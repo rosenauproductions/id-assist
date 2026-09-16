@@ -1,5 +1,6 @@
 import {
   evaluateWizardField,
+  isObservableVerb,
   type BriefDraft,
   type FieldEvaluation,
   type WizardStepId,
@@ -281,9 +282,18 @@ export function suggestRewrites(
         : String(draft[step] ?? "").trim();
 
   if (step === "jobTask") {
-    if (HOLLOW.test(value)) {
-      const topic = value
-        .replace(HOLLOW, "")
+    const missingVerb = Boolean(value) && !isObservableVerb(value);
+    if (HOLLOW.test(value) || missingVerb) {
+      // Strip whatever verb-ish word is leading the sentence — it's either a
+      // hollow verb (understand/know/learn…) or not an observable one at all —
+      // so the rewrite doesn't just re-wrap the same broken verb.
+      let topic = value.replace(HOLLOW, "");
+      if (missingVerb) {
+        // No recognizable observable verb at all — drop the leading word
+        // (whatever verb it was) so the rewrite doesn't just re-wrap it.
+        topic = topic.replace(/^(to\s+)?\w+\b\s*/, "");
+      }
+      topic = topic
         .replace(/\b(the|a|an|to|of|about|how to)\b/gi, " ")
         .replace(/\s+/g, " ")
         .trim();

@@ -153,6 +153,23 @@ export function BriefWizard() {
     void fetchCoach("suggest");
   }
 
+  function advanceTo(nextDraft: BriefDraft) {
+    if (stepIndex >= WIZARD_STEPS.length - 1) {
+      startTransition(async () => {
+        try {
+          const id = await createProjectFromDraftAction(nextDraft);
+          router.push(`/projects/${id}`);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Could not compile");
+        }
+      });
+      return;
+    }
+    setStepIndex((i) => i + 1);
+    setAttempts(0);
+    resetStepCoach();
+  }
+
   function checkAndAdvance() {
     const nextDraft = { ...draft };
     if (step.id === "constraints" && !nextDraft.constraints.trim()) {
@@ -175,20 +192,11 @@ export function BriefWizard() {
       return;
     }
 
-    if (stepIndex >= WIZARD_STEPS.length - 1) {
-      startTransition(async () => {
-        try {
-          const id = await createProjectFromDraftAction(nextDraft);
-          router.push(`/projects/${id}`);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Could not compile");
-        }
-      });
-      return;
-    }
-    setStepIndex((i) => i + 1);
-    setAttempts(0);
-    resetStepCoach();
+    advanceTo(nextDraft);
+  }
+
+  function continueAnyway() {
+    advanceTo(draft);
   }
 
   const displayEval = evaluation ?? liveEval;
@@ -363,6 +371,17 @@ export function BriefWizard() {
                     ? "Check again"
                     : "Check & continue"}
             </button>
+            {attempts >= 2 && evaluation && !evaluation.ok ? (
+              <button
+                type="button"
+                disabled={pending}
+                className="text-sm text-muted underline decoration-dotted underline-offset-4 hover:text-foreground disabled:opacity-40"
+                onClick={continueAnyway}
+                title="The coach isn't satisfied, but you can move on and refine this later."
+              >
+                Continue anyway
+              </button>
+            ) : null}
           </div>
         </section>
 

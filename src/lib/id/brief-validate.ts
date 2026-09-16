@@ -35,7 +35,11 @@ const TOPIC_ONLY =
 const HOLLOW =
   /\b(understand|know|learn|be aware|appreciate|be familiar with|gain knowledge)\b/i;
 const OBSERVABLE =
-  /\b(write|create|build|run|perform|diagnose|critique|select|decide|complete|submit|configure|troubleshoot|facilitate|coach|draft|revise|approve|identify|classify|calculate|demonstrate|apply|analyze|evaluate)\b/i;
+  /\b(write|create|build|run|perform|diagnose|critique|select|decide|complete|submit|configure|troubleshoot|facilitate|coach|draft|revise|approve|identify|classify|calculate|demonstrate|apply|analyze|evaluate|explain|describe|present|respond|reply|resolve|recommend|document|summarize|outline|generate|produce|deliver|review|assess|plan|design|address|handle|process|escalate|prioritize|verify|validate|inspect|measure|compose|edit|format|negotiate|greet|close|pitch|counsel|advise|guide|instruct|operate|execute|implement|install|deploy|test|debug|fix|repair|calibrate|adjust|audit|reconcile|file|route|assign|brief|train|mentor|answer|walk through|onboard)\b/i;
+
+export function isObservableVerb(value: string): boolean {
+  return OBSERVABLE.test(value);
+}
 
 export const WIZARD_STEPS: {
   id: WizardStepId;
