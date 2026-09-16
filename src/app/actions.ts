@@ -8,6 +8,7 @@ import { compileBrief } from "@/lib/id/compile";
 import { estimateProject } from "@/lib/id/estimate";
 import { canApprove, outlineStatus, runFilters } from "@/lib/id/filters";
 import { nid } from "@/lib/id/ids";
+import { importOutlineFromText } from "@/lib/id/import-outline";
 import { refineOutlineWithModel } from "@/lib/id/refine";
 import { mergeRequirements } from "@/lib/id/requirements";
 import { deleteProject, loadProject, saveProject } from "@/lib/id/store";
@@ -74,6 +75,12 @@ export async function createProjectFromDraftAction(draft: BriefDraft) {
     constraints: draft.constraints.trim() || "None",
     delivery: draft.delivery.length ? draft.delivery : [...DELIVERY_TARGETS],
   });
+  await saveProject(project);
+  return project.id;
+}
+
+export async function importOutlineAction(rawText: string): Promise<string> {
+  const project = await importOutlineFromText(rawText);
   await saveProject(project);
   return project.id;
 }

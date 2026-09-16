@@ -76,7 +76,7 @@ export default async function Home() {
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="grid gap-6">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <LaunchTile
               href="/wizard"
               eyebrow="Guided"
@@ -88,6 +88,12 @@ export default async function Home() {
               eyebrow="Fast"
               title="New course brief"
               description="Fill the full brief form in one pass if you already know the shape of it."
+            />
+            <LaunchTile
+              href="/import"
+              eyebrow="Import"
+              title="Drop in an outline"
+              description="Already have one written? Paste it in and let the model map it into a designable outline."
             />
           </div>
 

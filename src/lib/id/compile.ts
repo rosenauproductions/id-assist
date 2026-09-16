@@ -25,7 +25,7 @@ const PREFERRED: Record<Bloom, DeliveryTarget[]> = {
   create: ["gdoc", "canvas", "tutor"],
 };
 
-function pickDelivery(
+export function pickDelivery(
   bloom: Bloom,
   available: DeliveryTarget[],
   fallback: DeliveryTarget,
@@ -41,7 +41,7 @@ function pickDelivery(
  * turns that into a block so it surfaces to the human instead of silently
  * dropping the evidence.
  */
-function pickArtifactDelivery(available: DeliveryTarget[]): DeliveryTarget | null {
+export function pickArtifactDelivery(available: DeliveryTarget[]): DeliveryTarget | null {
   return (
     PREFERRED.apply
       .filter((target) => target !== "tutor")
@@ -124,7 +124,7 @@ function canvasUnits(): ContentUnit[] {
   ];
 }
 
-function unitsFor(delivery: DeliveryTarget, jobTask: string): ContentUnit[] {
+export function unitsFor(delivery: DeliveryTarget, jobTask: string): ContentUnit[] {
   switch (delivery) {
     case "rise":
       return riseUnits(jobTask);
@@ -141,7 +141,7 @@ function unitsFor(delivery: DeliveryTarget, jobTask: string): ContentUnit[] {
   }
 }
 
-function minutesFor(delivery: DeliveryTarget): number {
+export function minutesFor(delivery: DeliveryTarget): number {
   switch (delivery) {
     case "video":
       return 5;
