@@ -1,162 +1,165 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { createProjectAction } from "@/app/actions";
 import { ProjectList } from "@/app/projects/project-list";
-import { DELIVERY_TARGETS } from "@/lib/id/types";
 import { listProjects } from "@/lib/id/store";
+import { listPendingInvitations, listWorkspaceMembers, requireWorkspaceContext } from "@/lib/team/store";
+import type { IdProject } from "@/lib/id/types";
 
-const LABELS: Record<(typeof DELIVERY_TARGETS)[number], string> = {
-  rise: "Rise build sheet",
-  canvas: "Canvas pages",
-  gdoc: "Google Doc",
-  gslides: "Google Slides",
-  video: "Video script",
-  tutor: "Live tutor",
-};
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
 
-const DELIVERY_HINTS: Record<(typeof DELIVERY_TARGETS)[number], string> = {
-  rise: "Interactive elearning blocks you build in Rise.",
-  canvas: "LMS pages and assignments to paste into Canvas.",
-  gdoc: "Job aids, templates, and written practice.",
-  gslides: "Presentation decks for facilitated or self-paced review.",
-  video: "Script + shot list — not a rendered video file.",
-  tutor: "Real-time Ollama coach that teaches the approved outline.",
-};
+function openFilterCount(project: IdProject): number {
+  return project.outline.filters.filter(
+    (filter) => !filter.resolved && filter.severity !== "pass",
+  ).length;
+}
+
+function hoursLoggedSince(projects: IdProject[], since: Date): number {
+  const cutoff = since.getTime();
+  return projects.reduce((total, project) => {
+    const recent = (project.timeLogs ?? []).filter(
+      (log) => new Date(log.loggedAt).getTime() >= cutoff,
+    );
+    return total + recent.reduce((sum, log) => sum + log.hours, 0);
+  }, 0);
+}
 
 export default async function Home() {
-  const projects = await listProjects();
+  const context = await requireWorkspaceContext();
+  const [projects, members, pendingInvitations] = await Promise.all([
+    listProjects(),
+    listWorkspaceMembers(context.workspaceId),
+    listPendingInvitations(context.workspaceId),
+  ]);
+
+  const activeProjects = projects.filter(
+    (project) => project.outline.status !== "approved",
+  ).length;
+  const openFindings = projects.reduce(
+    (sum, project) => sum + openFilterCount(project),
+    0,
+  );
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const hoursThisWeek = hoursLoggedSince(projects, weekAgo);
+  const recent = [...projects]
+    .sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    )
+    .slice(0, 5);
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1.15fr_0.85fr]">
-      <section className="rounded-xl border border-line bg-card p-6 shadow-sm">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-accent">
-          Step 1 · Brief
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          New course brief
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-          Compile a pedagogy outline first. Approve it. Then create delivery
-          files and tutor with your local Ollama model.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            href="/wizard"
-            className="rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background"
-          >
-            Start wizard
-          </Link>
-          <span className="self-center text-xs text-muted">
-            or fill the full form below
-          </span>
+    <main className="mx-auto max-w-6xl px-6 py-10">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-accent">
+            {context.workspaceName}
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+            Welcome back, {context.email.split("@")[0]}
+          </h1>
         </div>
-        <form action={createProjectAction} className="mt-8 grid gap-4">
-          <Field
-            label="Course name"
-            hint="Working title learners and stakeholders will recognize."
-          >
-            <input
-              required
-              name="title"
-              className="field"
-              placeholder="Writing a blameless post-incident review"
-            />
-          </Field>
-          <Field
-            label="Audience"
-            hint="Who takes this course — role, experience level, and context."
-          >
-            <input
-              required
-              name="audience"
-              className="field"
-              placeholder="Engineering leads and incident commanders"
-            />
-          </Field>
-          <Field
-            label="Job task (what they must be able to do)"
-            hint="Observable on-the-job performance after the course — not a topic list."
-          >
-            <textarea
-              required
-              name="jobTask"
-              rows={3}
-              className="field"
-              placeholder="Write a facts-only PIR from a Sev-2 timeline"
-            />
-          </Field>
-          <Field
-            label="Why now"
-            hint="Workplace cost of not doing this. Adults need relevance up front."
-          >
-            <textarea
-              name="whyNow"
-              rows={2}
-              className="field"
-              placeholder="Blame language is killing incident reporting"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              label="Seat time (minutes)"
-              hint="Learner time in the course — not build time. Hard budget for lesson chunking."
-            >
-              <input
-                name="durationMinutes"
-                type="number"
-                min={10}
-                defaultValue={25}
-                className="field"
-              />
-            </Field>
-            <Field
-              label="Constraints"
-              hint="Limits that shape design: async only, no video, compliance, tools, etc."
-            >
-              <input
-                name="constraints"
-                className="field"
-                placeholder="Async, no live workshop"
-              />
-            </Field>
-          </div>
-          <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium">Build mix</legend>
-            <p className="text-xs font-normal leading-5 text-muted">
-              Channels this course may ship in. One course can mix several; the
-              outline assigns lessons to the best fit.
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {DELIVERY_TARGETS.map((target) => (
-                <label
-                  key={target}
-                  className="flex flex-col gap-0.5 rounded-md border border-line px-3 py-2"
-                >
-                  <span className="flex items-center gap-2 font-medium">
-                    <input
-                      type="checkbox"
-                      name={`delivery-${target}`}
-                      defaultChecked
-                    />
-                    {LABELS[target]}
-                  </span>
-                  <span className="pl-6 text-xs font-normal text-muted">
-                    {DELIVERY_HINTS[target]}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <button
-            type="submit"
-            className="mt-2 w-fit rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background"
-          >
-            Compile outline
-          </button>
-        </form>
+      </div>
+
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Projects in flight" value={String(activeProjects)} />
+        <Stat label="Total projects" value={String(projects.length)} />
+        <Stat label="Open filter findings" value={String(openFindings)} />
+        <Stat label="Hours logged this week" value={hoursThisWeek.toFixed(1)} />
       </section>
 
-      <section>
+      <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="grid gap-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <LaunchTile
+              href="/wizard"
+              eyebrow="Guided"
+              title="Start wizard"
+              description="Step through the brief one question at a time, with coaching as you go."
+            />
+            <LaunchTile
+              href="/projects/new"
+              eyebrow="Fast"
+              title="New course brief"
+              description="Fill the full brief form in one pass if you already know the shape of it."
+            />
+          </div>
+
+          <section className="rounded-xl border border-line bg-card p-5">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg font-semibold">Recent activity</h2>
+              <span className="text-xs text-muted">last updated</span>
+            </div>
+            {recent.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">
+                Nothing yet — compile a brief to get started.
+              </p>
+            ) : (
+              <ul className="mt-3 grid gap-2">
+                {recent.map((project) => (
+                  <li key={project.id}>
+                    <Link
+                      href={`/projects/${project.id}`}
+                      className="flex items-center justify-between gap-3 rounded-md border border-line bg-background px-3 py-2 text-sm hover:border-accent/40"
+                    >
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {project.outline.brief.title || "Untitled course"}
+                      </span>
+                      <StatusPill status={project.outline.status} />
+                      <span className="shrink-0 text-xs text-muted">
+                        {relativeTime(project.updatedAt)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <section className="rounded-xl border border-line bg-card p-5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-lg font-semibold">Team</h2>
+            <Link
+              href="/team"
+              className="text-xs font-medium text-accent underline-offset-2 hover:underline"
+            >
+              Manage
+            </Link>
+          </div>
+          <div className="mt-3 flex -space-x-2">
+            {members.slice(0, 6).map((member) => (
+              <span
+                key={member.id}
+                title={member.email}
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-card bg-accent/15 text-sm font-semibold text-accent"
+              >
+                {member.email.charAt(0).toUpperCase()}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-muted">
+            {members.length} {members.length === 1 ? "member" : "members"}
+            {pendingInvitations.length > 0
+              ? ` · ${pendingInvitations.length} invite${pendingInvitations.length === 1 ? "" : "s"} pending`
+              : ""}
+          </p>
+          <Link
+            href="/team"
+            className="mt-3 inline-block rounded-md border border-line px-3 py-1.5 text-xs font-medium hover:border-accent/40"
+          >
+            Invite a teammate
+          </Link>
+        </section>
+      </section>
+
+      <section className="mt-10">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted">
             Projects
@@ -165,39 +168,61 @@ export default async function Home() {
         </div>
         <ProjectList projects={projects} />
       </section>
-      <style>{`
-        .field {
-          width: 100%;
-          border-radius: 0.5rem;
-          border: 1px solid var(--line);
-          background: var(--background);
-          padding: 0.55rem 0.75rem;
-        }
-        .field:focus {
-          outline: 2px solid color-mix(in oklab, var(--accent) 35%, transparent);
-          outline-offset: 1px;
-        }
-      `}</style>
     </main>
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-card px-4 py-3">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function LaunchTile({
+  href,
+  eyebrow,
+  title,
+  description,
 }: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium">
-      {label}
-      {hint ? (
-        <span className="text-xs font-normal leading-5 text-muted">{hint}</span>
-      ) : null}
-      {children}
-    </label>
+    <Link
+      href={href}
+      className="group rounded-xl border border-line bg-card p-5 transition-colors hover:border-accent/40 hover:bg-accent/5"
+    >
+      <p className="text-[11px] font-medium uppercase tracking-wide text-accent">
+        {eyebrow}
+      </p>
+      <p className="mt-1 text-lg font-semibold">{title}</p>
+      <p className="mt-1 text-sm text-muted">{description}</p>
+      <span className="mt-3 inline-block text-sm font-medium text-accent">
+        Launch →
+      </span>
+    </Link>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const tone =
+    status === "approved"
+      ? "bg-accent/10 text-accent"
+      : status === "needs_review"
+        ? "bg-warn/10 text-warn"
+        : "bg-muted/10 text-muted";
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${tone}`}
+    >
+      {status.replace("_", " ")}
+    </span>
   );
 }

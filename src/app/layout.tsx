@@ -39,21 +39,26 @@ export default async function RootLayout({
               ID Assist
             </Link>
             {session?.user ? (
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/login" });
-                }}
-                className="flex items-center gap-3"
-              >
-                <span className="text-sm text-muted">{session.user.email}</span>
-                <button
-                  type="submit"
-                  className="text-sm text-muted hover:text-foreground"
+              <div className="flex items-center gap-4">
+                <Link href="/team" className="text-sm text-muted hover:text-foreground">
+                  Team
+                </Link>
+                <form
+                  action={async () => {
+                    "use server";
+                    await signOut({ redirectTo: "/login" });
+                  }}
+                  className="flex items-center gap-3"
                 >
-                  Sign out
-                </button>
-              </form>
+                  <span className="text-sm text-muted">{session.user.email}</span>
+                  <button
+                    type="submit"
+                    className="text-sm text-muted hover:text-foreground"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
             ) : (
               <p className="text-sm text-muted">Human in the loop</p>
             )}

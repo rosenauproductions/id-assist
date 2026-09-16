@@ -1,14 +1,40 @@
 import { and, desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { projects as projectsTable } from "@/lib/db/schema";
+import { projects as projectsTable, users } from "@/lib/db/schema";
 import { COURSE_PHASES, type IdProject } from "./types";
+
+type WriteContext = { userId: string; workspaceId: string };
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Not signed in.");
   return userId;
+}
+
+/** Every project belongs to a workspace; everyone in that workspace can see
+ * and edit it (the "one shared workspace" model — no per-project ACLs). */
+async function requireWorkspaceId(): Promise<string> {
+  const userId = await requireUserId();
+  const [row] = await db
+    .select({ workspaceId: users.workspaceId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row) throw new Error("Account not found.");
+  return row.workspaceId;
+}
+
+async function requireWriteContext(): Promise<WriteContext> {
+  const userId = await requireUserId();
+  const [row] = await db
+    .select({ workspaceId: users.workspaceId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row) throw new Error("Account not found.");
+  return { userId, workspaceId: row.workspaceId };
 }
 
 /**
@@ -30,7 +56,7 @@ function fromRow(row: { data: unknown }): IdProject {
 }
 
 export async function saveProject(project: IdProject): Promise<void> {
-  const ownerId = await requireUserId();
+  const { userId, workspaceId } = await requireWriteContext();
   project.updatedAt = new Date().toISOString();
   const title = project.outline.brief.title || "untitled-course";
   const status = project.outline.status;
@@ -39,13 +65,16 @@ export async function saveProject(project: IdProject): Promise<void> {
     .insert(projectsTable)
     .values({
       id: project.id,
-      ownerId,
+      workspaceId,
+      createdByUserId: userId,
       title,
       status,
       data: project,
     })
     .onConflictDoUpdate({
       target: projectsTable.id,
+      // workspaceId/createdByUserId are deliberately omitted here — they're
+      // set once at creation and never reassigned by a later save.
       set: {
         title,
         status,
@@ -56,29 +85,31 @@ export async function saveProject(project: IdProject): Promise<void> {
 }
 
 export async function loadProject(id: string): Promise<IdProject | null> {
-  const ownerId = await requireUserId();
+  const workspaceId = await requireWorkspaceId();
   const [row] = await db
     .select({ data: projectsTable.data })
     .from(projectsTable)
-    .where(and(eq(projectsTable.id, id), eq(projectsTable.ownerId, ownerId)))
+    .where(and(eq(projectsTable.id, id), eq(projectsTable.workspaceId, workspaceId)))
     .limit(1);
   if (!row) return null;
   return fromRow(row);
 }
 
 export async function listProjects(): Promise<IdProject[]> {
-  const ownerId = await requireUserId();
+  const workspaceId = await requireWorkspaceId();
   const rows = await db
     .select({ data: projectsTable.data })
     .from(projectsTable)
-    .where(eq(projectsTable.ownerId, ownerId))
+    .where(eq(projectsTable.workspaceId, workspaceId))
     .orderBy(desc(projectsTable.updatedAt));
   return rows.map(fromRow);
 }
 
 export async function deleteProject(projectId: string): Promise<void> {
-  const ownerId = await requireUserId();
+  const workspaceId = await requireWorkspaceId();
   await db
     .delete(projectsTable)
-    .where(and(eq(projectsTable.id, projectId), eq(projectsTable.ownerId, ownerId)));
+    .where(
+      and(eq(projectsTable.id, projectId), eq(projectsTable.workspaceId, workspaceId)),
+    );
 }
