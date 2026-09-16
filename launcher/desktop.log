@@ -1,0 +1,44 @@
+2026-09-15T20:34:52.958Z [id-assist-desktop] Desktop app starting
+2026-09-15T20:34:52.964Z [id-assist-desktop] Starting: /usr/local/bin/node /Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist/node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1
+2026-09-15T20:34:52.964Z [id-assist-desktop] ROOT=/Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist
+2026-09-15T20:34:52.965Z [id-assist-desktop] Waiting for http://127.0.0.1:3000…
+2026-09-15T20:34:53.320Z [id-assist-desktop] [1m[38;2;173;127;168m▲ Next.js 16.3.5[39m[22m (Turbopack)
+2026-09-15T20:34:53.320Z [id-assist-desktop] - Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+[32m[1m✓[22m[39m Ready in 268ms
+2026-09-15T20:34:53.390Z [id-assist-desktop] [32m[1m✓[22m[39m Running next.config.ts took 68ms
+2026-09-15T20:34:54.496Z [id-assist-desktop] GET / [32m200[39m in 408ms[2m (next.js: 229ms, application-code: 179ms)[22m
+2026-09-15T20:34:54.535Z [id-assist-desktop] GET / [32m200[39m in 32ms[2m (next.js: 3ms, application-code: 29ms)[22m
+2026-09-15T20:34:54.696Z [id-assist-desktop] Window ready
+2026-09-15T20:34:58.027Z [id-assist-desktop] POST / [32m200[39m in 51ms[2m (next.js: 1.6ms, application-code: 50ms)[22m
+2026-09-15T20:34:58.027Z [id-assist-desktop] └─ ƒ openProjectFolderAction("prj_99a7a0c7") in 44ms [2msrc/app/actions.ts[22m
+2026-09-15T20:35:35.042Z [id-assist-desktop] POST / [32m200[39m in 52ms[2m (next.js: 1.3ms, application-code: 51ms)[22m
+  └─ ƒ openProjectFolderAction("prj_99a7a0c7") in 45ms [2msrc/app/actions.ts[22m
+2026-09-15T20:35:39.531Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 369ms[2m (next.js: 356ms, application-code: 13ms)[22m
+2026-09-15T20:35:46.868Z [id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 2ms, application-code: 16ms)[22m
+  └─ ƒ updateOutcomeAction({}) in 3ms [2msrc/app/actions.ts[22m
+2026-09-15T20:35:58.623Z [id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 3ms, application-code: 13ms)[22m
+  └─ ƒ approveProjectAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+2026-09-15T20:36:14.887Z [id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 2ms, application-code: 13ms)[22m
+  └─ ƒ reopenOutlineAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+2026-09-15T20:36:15.800Z [id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 3ms, application-code: 15ms)[22m
+  └─ ƒ approveProjectAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+2026-09-15T20:36:17.508Z [id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 21ms[2m (next.js: 2ms, application-code: 18ms)[22m
+2026-09-15T20:36:17.508Z [id-assist-desktop] └─ ƒ generateArtifactsAction("prj_99a7a0c7") in 4ms [2msrc/app/actions.ts[22m
+2026-09-15T20:38:16.205Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 29ms[2m (next.js: 6ms, application-code: 23ms)[22m
+2026-09-15T20:38:24.119Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 5ms, application-code: 11ms)[22m
+2026-09-15T20:38:24.390Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 14ms[2m (next.js: 4ms, application-code: 11ms)[22m
+2026-09-15T20:38:48.495Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 22ms[2m (next.js: 5ms, application-code: 17ms)[22m
+2026-09-15T20:38:52.292Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 29ms[2m (next.js: 6ms, application-code: 24ms)[22m
+2026-09-15T20:38:59.263Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 21ms[2m (next.js: 3ms, application-code: 17ms)[22m
+2026-09-15T20:38:59.362Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 11ms[2m (next.js: 1.2ms, application-code: 10ms)[22m
+2026-09-15T20:38:59.501Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 13ms[2m (next.js: 3ms, application-code: 10ms)[22m
+2026-09-15T20:38:59.646Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 6ms, application-code: 13ms)[22m
+2026-09-15T20:38:59.827Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 15ms[2m (next.js: 2ms, application-code: 12ms)[22m
+2026-09-15T20:39:16.590Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 15ms[2m (next.js: 3ms, application-code: 12ms)[22m
+2026-09-15T20:39:16.608Z [id-assist-desktop] [32m[1m✓[22m[39m Compiled in 17ms
+2026-09-15T20:39:36.461Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 14ms[2m (next.js: 3ms, application-code: 11ms)[22m
+2026-09-15T20:39:37.979Z [id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 13ms[2m (next.js: 2ms, application-code: 11ms)[22m
+2026-09-15T20:39:37.999Z [id-assist-desktop] [32m[1m✓[22m[39m Compiled in 13ms
+2026-09-15T20:40:11.891Z [id-assist-desktop] Stopping Next.js pid=32444…

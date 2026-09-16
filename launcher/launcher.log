@@ -1,0 +1,376 @@
+
+> id-assist@0.1.0 desktop
+> electron .
+
+[id-assist-desktop] Starting Next.js: npm run start -- -p 3000
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] > id-assist@0.1.0 start
+> next start -p 3000
+[id-assist-desktop] ▲ Next.js 16.3.5
+[id-assist-desktop] - Local:         http://localhost:3000
+- Network:       http://192.168.68.132:3000
+✓ Ready in 93ms
+[id-assist-desktop] ✓ Running next.config.ts took 80ms
+[id-assist-desktop] Starting Next.js: npm run start -- -p 3000
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] > id-assist@0.1.0 start
+> next start -p 3000
+[id-assist-desktop] [31m[1m⨯[22m[39m Failed to start server
+[id-assist-desktop] Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+[id-assist-desktop] Next.js exited code=1 signal=null
+[id-assist-desktop] Desktop app starting
+[id-assist-desktop] Starting: /usr/local/bin/node /Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist/node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1
+[id-assist-desktop] ROOT=/Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] [1m[38;2;173;127;168m▲ Next.js 16.3.5[39m[22m (Turbopack)
+[id-assist-desktop] - Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+[32m[1m✓[22m[39m Ready in 261ms
+[id-assist-desktop] [32m[1m✓[22m[39m Running next.config.ts took 67ms
+[id-assist-desktop] GET / [32m200[39m in 361ms[2m (next.js: 228ms, application-code: 133ms)[22m
+[id-assist-desktop] GET / [32m200[39m in 31ms[2m (next.js: 3ms, application-code: 29ms)[22m
+[id-assist-desktop] Window ready
+[id-assist-desktop] GET /wizard [32m200[39m in 148ms[2m (next.js: 138ms, application-code: 9ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 96ms[2m (next.js: 73ms, application-code: 22ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 21ms[2m (next.js: 1.6ms, application-code: 19ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 28ms[2m (next.js: 1.7ms, application-code: 26ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 20ms[2m (next.js: 1.8ms, application-code: 18ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 21ms[2m (next.js: 1.5ms, application-code: 19ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 18ms[2m (next.js: 2ms, application-code: 16ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 18ms[2m (next.js: 1.7ms, application-code: 17ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 19ms[2m (next.js: 1.9ms, application-code: 17ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 18ms[2m (next.js: 1.8ms, application-code: 16ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 17ms[2m (next.js: 3ms, application-code: 14ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 16ms[2m (next.js: 1.3ms, application-code: 15ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 16ms[2m (next.js: 1.4ms, application-code: 15ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 26ms[2m (next.js: 1.4ms, application-code: 25ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 21ms[2m (next.js: 1.5ms, application-code: 19ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 25ms[2m (next.js: 1.2ms, application-code: 23ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 32ms[2m (next.js: 2ms, application-code: 29ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 19ms[2m (next.js: 2ms, application-code: 17ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 10ms[2m (next.js: 2ms, application-code: 8ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 13ms[2m (next.js: 3ms, application-code: 10ms)[22m
+[id-assist-desktop] [32m[1m✓[22m[39m Compiled in 25ms
+[id-assist-desktop] GET /wizard [32m200[39m in 11ms[2m (next.js: 3ms, application-code: 8ms)[22m
+[id-assist-desktop] Stopping Next.js pid=28732…
+[id-assist-desktop] Desktop app starting
+[id-assist-desktop] Starting: /usr/local/bin/node /Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist/node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1
+[id-assist-desktop] ROOT=/Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] [1m[38;2;173;127;168m▲ Next.js 16.3.5[39m[22m (Turbopack)
+[id-assist-desktop] - Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+[32m[1m✓[22m[39m Ready in 272ms
+[id-assist-desktop] [32m[1m✓[22m[39m Running next.config.ts took 17ms
+[id-assist-desktop] GET / [32m200[39m in 404ms[2m (next.js: 242ms, application-code: 161ms)[22m
+[id-assist-desktop] GET / [32m200[39m in 33ms[2m (next.js: 1.7ms, application-code: 31ms)[22m
+[id-assist-desktop] Window ready
+[id-assist-desktop] GET /wizard [32m200[39m in 145ms[2m (next.js: 138ms, application-code: 7ms)[22m
+[id-assist-desktop] (node:29824) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:29824) Warning: AI SDK Warning (ollama.chat / id-assist-tutor): The feature "responseFormat" is not supported. JSON response format schema is only supported with structuredOutputs
+[id-assist-desktop] POST /api/brief-coach [32m200[39m in 15.5s[2m (next.js: 280ms, application-code: 15.2s)[22m
+[id-assist-desktop] (node:29824) Warning: AI SDK Warning (ollama.chat / id-assist-tutor): The feature "responseFormat" is not supported. JSON response format schema is only supported with structuredOutputs
+[id-assist-desktop] POST /api/brief-coach [32m200[39m in 7.7s[2m (next.js: 25ms, application-code: 7.7s)[22m
+[id-assist-desktop] (node:29824) Warning: AI SDK Warning (ollama.chat / id-assist-tutor): The feature "responseFormat" is not supported. JSON response format schema is only supported with structuredOutputs
+[id-assist-desktop] POST /api/brief-coach [32m200[39m in 11.4s[2m (next.js: 3ms, application-code: 11.4s)[22m
+[id-assist-desktop] [32m[1m✓[22m[39m Compiled in 103ms
+[id-assist-desktop] GET /wizard [32m200[39m in 40ms[2m (next.js: 15ms, application-code: 25ms)[22m
+[id-assist-desktop] GET /wizard [32m200[39m in 24ms[2m (next.js: 11ms, application-code: 14ms)[22m
+[id-assist-desktop] Stopping Next.js pid=29823…
+[id-assist-desktop] Desktop app starting
+[id-assist-desktop] Starting: /usr/local/bin/node /Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist/node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1
+[id-assist-desktop] ROOT=/Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] [1m[38;2;173;127;168m▲ Next.js 16.3.5[39m[22m (Turbopack)
+[id-assist-desktop] - Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+[32m[1m✓[22m[39m Ready in 236ms
+[id-assist-desktop] [32m[1m✓[22m[39m Running next.config.ts took 105ms
+[id-assist-desktop] GET / [32m200[39m in 390ms[2m (next.js: 219ms, application-code: 171ms)[22m
+[id-assist-desktop] GET / [32m200[39m in 37ms[2m (next.js: 1.8ms, application-code: 35ms)[22m
+[id-assist-desktop] Window ready
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 590ms[2m (next.js: 574ms, application-code: 16ms)[22m
+[id-assist-desktop] [31m[1m⨯[22m[39m Error [AI_NoObjectGeneratedError]: No object generated: response did not match schema.
+    at async refineOutlineWithModel (src/lib/id/refine.ts:60:22)
+    at async refineOutlineAction (src/app/actions.ts:115:19)
+  58 |   };
+  59 |
+> 60 |   const { output } = await generateText({
+     |                      ^
+  61 |     model: getLanguageModel(),
+  62 |     output: Output.object({ schema: refineSchema }),
+  63 |     prompt: `You are an instructional designer refining an ID Assist course outline. {
+  text: '{\n' +
+    '  "brief": {\n' +
+    '    "title": "how to make an AI bot",\n' +
+    '    "audience": "20 year old college grads",\n' +
+    '    "jobTask": "but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study",\n' +
+    '    "whyNow": "learning to make an ai bot today will help you increase your performance across your carrer.",\n' +
+    '    "durationMinutes": 60,\n' +
+    '    "constraints": "async",\n' +
+    '    "delivery": [\n' +
+    '      "rise",\n' +
+    '      "canvas",\n' +
+    '      "gdoc",\n' +
+    '      "gslides",\n' +
+    '      "video",\n' +
+    '      "tutor"\n' +
+    '    ]\n' +
+    '  },\n' +
+    '  "outcomes": [\n' +
+    '    {\n' +
+    '      "id": "out_0224430f",\n' +
+    '      "kind": "enabling",\n' +
+    '      "bloom": "understand",\n' +
+    '      "condition": "Given 20 year old college graduates in their current role",\n' +
+    '      "behavior": "explain why having an AI bot to assist them in their new academic role matters now and describe workplace costs in their own words",\n' +
+    '      "criterion": "identifies workplace costs accurately in at least three examples"\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "id": "out_97c1a1f3",\n' +
+    '      "kind": "terminal",\n' +
+    '      "bloom": "apply",\n' +
+    '      "condition": "Given a real workplace situation for 20 year old college graduates",\n' +
+    '      "behavior": "design and build an AI bot that assists them in their new academic role",\n' +
+    '      "criterion": "AI bot meets the quality bar stated in the assessment spec",\n' +
+    '      "assessmentId": "as_07b92dc7"\n' +
+    '    }\n' +
+    '  ],\n' +
+    '  "lessons": [\n' +
+    '    {\n' +
+    '      "id": "les_bdbdd75a",\n' +
+    '      "title": "Explain why but the end of this course..",\n' +
+    '      "objectiveId": "out_0224430f",\n' +
+    '      "estimatedMinutes": 30,\n' +
+    '      "delivery": "video",\n' +
+    '      "units": [\n' +
+    '        {\n' +
+    '          "id": "u_82f08f8b",\n' +
+    '          "purpose": "Highlight workplace cost of lacking AI assistance",\n' +
+    '          "gagne": "attention",\n' +
+    '          "delivery": "video"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_f8ab8a1a",\n' +
+    '          "purpose": "Compare effectiveness of wrong vs right AI approaches",\n' +
+    '          "gagne": "present",\n' +
+    '          "delivery": "video"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_127d1fa6",\n' +
+    '          "purpose": "State learning objective: design an AI bot",\n' +
+    '          "gagne": "objectives",\n' +
+    '          "delivery": "video"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_51f2c737",\n' +
+    '          "purpose": "Preview next lesson: building the bot",\n' +
+    '          "gagne": "retain",\n' +
+    '          "delivery": "video"\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    },\n' +
+    '    {\n' +
+    '      "id": "les_5113ae32",\n' +
+    '      "title": "But the end of this course.. students will",\n' +
+    '      "objectiveId": "out_97c1a1f3",\n' +
+    '      "estimatedMinutes": 30,\n' +
+    '      "delivery": "gdoc",\n' +
+    '      "units": [\n' +
+    '        {\n' +
+    '          "id": "u_28b88bfc",\n' +
+    '          "purpose": "Understand the purpose of a job aid and when to use it",\n' +
+    '          "gagne": "objectives",\n' +
+    '          "delivery": "gdoc"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_736050eb",\n' +
+    '          "purpose": "Review worked example of building an AI bot",\n' +
+    '          "gagne": "present",\n' +
+    '          "delivery": "gdoc"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_c3e5fb24",\n' +
+    '          "purpose": "Fill in bot design template",\n' +
+    '          "gagne": "elicit",\n' +
+    '          "delivery": "gdoc"\n' +
+    '        },\n' +
+    '        {\n' +
+    '          "id": "u_ef31e2b4",\n' +
+    '          "purpose": "Use quality criterion checklist to self‑assess bot",\n' +
+    '          "gagne": "assess",\n' +
+    '          "delivery": "gdoc"\n' +
+    '        }\n' +
+    '      ]\n' +
+    '    }\n' +
+    '  ],\n' +
+    '  "openFilters": []\n' +
+    '}',
+  response: {
+    id: 'chatcmpl-881',
+    timestamp: 2026-09-15T19:51:56.000Z,
+    modelId: 'id-assist-tutor',
+    headers: {
+      'content-type': 'application/json',
+      date: 'Tue, 15 Sep 2026 19:51:56 GMT',
+      'transfer-encoding': 'chunked'
+    },
+    body: undefined,
+    messages: [ [Object] ]
+  },
+  usage: {
+    inputTokens: 1289,
+    inputTokenDetails: {
+      noCacheTokens: 1149,
+      cacheReadTokens: 140,
+      cacheWriteTokens: undefined
+    },
+    outputTokens: 1598,
+    outputTokenDetails: { textTokens: 1598, reasoningTokens: 0 },
+    totalTokens: 2887,
+    raw: {
+      prompt_tokens: 1289,
+      completion_tokens: 1598,
+      total_tokens: 2887,
+      prompt_tokens_details: [Object]
+    }
+  },
+  finishReason: 'stop',
+  digest: '2166781691',
+  [cause]: Error [AI_TypeValidationError]: Type validation failed: Value: {"brief":{"title":"how to make an AI bot","audience":"20 year old college grads","jobTask":"but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study","whyNow":"learning to make an ai bot today will help you increase your performance across your carrer.","durationMinutes":60,"constraints":"async","delivery":["rise","canvas","gdoc","gslides","video","tutor"]},"outcomes":[{"id":"out_0224430f","kind":"enabling","bloom":"understand","condition":"Given 20 year old college graduates in their current role","behavior":"explain why having an AI bot to assist them in their new academic role matters now and describe workplace costs in their own words","criterion":"identifies workplace costs accurately in at least three examples"},{"id":"out_97c1a1f3","kind":"terminal","bloom":"apply","condition":"Given a real workplace situation for 20 year old college graduates","behavior":"design and build an AI bot that assists them in their new academic role","criterion":"AI bot meets the quality bar stated in the assessment spec","assessmentId":"as_07b92dc7"}],"lessons":[{"id":"les_bdbdd75a","title":"Explain why but the end of this course..","objectiveId":"out_0224430f","estimatedMinutes":30,"delivery":"video","units":[{"id":"u_82f08f8b","purpose":"Highlight workplace cost of lacking AI assistance","gagne":"attention","delivery":"video"},{"id":"u_f8ab8a1a","purpose":"Compare effectiveness of wrong vs right AI approaches","gagne":"present","delivery":"video"},{"id":"u_127d1fa6","purpose":"State learning objective: design an AI bot","gagne":"objectives","delivery":"video"},{"id":"u_51f2c737","purpose":"Preview next lesson: building the bot","gagne":"retain","delivery":"video"}]},{"id":"les_5113ae32","title":"But the end of this course.. students will","objectiveId":"out_97c1a1f3","estimatedMinutes":30,"delivery":"gdoc","units":[{"id":"u_28b88bfc","purpose":"Understand the purpose of a job aid and when to use it","gagne":"objectives","delivery":"gdoc"},{"id":"u_736050eb","purpose":"Review worked example of building an AI bot","gagne":"present","delivery":"gdoc"},{"id":"u_c3e5fb24","purpose":"Fill in bot design template","gagne":"elicit","delivery":"gdoc"},{"id":"u_ef31e2b4","purpose":"Use quality criterion checklist to self‑assess bot","gagne":"assess","delivery":"gdoc"}]}],"openFilters":[]}.
+  Error message: [
+    {
+      "origin": "number",
+      "code": "too_big",
+      "maximum": 12,
+      "inclusive": true,
+      "path": [
+        "lessons",
+        0,
+        "estimatedMinutes"
+      ],
+      "message": "Too big: expected number to be <=12"
+    },
+    {
+      "origin": "number",
+      "code": "too_big",
+      "maximum": 12,
+      "inclusive": true,
+      "path": [
+        "lessons",
+        1,
+        "estimatedMinutes"
+      ],
+      "message": "Too big: expected number to be <=12"
+    }
+  ]
+      at async refineOutlineWithModel (src/lib/id/refine.ts:60:22)
+      at async refineOutlineAction (src/app/actions.ts:115:19)
+    58 |   };
+    59 |
+  > 60 |   const { output } = await generateText({
+       |                      ^
+    61 |     model: getLanguageModel(),
+    62 |     output: Output.object({ schema: refineSchema }),
+    63 |     prompt: `You are an instructional designer refining an ID Assist course outline. {
+    value: {
+      brief: [Object],
+      outcomes: [Array],
+      lessons: [Array],
+      openFilters: []
+    },
+    context: undefined,
+    [cause]: [Error [ZodError]: [
+      {
+        "origin": "number",
+        "code": "too_big",
+        "maximum": 12,
+        "inclusive": true,
+        "path": [
+          "lessons",
+          0,
+          "estimatedMinutes"
+        ],
+        "message": "Too big: expected number to be <=12"
+      },
+      {
+        "origin": "number",
+        "code": "too_big",
+        "maximum": 12,
+        "inclusive": true,
+        "path": [
+          "lessons",
+          1,
+          "estimatedMinutes"
+        ],
+        "message": "Too big: expected number to be <=12"
+      }
+    ]]
+  }
+}
+[id-assist-desktop] (node:30152) Warning: AI SDK Warning System: To turn off warning logging, set the AI_SDK_LOG_WARNINGS global to false.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30152) Warning: AI SDK Warning (ollama.chat / id-assist-tutor): The feature "responseFormat" is not supported. JSON response format schema is only supported with structuredOutputs
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [31m500[39m in 27.2s[2m (next.js: 9ms, application-code: 27.2s)[22m
+[id-assist-desktop] └─ ƒ refineOutlineAction("prj_99a7a0c7") in 26934ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] GET / [32m200[39m in 26ms[2m (next.js: 6ms, application-code: 20ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 14ms[2m (next.js: 4ms, application-code: 10ms)[22m
+[id-assist-desktop] Stopping Next.js pid=30151…
+[id-assist-desktop] [?25h
+[id-assist-desktop] Next.js exited code=0 signal=null
+[id-assist-desktop] Desktop app starting
+[id-assist-desktop] Starting: /usr/local/bin/node /Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist/node_modules/next/dist/bin/next dev -p 3000 -H 127.0.0.1
+[id-assist-desktop] ROOT=/Users/christopherrosenau/Desktop/Personal - Chris/Cursor Projects/id-assist
+[id-assist-desktop] Waiting for http://127.0.0.1:3000…
+[id-assist-desktop] [1m[38;2;173;127;168m▲ Next.js 16.3.5[39m[22m (Turbopack)
+[id-assist-desktop] - Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+[32m[1m✓[22m[39m Ready in 268ms
+[id-assist-desktop] [32m[1m✓[22m[39m Running next.config.ts took 68ms
+[id-assist-desktop] GET / [32m200[39m in 408ms[2m (next.js: 229ms, application-code: 179ms)[22m
+[id-assist-desktop] GET / [32m200[39m in 32ms[2m (next.js: 3ms, application-code: 29ms)[22m
+[id-assist-desktop] Window ready
+[id-assist-desktop] POST / [32m200[39m in 51ms[2m (next.js: 1.6ms, application-code: 50ms)[22m
+[id-assist-desktop] └─ ƒ openProjectFolderAction("prj_99a7a0c7") in 44ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] POST / [32m200[39m in 52ms[2m (next.js: 1.3ms, application-code: 51ms)[22m
+  └─ ƒ openProjectFolderAction("prj_99a7a0c7") in 45ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 369ms[2m (next.js: 356ms, application-code: 13ms)[22m
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 2ms, application-code: 16ms)[22m
+  └─ ƒ updateOutcomeAction({}) in 3ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 3ms, application-code: 13ms)[22m
+  └─ ƒ approveProjectAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 2ms, application-code: 13ms)[22m
+  └─ ƒ reopenOutlineAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 3ms, application-code: 15ms)[22m
+  └─ ƒ approveProjectAction("prj_99a7a0c7") in 2ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] POST /projects/prj_99a7a0c7 [32m200[39m in 21ms[2m (next.js: 2ms, application-code: 18ms)[22m
+[id-assist-desktop] └─ ƒ generateArtifactsAction("prj_99a7a0c7") in 4ms [2msrc/app/actions.ts[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 29ms[2m (next.js: 6ms, application-code: 23ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 16ms[2m (next.js: 5ms, application-code: 11ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 14ms[2m (next.js: 4ms, application-code: 11ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 22ms[2m (next.js: 5ms, application-code: 17ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 29ms[2m (next.js: 6ms, application-code: 24ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 21ms[2m (next.js: 3ms, application-code: 17ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 11ms[2m (next.js: 1.2ms, application-code: 10ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 13ms[2m (next.js: 3ms, application-code: 10ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 18ms[2m (next.js: 6ms, application-code: 13ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 15ms[2m (next.js: 2ms, application-code: 12ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 15ms[2m (next.js: 3ms, application-code: 12ms)[22m
+[id-assist-desktop] [32m[1m✓[22m[39m Compiled in 17ms
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 14ms[2m (next.js: 3ms, application-code: 11ms)[22m
+[id-assist-desktop] GET /projects/prj_99a7a0c7 [32m200[39m in 13ms[2m (next.js: 2ms, application-code: 11ms)[22m
+[id-assist-desktop] [32m[1m✓[22m[39m Compiled in 13ms
+[id-assist-desktop] Stopping Next.js pid=32444…

@@ -1,0 +1,272 @@
+{
+  "id": "prj_99a7a0c7",
+  "createdAt": "2026-09-15T18:36:07.215Z",
+  "updatedAt": "2026-09-15T21:03:06.064Z",
+  "outline": {
+    "status": "approved",
+    "brief": {
+      "title": "how to make an AI bot",
+      "audience": "20 year old collage grads",
+      "jobTask": "but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study",
+      "whyNow": "learning to make an ai bot today will help you increase your performance across your carrer.",
+      "durationMinutes": 60,
+      "constraints": "async",
+      "delivery": [
+        "rise",
+        "canvas",
+        "gdoc",
+        "gslides",
+        "video",
+        "tutor"
+      ]
+    },
+    "outcomes": [
+      {
+        "id": "out_0224430f",
+        "kind": "enabling",
+        "bloom": "understand",
+        "condition": "Given 20 year old collage grads in their current role",
+        "behavior": "explain why but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study matters now",
+        "criterion": "names the workplace cost in their own words also to do so"
+      },
+      {
+        "id": "out_97c1a1f3",
+        "kind": "terminal",
+        "bloom": "apply",
+        "condition": "Given a real workplace situation for 20 year old collage grads",
+        "behavior": "but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study",
+        "criterion": "meets the quality bar stated in the assessment spec",
+        "assessmentId": "as_07b92dc7"
+      }
+    ],
+    "assessments": [
+      {
+        "id": "as_07b92dc7",
+        "outcomeId": "out_97c1a1f3",
+        "bloom": "apply",
+        "format": "performance",
+        "correctPerformance": "Learner can but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study to this criterion: meets the quality bar stated in the assessment spec",
+        "exemplarStem": "Using your own work, but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study.",
+        "delivery": "gdoc"
+      }
+    ],
+    "modules": [
+      {
+        "id": "mod_8e4322c4",
+        "title": "how to make an AI bot",
+        "lessonIds": [
+          "les_bdbdd75a",
+          "les_5113ae32"
+        ]
+      }
+    ],
+    "lessons": [
+      {
+        "id": "les_bdbdd75a",
+        "title": "Explain why but the end of this course..",
+        "objectiveId": "out_0224430f",
+        "estimatedMinutes": 5,
+        "delivery": "video",
+        "supplements": [
+          "gslides"
+        ],
+        "units": [
+          {
+            "id": "u_82f08f8b",
+            "purpose": "Cold open: the workplace cost",
+            "gagne": "attention",
+            "delivery": "video"
+          },
+          {
+            "id": "u_f8ab8a1a",
+            "purpose": "Two-case contrast (wrong vs right)",
+            "gagne": "present",
+            "delivery": "video"
+          },
+          {
+            "id": "u_127d1fa6",
+            "purpose": "Name the job: but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study",
+            "gagne": "objectives",
+            "delivery": "video"
+          },
+          {
+            "id": "u_51f2c737",
+            "purpose": "What to do next in the following lesson",
+            "gagne": "retain",
+            "delivery": "video"
+          }
+        ]
+      },
+      {
+        "id": "les_5113ae32",
+        "title": "But the end of this course.. students will",
+        "objectiveId": "out_97c1a1f3",
+        "estimatedMinutes": 8,
+        "delivery": "gdoc",
+        "supplements": [],
+        "units": [
+          {
+            "id": "u_28b88bfc",
+            "purpose": "Job aid purpose and when to use it",
+            "gagne": "objectives",
+            "delivery": "gdoc"
+          },
+          {
+            "id": "u_736050eb",
+            "purpose": "Worked example of but the end of this course.. students will be able to make their own AI bot that will assist them in thier new role of study",
+            "gagne": "present",
+            "delivery": "gdoc"
+          },
+          {
+            "id": "u_c3e5fb24",
+            "purpose": "Blank template the learner fills",
+            "gagne": "elicit",
+            "delivery": "gdoc"
+          },
+          {
+            "id": "u_ef31e2b4",
+            "purpose": "Quality criterion checklist",
+            "gagne": "assess",
+            "delivery": "gdoc"
+          }
+        ],
+        "assessmentId": "as_07b92dc7"
+      }
+    ],
+    "filters": [
+      {
+        "id": "flt_a4a71cef",
+        "severity": "pass",
+        "code": "andragogy.why_now",
+        "targetId": "brief",
+        "message": "Why-now is present.",
+        "suggestion": "Keep it visible in the first lesson.",
+        "resolved": true
+      },
+      {
+        "id": "flt_b6001433",
+        "severity": "pass",
+        "code": "coverage.ok",
+        "targetId": "out_97c1a1f3",
+        "message": "Terminal outcome has aligned evidence.",
+        "suggestion": "Keep practice at this level.",
+        "resolved": true
+      }
+    ]
+  },
+  "team": [
+    {
+      "id": "res_id",
+      "kind": "human",
+      "name": "You",
+      "roles": [
+        "ID"
+      ],
+      "skills": [
+        "instructional-design",
+        "writing"
+      ],
+      "hoursPerWeek": 15,
+      "hourlyRateUsd": 85
+    },
+    {
+      "id": "res_sme",
+      "kind": "human",
+      "name": "SME",
+      "roles": [
+        "SME"
+      ],
+      "skills": [
+        "domain",
+        "approval"
+      ],
+      "hoursPerWeek": 3,
+      "sme": {
+        "kind": "w2"
+      }
+    },
+    {
+      "id": "res_assist",
+      "kind": "ai",
+      "name": "ID Assist",
+      "skills": [
+        "outline",
+        "filters",
+        "draft",
+        "tutor"
+      ],
+      "costPerRunUsd": 4
+    }
+  ],
+  "estimate": {
+    "asOf": "2026-09-15T20:36:15.787Z",
+    "basis": "outline",
+    "learnerMinutes": 60,
+    "p50Hours": 7.1,
+    "p90Hours": 8.8,
+    "calendarDays": 12,
+    "bottleneck": "SME (SME, 3 h/wk)",
+    "p50CostUsd": 606,
+    "p90CostUsd": 727,
+    "buckets": [
+      {
+        "label": "Labor",
+        "amountUsd": 602,
+        "note": "Non-SME hourly"
+      },
+      {
+        "label": "SME fee",
+        "amountUsd": 0,
+        "note": "W2 is $0 invoice"
+      },
+      {
+        "label": "ID Assist / AI",
+        "amountUsd": 4,
+        "note": "1 compiler runs"
+      }
+    ],
+    "notes": [
+      "SME is W2: $0 invoice. Calendar still uses 3 h/wk around other duties."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "art_db989659",
+      "delivery": "rise",
+      "filename": "01-rise-build-sheet.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/01-rise-build-sheet.md"
+    },
+    {
+      "id": "art_4800f82f",
+      "delivery": "canvas",
+      "filename": "02-canvas-pages.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/02-canvas-pages.md"
+    },
+    {
+      "id": "art_97309131",
+      "delivery": "video",
+      "filename": "03-video-script.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/03-video-script.md"
+    },
+    {
+      "id": "art_5585e0db",
+      "delivery": "gdoc",
+      "filename": "04-google-doc-job-aid.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/04-google-doc-job-aid.md"
+    },
+    {
+      "id": "art_d25b2f03",
+      "delivery": "gslides",
+      "filename": "05-google-slides.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/05-google-slides.md"
+    },
+    {
+      "id": "art_684f1224",
+      "delivery": "tutor",
+      "filename": "06-tutor-coach-pack.md",
+      "relativePath": "data/projects/how-to-make-an-ai-bot/artifacts/06-tutor-coach-pack.md"
+    }
+  ],
+  "timeLogs": [],
+  "folderName": "how-to-make-an-ai-bot"
+}
