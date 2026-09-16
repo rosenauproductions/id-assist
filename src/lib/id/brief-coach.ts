@@ -401,3 +401,83 @@ export function composeFieldFromAnswers(
 ): string {
   return FIELD_COACH[step].compose(answers, draft);
 }
+
+// --- As-you-type "ghost text" continuations -------------------------------
+// Rule-based, instant, and deliberately conservative: each helper only
+// proposes a *continuation* to append after what the author already typed
+// (never a replacement), and only once the field looks far enough along
+// that a generic addition won't read as nonsense. Accepting one is always
+// optional (Tab / -> in the wizard UI) and never blocks anything on its own.
+
+const CONDITION_WORDS = /\b(from|using|given|with|after|during|when)\b/i;
+const CRITERION_WORDS =
+  /\b(standard|criteria|criterion|score|pass\/fail|checklist|rubric)\b/i;
+const URGENCY_WORDS =
+  /\b(now|quarter|month|deadline|increasing|rising|worsening|urgent|risk|today)\b/i;
+const LEVEL_WORDS =
+  /\b(new|junior|senior|lead|1\+|year|years|experience|tenure|month|months|day|days)\b/i;
+const SENTENCE_END = /[.!?]\s*$/;
+
+function jobTaskNextPhrase(value: string): string {
+  const trimmed = value.trimEnd();
+  if (trimmed.length < 10 || SENTENCE_END.test(trimmed)) return "";
+  if (HOLLOW.test(trimmed) || !isObservableVerb(trimmed)) return "";
+  if (!CONDITION_WORDS.test(trimmed)) {
+    return ", given real inputs and tools from their job";
+  }
+  if (!CRITERION_WORDS.test(trimmed)) {
+    return " to a standard a peer could check pass/fail";
+  }
+  return "";
+}
+
+function whyNowNextPhrase(value: string): string {
+  const trimmed = value.trimEnd();
+  if (trimmed.length < 14 || SENTENCE_END.test(trimmed)) return "";
+  if (URGENCY_WORDS.test(trimmed)) return "";
+  return ", and it is only getting worse this quarter";
+}
+
+function audienceNextPhrase(value: string): string {
+  const trimmed = value.trimEnd();
+  if (trimmed.length < 6 || SENTENCE_END.test(trimmed)) return "";
+  if (LEVEL_WORDS.test(trimmed)) return "";
+  return " with at least a year of hands-on experience";
+}
+
+function titleNextPhrase(value: string, draft: BriefDraft): string {
+  const trimmed = value.trimEnd();
+  if (trimmed.length < 8 || trimmed.length > 60 || SENTENCE_END.test(trimmed)) {
+    return "";
+  }
+  const role = (draft.audience || "").split(/[,.]/)[0].trim();
+  if (!role) return "";
+  const roleWord = role.split(/\s+/)[0]?.toLowerCase();
+  if (!roleWord || trimmed.toLowerCase().includes(roleWord)) return "";
+  return ` for ${role}`;
+}
+
+function constraintsNextPhrase(value: string): string {
+  return value.trim() ? "" : "None";
+}
+
+export function suggestNextPhrase(
+  step: WizardStepId,
+  value: string,
+  draft: BriefDraft,
+): string {
+  switch (step) {
+    case "title":
+      return titleNextPhrase(value, draft);
+    case "audience":
+      return audienceNextPhrase(value);
+    case "jobTask":
+      return jobTaskNextPhrase(value);
+    case "whyNow":
+      return whyNowNextPhrase(value);
+    case "constraints":
+      return constraintsNextPhrase(value);
+    default:
+      return "";
+  }
+}

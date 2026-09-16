@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type KeyboardEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { createProjectFromDraftAction } from "@/app/actions";
 import {
@@ -11,6 +17,7 @@ import {
   composeFieldFromAnswers,
   enrichEvaluation,
   FIELD_COACH,
+  suggestNextPhrase,
   type DevelopQuestion,
 } from "@/lib/id/brief-coach";
 import {
@@ -56,6 +63,7 @@ export function BriefWizard() {
     {},
   );
   const [composedPreview, setComposedPreview] = useState<string | null>(null);
+  const [ghostSuggestion, setGhostSuggestion] = useState("");
 
   const step = WIZARD_STEPS[stepIndex];
   const progress = ((stepIndex + 1) / WIZARD_STEPS.length) * 100;
@@ -66,6 +74,8 @@ export function BriefWizard() {
     if (step.id === "delivery") return draft.delivery.join(",");
     return String(draft[step.id] ?? "");
   }, [draft, step]);
+
+  const ghostEligible = step.input === "text" || step.input === "textarea";
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -79,9 +89,14 @@ export function BriefWizard() {
       } else if (next.ok) {
         setCoachNote(null);
       }
+      setGhostSuggestion(
+        ghostEligible
+          ? suggestNextPhrase(step.id, String(draft[step.id] ?? ""), draft)
+          : "",
+      );
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [draft, step.id, attempts, developOpen]);
+  }, [draft, step.id, attempts, developOpen, ghostEligible]);
 
   function resetStepCoach() {
     setEvaluation(null);
@@ -90,6 +105,7 @@ export function BriefWizard() {
     setDevelopAnswers({});
     setComposedPreview(null);
     setCoachNote(null);
+    setGhostSuggestion("");
   }
 
   function updateField(id: WizardStepId, value: string | number | DeliveryTarget[]) {
@@ -97,6 +113,26 @@ export function BriefWizard() {
     setEvaluation(null);
     setError(null);
     setComposedPreview(null);
+    setGhostSuggestion("");
+  }
+
+  function acceptGhostSuggestion(currentText: string) {
+    if (!ghostSuggestion) return;
+    updateField(step.id, currentText + ghostSuggestion);
+  }
+
+  function handleGhostKeyDown(
+    e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
+    if (!ghostSuggestion) return false;
+    if (e.key !== "Tab" && e.key !== "ArrowRight") return false;
+    const el = e.currentTarget;
+    const atEnd =
+      el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
+    if (!atEnd) return false;
+    e.preventDefault();
+    acceptGhostSuggestion(el.value);
+    return true;
   }
 
   function applyRewrite(text: string) {
@@ -244,29 +280,65 @@ export function BriefWizard() {
 
           <div className="mt-5">
             {step.input === "text" ? (
-              <input
-                className="field w-full"
-                value={currentValue}
-                placeholder={step.placeholder}
-                onChange={(e) => updateField(step.id, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    checkAndAdvance();
-                  }
-                }}
-                autoFocus
-              />
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="field w-full whitespace-pre-wrap break-words pointer-events-none select-none"
+                >
+                  <span className="text-transparent">{currentValue}</span>
+                  {ghostSuggestion ? (
+                    <span className="text-muted" style={{ opacity: 0.55 }}>
+                      {ghostSuggestion}
+                    </span>
+                  ) : null}
+                  {!currentValue && !ghostSuggestion ? (
+                    <span className="text-transparent">{step.placeholder}</span>
+                  ) : null}
+                </div>
+                <input
+                  className="field w-full absolute inset-0"
+                  style={{ background: "transparent" }}
+                  value={currentValue}
+                  placeholder={step.placeholder}
+                  onChange={(e) => updateField(step.id, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (handleGhostKeyDown(e)) return;
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      checkAndAdvance();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
             ) : null}
             {step.input === "textarea" ? (
-              <textarea
-                className="field w-full"
-                rows={4}
-                value={currentValue}
-                placeholder={step.placeholder}
-                onChange={(e) => updateField(step.id, e.target.value)}
-                autoFocus
-              />
+              <div className="relative">
+                <div
+                  aria-hidden
+                  className="field w-full whitespace-pre-wrap break-words pointer-events-none select-none"
+                  style={{ minHeight: "calc(4 * 1.5em + 1.3rem)" }}
+                >
+                  <span className="text-transparent">{currentValue}</span>
+                  {ghostSuggestion ? (
+                    <span className="text-muted" style={{ opacity: 0.55 }}>
+                      {ghostSuggestion}
+                    </span>
+                  ) : null}
+                </div>
+                <textarea
+                  className="field w-full absolute inset-0 resize-none"
+                  style={{ background: "transparent" }}
+                  rows={4}
+                  value={currentValue}
+                  placeholder={step.placeholder}
+                  onChange={(e) => updateField(step.id, e.target.value)}
+                  onKeyDown={(e) => {
+                    handleGhostKeyDown(e);
+                  }}
+                  autoFocus
+                />
+              </div>
             ) : null}
             {step.input === "number" ? (
               <input
