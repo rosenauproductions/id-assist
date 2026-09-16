@@ -110,6 +110,35 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
       );
     }
 
+    const boundLessons = outline.lessons.filter(
+      (lesson) => lesson.objectiveId === outcome.id,
+    );
+    if (boundLessons.length === 0) {
+      hits.push(
+        hit(
+          "block",
+          "outcome.uncovered",
+          outcome.id,
+          "This objective has no lesson teaching it yet.",
+          "Add a lesson bound to this objective, or drop it from the brief.",
+        ),
+      );
+    } else if (
+      boundLessons.every(
+        (lesson) => !lesson.units.some((unit) => unit.gagne === "elicit"),
+      )
+    ) {
+      hits.push(
+        hit(
+          "rewrite",
+          "objective.no_activity",
+          outcome.id,
+          "This objective has a lesson but no guided-practice activity in it.",
+          "Add an elicit-type unit (guided attempt, practice prompt, try-it) before the assessment.",
+        ),
+      );
+    }
+
     if (outcome.kind === "terminal") {
       const evidence = outline.assessments.find(
         (assessment) => assessment.outcomeId === outcome.id,
@@ -178,6 +207,34 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "Add at least one non-tutor delivery channel so this evidence has somewhere to live.",
           ),
         );
+      }
+
+      if (
+        evidence &&
+        evidence.targetItemCount !== undefined &&
+        evidence.actualItemCount !== undefined
+      ) {
+        if (evidence.actualItemCount < evidence.targetItemCount) {
+          hits.push(
+            hit(
+              "block",
+              "assessment.item_count_gap",
+              evidence.id,
+              `Assessment has ${evidence.actualItemCount} item(s) but requirements specify ${evidence.targetItemCount}.`,
+              `Add ${evidence.targetItemCount - evidence.actualItemCount} more item(s), or lower the target if the spec changed.`,
+            ),
+          );
+        } else {
+          hits.push(
+            hit(
+              "pass",
+              "assessment.item_count_ok",
+              evidence.id,
+              `Assessment item count meets the requirement (${evidence.actualItemCount}/${evidence.targetItemCount}).`,
+              "Keep the count in sync if the requirement changes.",
+            ),
+          );
+        }
       }
     }
   }
@@ -263,6 +320,36 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           lesson.id,
           "Flashcards cannot be the practice for this Bloom level.",
           "Swap to contrast, scenario, process, or try-prompt.",
+        ),
+      );
+    }
+  }
+
+  // Module-level rollup: this is the "Module 2 has three objectives but
+  // only two activities" quantity check — counts objectives this module's
+  // lessons actually cover against how many of those lessons have a real
+  // practice activity (a guided-attempt/elicit unit), not just content.
+  for (const courseModule of outline.modules) {
+    const moduleLessons = outline.lessons.filter((lesson) =>
+      courseModule.lessonIds.includes(lesson.id),
+    );
+    const coveredOutcomeIds = new Set(
+      moduleLessons.map((lesson) => lesson.objectiveId),
+    );
+    const moduleOutcomeCount = outline.outcomes.filter((outcome) =>
+      coveredOutcomeIds.has(outcome.id),
+    ).length;
+    const activityCount = moduleLessons.filter((lesson) =>
+      lesson.units.some((unit) => unit.gagne === "elicit"),
+    ).length;
+    if (moduleOutcomeCount > 0 && activityCount < moduleOutcomeCount) {
+      hits.push(
+        hit(
+          "rewrite",
+          "module.objective_gap",
+          courseModule.id,
+          `Module “${courseModule.title}” has ${moduleOutcomeCount} objective(s) but only ${activityCount} lesson(s) with a practice activity.`,
+          "Add a guided-practice activity for every objective in this module before calling it ready.",
         ),
       );
     }

@@ -5,26 +5,36 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import {
+  addRequirementAction,
   approveProjectAction,
   deleteProjectAction,
+  deleteRequirementAction,
   dismissFilterAction,
   generateArtifactsAction,
   logTimeAction,
   refineOutlineAction,
   reopenOutlineAction,
+  setPhaseProgressAction,
+  toggleRequirementAction,
+  updateAssessmentCountsAction,
   updateLessonAction,
   updateOutcomeAction,
   updateSmeAction,
 } from "@/app/actions";
 import { canApprove } from "@/lib/id/filters";
+import { effectivePhaseProgress } from "@/lib/id/requirements";
 import {
   BLOOM_LEVELS,
+  COURSE_PHASE_LABELS,
+  COURSE_PHASES,
   DELIVERY_TARGETS,
   TIME_PHASES,
+  type AssessmentSpec,
   type FilterHit,
   type IdProject,
   type Lesson,
   type Outcome,
+  type RequirementItem,
 } from "@/lib/id/types";
 
 export function ProjectWorkspace({ project }: { project: IdProject }) {
@@ -41,6 +51,8 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
     (sum, log) => sum + log.hours,
     0,
   );
+  const phases = effectivePhaseProgress(project);
+  const requirements = project.requirements ?? [];
 
   function run(action: () => Promise<void>) {
     setError(null);
@@ -142,6 +154,8 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
         openFilters={openFilters}
       />
 
+      <PhaseTimeline projectId={project.id} phases={phases} />
+
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Seat time" value={`${estimate.learnerMinutes} min`} />
         <Stat
@@ -189,6 +203,26 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
               ))}
             </ul>
           </section>
+
+          <section className="rounded-xl border border-line bg-card p-5">
+            <h2 className="text-lg font-semibold">Assessments</h2>
+            <p className="mt-1 text-sm text-muted">
+              Set target/actual item counts to catch quantity gaps — e.g. “20
+              items built but the spec calls for 25.”
+            </p>
+            <ul className="mt-4 grid gap-4">
+              {outline.assessments.map((assessment) => (
+                <AssessmentCountEditor
+                  key={assessment.id}
+                  projectId={project.id}
+                  assessment={assessment}
+                  outcome={outline.outcomes.find(
+                    (outcome) => outcome.id === assessment.outcomeId,
+                  )}
+                />
+              ))}
+            </ul>
+          </section>
         </div>
 
         <div className="grid gap-6 self-start">
@@ -208,6 +242,24 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
                 />
               ))}
             </ul>
+          </section>
+
+          <section className="rounded-xl border border-line bg-card p-5">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg font-semibold">Requirements checklist</h2>
+              <span className="text-xs text-muted">
+                {requirements.filter((item) => item.done).length}/
+                {requirements.length} done
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-muted">
+              Required / Recommended / Optional. Auto items track the outline
+              live; add your own for anything the engine can&apos;t check.
+            </p>
+            <RequirementsChecklist
+              projectId={project.id}
+              requirements={requirements}
+            />
           </section>
 
           <section className="rounded-xl border border-line bg-card p-5">
@@ -950,5 +1002,349 @@ function SmeForm({ project }: { project: IdProject }) {
         </>
       )}
     </ActionForm>
+  );
+}
+
+function PhaseTimeline({
+  projectId,
+  phases,
+}: {
+  projectId: string;
+  phases: ReturnType<typeof effectivePhaseProgress>;
+}) {
+  return (
+    <section className="mt-6 rounded-xl border border-line bg-card p-5">
+      <h2 className="text-lg font-semibold">Phase timeline</h2>
+      <p className="mt-1 text-sm text-muted">
+        Discovery → Publishing. Auto-calculated from the requirements
+        checklist below — override a phase if reality doesn&apos;t match yet.
+      </p>
+      <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {phases.map((phase) => (
+          <PhaseCard key={phase.phase} projectId={projectId} phase={phase} />
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+const PHASE_STATUS_TONE: Record<string, string> = {
+  done: "border-accent/30 bg-accent/5 text-accent",
+  in_progress: "border-line bg-background text-foreground",
+  blocked: "border-danger/30 bg-danger/5 text-danger",
+  not_started: "border-line bg-card text-muted",
+};
+
+function PhaseCard({
+  projectId,
+  phase,
+}: {
+  projectId: string;
+  phase: ReturnType<typeof effectivePhaseProgress>[number];
+}) {
+  const [editing, setEditing] = useState(false);
+  const tone = PHASE_STATUS_TONE[phase.status] ?? PHASE_STATUS_TONE.not_started;
+  return (
+    <li className={`rounded-lg border p-3 text-sm ${tone}`}>
+      <div className="flex items-center justify-between">
+        <span className="font-medium">{COURSE_PHASE_LABELS[phase.phase]}</span>
+        {phase.overridden ? (
+          <span className="text-[10px] uppercase tracking-wide text-muted">
+            manual
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line/60">
+        <div
+          className="h-full rounded-full bg-current opacity-70"
+          style={{ width: `${phase.percent}%` }}
+        />
+      </div>
+      <p className="mt-1 text-xs text-muted">
+        {phase.percent}% · {phase.status.replace("_", " ")}
+        {phase.requiredTotal > 0
+          ? ` · ${phase.requiredDone}/${phase.requiredTotal} required`
+          : ""}
+      </p>
+      {editing ? (
+        <ActionForm
+          className="mt-2 grid gap-1"
+          action={async (formData) => {
+            formData.set("projectId", projectId);
+            formData.set("phase", phase.phase);
+            await setPhaseProgressAction(formData);
+            setEditing(false);
+          }}
+        >
+          {({ pending }) => (
+            <>
+              <input
+                name="percent"
+                type="number"
+                min={0}
+                max={100}
+                defaultValue={phase.overridden ? phase.percent : ""}
+                placeholder="auto"
+                className="field text-xs"
+                disabled={pending}
+              />
+              <select
+                name="status"
+                defaultValue={phase.overridden ? phase.status : "auto"}
+                className="field text-xs"
+                disabled={pending}
+              >
+                <option value="auto">Auto</option>
+                <option value="not_started">Not started</option>
+                <option value="in_progress">In progress</option>
+                <option value="blocked">Blocked</option>
+                <option value="done">Done</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="text-xs font-medium text-accent disabled:opacity-50"
+                >
+                  {pending ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="text-xs text-muted"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </ActionForm>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-2 text-xs text-muted underline-offset-2 hover:underline"
+        >
+          Override
+        </button>
+      )}
+    </li>
+  );
+}
+
+function RequirementsChecklist({
+  projectId,
+  requirements,
+}: {
+  projectId: string;
+  requirements: RequirementItem[];
+}) {
+  const grouped = COURSE_PHASES.map((phase) => ({
+    phase,
+    items: requirements.filter((item) => item.phase === phase),
+  })).filter((group) => group.items.length > 0);
+
+  return (
+    <div className="mt-3 grid gap-4">
+      {grouped.map((group) => (
+        <div key={group.phase}>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            {COURSE_PHASE_LABELS[group.phase]}
+          </p>
+          <ul className="mt-1 grid gap-1.5">
+            {group.items.map((item) => (
+              <RequirementRow key={item.id} projectId={projectId} item={item} />
+            ))}
+          </ul>
+        </div>
+      ))}
+      <AddRequirementForm projectId={projectId} />
+    </div>
+  );
+}
+
+const PRIORITY_TONE: Record<string, string> = {
+  required: "text-danger",
+  recommended: "text-warn",
+  optional: "text-muted",
+};
+
+function RequirementRow({
+  projectId,
+  item,
+}: {
+  projectId: string;
+  item: RequirementItem;
+}) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <li className="flex items-start gap-2 rounded-md border border-line bg-background px-2.5 py-1.5 text-sm">
+      <input
+        type="checkbox"
+        checked={item.done}
+        disabled={item.source === "auto" || pending}
+        onChange={() => {
+          startTransition(async () => {
+            await toggleRequirementAction(projectId, item.id);
+          });
+        }}
+        className="mt-0.5"
+      />
+      <div className="min-w-0 flex-1">
+        <p className={item.done ? "text-muted line-through" : ""}>
+          {item.label}
+        </p>
+        <p className="text-[11px]">
+          <span className={PRIORITY_TONE[item.priority] ?? ""}>
+            {item.priority}
+          </span>
+          {item.source === "auto" ? (
+            <span className="text-muted"> · auto-tracked</span>
+          ) : (
+            <span className="text-muted"> · added by you</span>
+          )}
+        </p>
+      </div>
+      {item.source === "manual" ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            startTransition(async () => {
+              await deleteRequirementAction(projectId, item.id);
+            });
+          }}
+          className="text-xs text-muted hover:text-danger"
+        >
+          Remove
+        </button>
+      ) : null}
+    </li>
+  );
+}
+
+function AddRequirementForm({ projectId }: { projectId: string }) {
+  return (
+    <ActionForm
+      className="grid gap-2 rounded-md border border-dashed border-line p-3 text-sm"
+      action={async (formData) => {
+        formData.set("projectId", projectId);
+        await addRequirementAction(formData);
+      }}
+    >
+      {({ pending }) => (
+        <>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+            Add your own item
+          </p>
+          <input
+            name="label"
+            required
+            disabled={pending}
+            className="field text-sm"
+            placeholder="e.g. Get SME sign-off on Module 2"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              name="phase"
+              defaultValue="discovery"
+              disabled={pending}
+              className="field text-sm"
+            >
+              {COURSE_PHASES.map((phase) => (
+                <option key={phase} value={phase}>
+                  {COURSE_PHASE_LABELS[phase]}
+                </option>
+              ))}
+            </select>
+            <select
+              name="priority"
+              defaultValue="recommended"
+              disabled={pending}
+              className="field text-sm"
+            >
+              <option value="required">Required</option>
+              <option value="recommended">Recommended</option>
+              <option value="optional">Optional</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={pending}
+            className="btn-secondary w-fit text-xs"
+          >
+            {pending ? "Adding…" : "Add item"}
+          </button>
+        </>
+      )}
+    </ActionForm>
+  );
+}
+
+function AssessmentCountEditor({
+  projectId,
+  assessment,
+  outcome,
+}: {
+  projectId: string;
+  assessment: AssessmentSpec;
+  outcome: Outcome | undefined;
+}) {
+  return (
+    <li className="rounded-lg border border-line bg-background p-4">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+        {assessment.format} · {assessment.bloom}
+      </p>
+      <p className="mt-1 text-sm text-muted">
+        {outcome ? outcome.behavior : "Objective not found"}
+      </p>
+      <ActionForm
+        className="mt-3 grid grid-cols-2 gap-2 text-sm"
+        action={async (formData) => {
+          formData.set("projectId", projectId);
+          formData.set("assessmentId", assessment.id);
+          await updateAssessmentCountsAction(formData);
+        }}
+      >
+        {({ pending, saved }) => (
+          <>
+            <HintLabel
+              label="Target item count"
+              hint="What the requirements call for."
+            >
+              <input
+                name="targetItemCount"
+                type="number"
+                min={0}
+                defaultValue={assessment.targetItemCount ?? ""}
+                disabled={pending}
+                className="field"
+                placeholder="e.g. 25"
+              />
+            </HintLabel>
+            <HintLabel label="Actual item count" hint="What's built so far.">
+              <input
+                name="actualItemCount"
+                type="number"
+                min={0}
+                defaultValue={assessment.actualItemCount ?? ""}
+                disabled={pending}
+                className="field"
+                placeholder="e.g. 20"
+              />
+            </HintLabel>
+            <div className="col-span-2">
+              <SaveButton
+                pending={pending}
+                saved={saved}
+                idle="Save counts"
+                saving="Saving…"
+                done="Saved"
+              />
+            </div>
+          </>
+        )}
+      </ActionForm>
+    </li>
   );
 }

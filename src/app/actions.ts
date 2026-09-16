@@ -9,13 +9,18 @@ import { estimateProject } from "@/lib/id/estimate";
 import { canApprove, outlineStatus, runFilters } from "@/lib/id/filters";
 import { nid } from "@/lib/id/ids";
 import { refineOutlineWithModel } from "@/lib/id/refine";
+import { mergeRequirements } from "@/lib/id/requirements";
 import { deleteProject, loadProject, saveProject } from "@/lib/id/store";
 import {
   BLOOM_LEVELS,
+  COURSE_PHASES,
   DELIVERY_TARGETS,
   TIME_PHASES,
   type Bloom,
+  type CoursePhase,
   type DeliveryTarget,
+  type PhaseStatus,
+  type RequirementPriority,
   type SmeEngagement,
   type TimePhase,
 } from "@/lib/id/types";
@@ -31,6 +36,7 @@ function refilter(project: Awaited<ReturnType<typeof loadProject>>) {
     project.outline.status = outlineStatus(project.outline.filters);
   }
   project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
 }
 
 export async function createProjectAction(formData: FormData) {
@@ -81,6 +87,7 @@ export async function approveProjectAction(projectId: string) {
   }
   project.outline.status = "approved";
   project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -94,6 +101,7 @@ export async function reopenOutlineAction(projectId: string) {
   }
   project.artifacts = [];
   project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -105,6 +113,7 @@ export async function generateArtifactsAction(projectId: string) {
     throw new Error("Approve the outline before creating delivery files.");
   }
   project.artifacts = generateArtifacts(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -137,6 +146,7 @@ export async function dismissFilterAction(
       ? "approved"
       : outlineStatus(project.outline.filters);
   project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -188,6 +198,139 @@ export async function updateLessonAction(formData: FormData) {
     project.artifacts = [];
   }
   refilter(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function updateAssessmentCountsAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const assessmentId = String(formData.get("assessmentId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const assessment = project.outline.assessments.find(
+    (item) => item.id === assessmentId,
+  );
+  if (!assessment) throw new Error("Assessment not found");
+
+  const targetRaw = String(formData.get("targetItemCount") ?? "").trim();
+  const actualRaw = String(formData.get("actualItemCount") ?? "").trim();
+  assessment.targetItemCount =
+    targetRaw === "" ? undefined : Math.max(0, Number(targetRaw) || 0);
+  assessment.actualItemCount =
+    actualRaw === "" ? undefined : Math.max(0, Number(actualRaw) || 0);
+
+  if (project.outline.status === "approved") {
+    project.outline.status = "needs_review";
+    project.artifacts = [];
+  }
+  refilter(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function addRequirementAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const phase = String(formData.get("phase") ?? "discovery");
+  if (!(COURSE_PHASES as readonly string[]).includes(phase)) {
+    throw new Error("Invalid phase");
+  }
+  const label = String(formData.get("label") ?? "").trim();
+  if (!label) throw new Error("Requirement needs a label");
+  const priorityRaw = String(formData.get("priority") ?? "recommended");
+  const priority: RequirementPriority = (
+    ["required", "recommended", "optional"] as const
+  ).includes(priorityRaw as RequirementPriority)
+    ? (priorityRaw as RequirementPriority)
+    : "recommended";
+
+  project.requirements = project.requirements ?? [];
+  project.requirements.push({
+    id: nid("req"),
+    phase: phase as CoursePhase,
+    label,
+    priority,
+    source: "manual",
+    done: false,
+    createdAt: new Date().toISOString(),
+  });
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function toggleRequirementAction(
+  projectId: string,
+  requirementId: string,
+) {
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const item = (project.requirements ?? []).find(
+    (candidate) => candidate.id === requirementId,
+  );
+  if (!item) throw new Error("Requirement not found");
+  if (item.source !== "manual") {
+    throw new Error(
+      "This item is auto-tracked and reflects the outline's real state.",
+    );
+  }
+  item.done = !item.done;
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function deleteRequirementAction(
+  projectId: string,
+  requirementId: string,
+) {
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  project.requirements = (project.requirements ?? []).filter(
+    (item) => !(item.id === requirementId && item.source === "manual"),
+  );
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function setPhaseProgressAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const phase = String(formData.get("phase") ?? "");
+  if (!(COURSE_PHASES as readonly string[]).includes(phase)) {
+    throw new Error("Invalid phase");
+  }
+  const percentRaw = String(formData.get("percent") ?? "").trim();
+  const statusRaw = String(formData.get("status") ?? "").trim();
+
+  project.phaseProgress =
+    project.phaseProgress ?? COURSE_PHASES.map((item) => ({ phase: item }));
+  let entry = project.phaseProgress.find((item) => item.phase === phase);
+  if (!entry) {
+    entry = { phase: phase as CoursePhase };
+    project.phaseProgress.push(entry);
+  }
+
+  if (percentRaw === "") {
+    delete entry.manualPercent;
+  } else {
+    entry.manualPercent = Math.max(0, Math.min(100, Number(percentRaw) || 0));
+  }
+
+  const validStatuses: PhaseStatus[] = [
+    "not_started",
+    "in_progress",
+    "blocked",
+    "done",
+  ];
+  if (statusRaw === "" || statusRaw === "auto") {
+    delete entry.manualStatus;
+  } else if (validStatuses.includes(statusRaw as PhaseStatus)) {
+    entry.manualStatus = statusRaw as PhaseStatus;
+  }
+
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
@@ -254,4 +397,3 @@ export async function deleteProjectAction(projectId: string) {
   revalidatePath("/");
   revalidatePath(`/projects/${projectId}`);
 }
-

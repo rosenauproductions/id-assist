@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { projects as projectsTable } from "@/lib/db/schema";
-import type { IdProject } from "./types";
+import { COURSE_PHASES, type IdProject } from "./types";
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
@@ -11,8 +11,22 @@ async function requireUserId(): Promise<string> {
   return userId;
 }
 
+/**
+ * Backfills fields added after some projects were already saved (jsonb rows
+ * don't get a schema migration, so older rows can be missing newer keys).
+ */
+function normalizeProject(project: IdProject): IdProject {
+  if (!project.requirements) {
+    project.requirements = [];
+  }
+  if (!project.phaseProgress) {
+    project.phaseProgress = COURSE_PHASES.map((phase) => ({ phase }));
+  }
+  return project;
+}
+
 function fromRow(row: { data: unknown }): IdProject {
-  return row.data as IdProject;
+  return normalizeProject(row.data as IdProject);
 }
 
 export async function saveProject(project: IdProject): Promise<void> {

@@ -78,6 +78,13 @@ export type AssessmentSpec = {
   correctPerformance: string;
   exemplarStem: string;
   delivery: DeliveryTarget;
+  /**
+   * Optional target/actual item counts (e.g. "quiz should have 25
+   * questions"). Left undefined until someone sets them; filters.ts only
+   * flags a gap once both are present.
+   */
+  targetItemCount?: number;
+  actualItemCount?: number;
 };
 
 export type ContentUnit = {
@@ -204,6 +211,65 @@ export type CourseOutline = {
   filters: FilterHit[];
 };
 
+/**
+ * Course-assembly phase timeline (Discovery → Publishing). Distinct from
+ * TIME_PHASES above, which is only the ADDIE-ish dropdown used for manual
+ * hour-logging in the cost estimator — this is the visible project timeline
+ * requested alongside the requirements checklist.
+ */
+export const COURSE_PHASES = [
+  "discovery",
+  "design",
+  "content_development",
+  "assessment",
+  "review",
+  "qa",
+  "assembly",
+  "publishing",
+] as const;
+
+export type CoursePhase = (typeof COURSE_PHASES)[number];
+
+export const COURSE_PHASE_LABELS: Record<CoursePhase, string> = {
+  discovery: "Discovery",
+  design: "Design",
+  content_development: "Content Development",
+  assessment: "Assessment",
+  review: "Review",
+  qa: "QA",
+  assembly: "Assembly",
+  publishing: "Publishing",
+};
+
+export type RequirementPriority = "required" | "recommended" | "optional";
+
+export type RequirementItem = {
+  id: string;
+  phase: CoursePhase;
+  label: string;
+  priority: RequirementPriority;
+  /** "auto" items are derived live from the outline/filters and can't be
+   * manually checked off — their `done` reflects real state. "manual" items
+   * are added via the checklist's form and toggled by hand. */
+  source: "auto" | "manual";
+  done: boolean;
+  /** Stable key an auto item keeps across recompute so its identity (and
+   * any future per-item notes) survives re-derivation. */
+  autoCode?: string;
+  note?: string;
+  createdAt: string;
+};
+
+export type PhaseStatus = "not_started" | "in_progress" | "blocked" | "done";
+
+export type PhaseProgress = {
+  phase: CoursePhase;
+  /** Manual override, 0-100. Undefined means "use the auto-calculated
+   * percent from the requirements checklist." */
+  manualPercent?: number;
+  manualStatus?: PhaseStatus;
+};
+
 export type IdProject = {
   id: string;
   createdAt: string;
@@ -213,4 +279,6 @@ export type IdProject = {
   estimate: ProductionEstimate;
   artifacts: GeneratedArtifact[];
   timeLogs: TimeLog[];
+  requirements: RequirementItem[];
+  phaseProgress: PhaseProgress[];
 };

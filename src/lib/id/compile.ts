@@ -1,17 +1,19 @@
 import { estimateProject, defaultTeam } from "./estimate";
 import { nid } from "./ids";
 import { outlineStatus, runFilters } from "./filters";
-import type {
-  AssessmentSpec,
-  Bloom,
-  ContentUnit,
-  CourseBrief,
-  DeliveryTarget,
-  GagneEvent,
-  IdProject,
-  Lesson,
-  Outcome,
-  RiseBlockKind,
+import { mergeRequirements } from "./requirements";
+import {
+  COURSE_PHASES,
+  type AssessmentSpec,
+  type Bloom,
+  type ContentUnit,
+  type CourseBrief,
+  type DeliveryTarget,
+  type GagneEvent,
+  type IdProject,
+  type Lesson,
+  type Outcome,
+  type RiseBlockKind,
 } from "./types";
 
 const PREFERRED: Record<Bloom, DeliveryTarget[]> = {
@@ -292,11 +294,14 @@ export function compileBrief(brief: CourseBrief): IdProject {
     },
     artifacts: [],
     timeLogs: [],
+    requirements: [],
+    phaseProgress: COURSE_PHASES.map((phase) => ({ phase })),
   };
 
   project.outline.filters = runFilters(project.outline);
   project.outline.status = outlineStatus(project.outline.filters);
   project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements, project);
   return project;
 }
 
