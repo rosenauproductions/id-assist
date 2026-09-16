@@ -5,7 +5,7 @@
   "main": "desktop/main.mjs",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "drizzle-kit migrate && next build",
     "start": "next start",
     "lint": "eslint",
     "ollama:setup": "bash scripts/setup-ollama.sh",
