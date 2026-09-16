@@ -131,7 +131,11 @@ Rules:
       coachNote: output.coachNote,
       source: "model" as const,
     });
-  } catch {
+  } catch (error) {
+    // Previously swallowed silently, which made this failure mode
+    // undiagnosable from the deployed app alone — log it so Vercel's
+    // runtime logs actually show why the model call failed.
+    console.error("[brief-coach] model call failed:", error);
     return Response.json({
       evaluation,
       suggestedRewrites: localRewrites,
