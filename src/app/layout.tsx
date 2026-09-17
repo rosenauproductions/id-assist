@@ -7,6 +7,7 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   ShieldCheckIcon,
+  QuestionMarkCircleIcon,
 } from "@heroicons/react/20/solid";
 import { auth, signOut } from "@/auth";
 import { getAppearance } from "@/lib/settings/store";
@@ -118,6 +119,13 @@ export default async function RootLayout({
                 >
                   <UsersIcon className="h-4 w-4" />
                   Team
+                </Link>
+                <Link
+                  href="/tickets"
+                  className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+                >
+                  <QuestionMarkCircleIcon className="h-4 w-4" />
+                  Help
                 </Link>
                 <Link
                   href="/settings"

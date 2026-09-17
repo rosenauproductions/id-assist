@@ -30,7 +30,13 @@ export default async function AdminPage() {
             Accounts
           </h1>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
+          <Link
+            href="/admin/tickets"
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Tickets →
+          </Link>
           <Link
             href="/admin/logins"
             className="text-sm text-muted hover:text-foreground"

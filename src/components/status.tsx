@@ -30,6 +30,11 @@ const STATUS_META: Record<string, StatusMeta> = {
   not_started: { icon: MinusCircleIcon, tone: "bg-muted/10 text-muted" },
   blocked: { icon: ExclamationTriangleIcon, tone: "bg-danger/10 text-danger" },
   done: { icon: CheckCircleIcon, tone: "bg-accent/10 text-accent" },
+  // Ticket statuses (src/lib/tickets/store.ts). "in_progress" above is
+  // shared with the phase timeline.
+  open: { icon: ExclamationTriangleIcon, tone: "bg-warn/10 text-warn" },
+  resolved: { icon: CheckCircleIcon, tone: "bg-accent/10 text-accent" },
+  closed: { icon: MinusCircleIcon, tone: "bg-muted/10 text-muted" },
 };
 
 const FALLBACK_META: StatusMeta = {

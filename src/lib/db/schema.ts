@@ -371,3 +371,56 @@ export const loginEvents = pgTable(
   },
   (table) => [index("login_events_created_at_idx").on(table.createdAt)],
 );
+
+/**
+ * A bug report or feature suggestion submitted through the bot-guided
+ * intake at /tickets/new (src/lib/tickets/scripts.ts). "summary" is the
+ * synthesized, readable version of the Q&A; "transcript" keeps the raw
+ * question/answer pairs so nothing the submitter said is lost even after
+ * the summary's wording is edited or the script itself changes later.
+ */
+export const tickets = pgTable(
+  "tickets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    submittedByUserId: uuid("submitted_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // "bug" | "suggestion"
+    type: text("type").notNull(),
+    // "open" | "in_progress" | "resolved" | "closed"
+    status: text("status").notNull().default("open"),
+    summary: text("summary").notNull(),
+    transcript: jsonb("transcript").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("tickets_workspace_id_idx").on(table.workspaceId)],
+);
+
+/** The reply thread on a ticket — both the submitter's and an admin's
+ * messages share this one ordered log, distinguished by authorUserId. */
+export const ticketMessages = pgTable(
+  "ticket_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("ticket_messages_ticket_id_idx").on(table.ticketId)],
+);

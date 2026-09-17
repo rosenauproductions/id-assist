@@ -21,6 +21,11 @@ import {
   updateSiteSettings,
   type FeatureCardCopy,
 } from "@/lib/platform/settings";
+import {
+  addTicketMessage,
+  setTicketStatus,
+  type TicketStatus,
+} from "@/lib/tickets/store";
 
 function parseRole(value: FormDataEntryValue | null): MemberRole {
   return value === "owner" ? "owner" : "member";
@@ -172,4 +177,23 @@ export async function updatePlatformDefaultsAction(formData: FormData) {
     monthlyGenerationLimit: Math.round(monthlyGenerationLimit),
   });
   revalidatePath("/admin/settings");
+}
+
+export async function addAdminTicketMessageAction(
+  ticketId: string,
+  body: string,
+): Promise<void> {
+  const admin = await requirePlatformAdmin();
+  await addTicketMessage({ ticketId, authorUserId: admin.userId, body });
+  revalidatePath(`/admin/tickets/${ticketId}`);
+}
+
+export async function setTicketStatusAction(
+  ticketId: string,
+  status: TicketStatus,
+): Promise<void> {
+  await requirePlatformAdmin();
+  await setTicketStatus(ticketId, status);
+  revalidatePath(`/admin/tickets/${ticketId}`);
+  revalidatePath("/admin/tickets");
 }
