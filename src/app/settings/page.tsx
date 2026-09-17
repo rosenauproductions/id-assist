@@ -2,17 +2,20 @@ import Link from "next/link";
 import { requireWorkspaceContext } from "@/lib/team/store";
 import { getAppearance, getWorkspaceSettings } from "@/lib/settings/store";
 import { getAvailablePlanOptions, getBillingSummary } from "@/lib/billing/store";
+import { listAcceptableRules } from "@/lib/id/acceptable-rules";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
 import { SettingsPanel } from "./settings-panel";
 
 export default async function SettingsPage() {
   const context = await requireWorkspaceContext();
-  const [appearance, workspaceSettings, billing, planOptions] = await Promise.all([
-    getAppearance(),
-    getWorkspaceSettings(),
-    getBillingSummary(context.workspaceId),
-    getAvailablePlanOptions(),
-  ]);
+  const [appearance, workspaceSettings, billing, planOptions, acceptableRules] =
+    await Promise.all([
+      getAppearance(),
+      getWorkspaceSettings(),
+      getBillingSummary(context.workspaceId),
+      getAvailablePlanOptions(),
+      listAcceptableRules(context.workspaceId),
+    ]);
 
   const workspace = workspaceSettings ?? {
     name: context.workspaceName,
@@ -39,6 +42,7 @@ export default async function SettingsPage() {
         workspace={workspace}
         billing={billing}
         planOptions={planOptions}
+        acceptableRules={acceptableRules}
       />
     </main>
   );

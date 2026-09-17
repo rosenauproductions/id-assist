@@ -13,6 +13,7 @@ import {
   type ThemeMode,
 } from "@/lib/settings/store";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
+import { removeAcceptableRule } from "@/lib/id/acceptable-rules";
 
 function parseThemeMode(value: FormDataEntryValue | null): ThemeMode {
   return value === "light" || value === "dark" ? value : "system";
@@ -86,4 +87,12 @@ export async function openBillingPortalAction(): Promise<void> {
     baseUrl,
   });
   redirect(url);
+}
+
+
+export async function removeAcceptableRuleAction(ruleId: string): Promise<void> {
+  const context = await requireWorkspaceContext();
+  requireOwner(context);
+  await removeAcceptableRule(context.workspaceId, ruleId);
+  revalidatePath("/settings");
 }

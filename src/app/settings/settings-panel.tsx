@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import {
   openBillingPortalAction,
+  removeAcceptableRuleAction,
   startCheckoutAction,
   updateAppearanceAction,
   updateWorkspaceSettingsAction,
 } from "./actions";
+import type { AcceptableRule } from "@/lib/id/acceptable-rules";
 import type { BillingPlanOption, BillingSummary } from "@/lib/billing/store";
 import {
   ACCENT_THEMES,
@@ -47,18 +49,21 @@ export function SettingsPanel({
   workspace,
   billing,
   planOptions,
+  acceptableRules,
 }: {
   appearance: Appearance;
   isOwner: boolean;
   workspace: WorkspaceSettings;
   billing: BillingSummary;
   planOptions: BillingPlanOption[];
+  acceptableRules: AcceptableRule[];
 }) {
   return (
     <div className="mt-8 grid gap-6">
       <BillingSection isOwner={isOwner} billing={billing} planOptions={planOptions} />
       <AppearanceSection appearance={appearance} />
       <WorkspaceSection isOwner={isOwner} workspace={workspace} />
+      <AcceptableIssuesSection isOwner={isOwner} rules={acceptableRules} />
     </div>
   );
 }
@@ -409,6 +414,91 @@ function WorkspaceSection({
           font-weight: 600;
         }
       `}</style>
+    </section>
+  );
+}
+
+function AcceptableIssuesSection({
+  isOwner,
+  rules,
+}: {
+  isOwner: boolean;
+  rules: AcceptableRule[];
+}) {
+  const [pending, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function remove(ruleId: string) {
+    setError(null);
+    setPendingId(ruleId);
+    startTransition(async () => {
+      try {
+        await removeAcceptableRuleAction(ruleId);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Could not remove this rule",
+        );
+      } finally {
+        setPendingId(null);
+      }
+    });
+  }
+
+  return (
+    <section className="rounded-xl border border-line bg-card p-5">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold">Acceptable issues</h2>
+        {!isOwner ? (
+          <span className="text-xs text-muted">Owners only — view only</span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-sm text-muted">
+        Pedagogy flags marked &quot;Always allow this issue&quot; from any
+        outline in this workspace land here. They&apos;re muted everywhere,
+        on every project, until removed.
+      </p>
+
+      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+
+      {rules.length === 0 ? (
+        <p className="mt-4 text-sm text-muted">
+          No issue types are muted. Right-click a flag on an outline and
+          choose &quot;Always allow this issue&quot; to add one here.
+        </p>
+      ) : (
+        <ul className="mt-4 grid gap-2">
+          {rules.map((rule) => (
+            <li
+              key={rule.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-mono text-sm">{rule.filterCode}</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {rule.addedByEmail ? `Added by ${rule.addedByEmail}` : "Added"}
+                  {" · "}
+                  {new Date(rule.addedAt).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              {isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => remove(rule.id)}
+                  disabled={pending && pendingId === rule.id}
+                  className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-muted hover:text-danger disabled:opacity-50"
+                >
+                  {pending && pendingId === rule.id ? "Removing…" : "Remove"}
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

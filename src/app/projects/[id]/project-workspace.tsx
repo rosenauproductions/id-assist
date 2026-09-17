@@ -22,6 +22,7 @@ import {
   updateSmeAction,
 } from "@/app/actions";
 import { canApprove } from "@/lib/id/filters";
+import { FlagMarker } from "@/components/flag-marker";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
 import {
@@ -245,6 +246,9 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
                     projectId={project.id}
                     outcome={outcome}
                     locked={outline.status === "approved"}
+                    filters={outline.filters.filter(
+                      (filter) => filter.targetId === outcome.id,
+                    )}
                   />
                 ))}
               </ul>
@@ -282,6 +286,9 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
                     assessment={assessment}
                     outcome={outline.outcomes.find(
                       (outcome) => outcome.id === assessment.outcomeId,
+                    )}
+                    filters={outline.filters.filter(
+                      (filter) => filter.targetId === assessment.id,
                     )}
                   />
                 ))}
@@ -663,15 +670,18 @@ function OutcomeEditor({
   projectId,
   outcome,
   locked,
+  filters,
 }: {
   projectId: string;
   outcome: Outcome;
   locked: boolean;
+  filters: FilterHit[];
 }) {
   return (
     <li className="rounded-lg border border-line bg-background p-4">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
         {outcome.kind}
+        <FlagMarker projectId={projectId} filters={filters} />
       </p>
       <ActionForm
         className="mt-3 grid gap-2 text-sm"
@@ -821,6 +831,12 @@ function LessonEditor({
               {lesson.supplements.length
                 ? `+ ${lesson.supplements.join(", ")}`
                 : "no supplements"}
+              <FlagMarker
+                projectId={project.id}
+                filters={project.outline.filters.filter(
+                  (filter) => filter.targetId === lesson.id,
+                )}
+              />
             </p>
             <ul className="grid gap-1 text-sm text-muted">
               {lesson.units.map((unit) => (
@@ -1345,15 +1361,18 @@ function AssessmentCountEditor({
   projectId,
   assessment,
   outcome,
+  filters,
 }: {
   projectId: string;
   assessment: AssessmentSpec;
   outcome: Outcome | undefined;
+  filters: FilterHit[];
 }) {
   return (
     <li className="rounded-lg border border-line bg-background p-4">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
         {assessment.format} · {assessment.bloom}
+        <FlagMarker projectId={projectId} filters={filters} />
       </p>
       <p className="mt-1 text-sm text-muted">
         {outcome ? outcome.behavior : "Objective not found"}

@@ -12,6 +12,8 @@ import { importOutlineFromText } from "@/lib/id/import-outline";
 import { refineOutlineWithModel } from "@/lib/id/refine";
 import { mergeRequirements } from "@/lib/id/requirements";
 import { deleteProject, loadProject, saveProject } from "@/lib/id/store";
+import { addAcceptableRule } from "@/lib/id/acceptable-rules";
+import { requireWorkspaceContext } from "@/lib/team/store";
 import {
   BLOOM_LEVELS,
   COURSE_PHASES,
@@ -148,6 +150,33 @@ export async function dismissFilterAction(
   }
   filter.resolved = true;
   filter.dismissReason = reason.trim() || "accepted";
+  project.outline.status =
+    project.outline.status === "approved"
+      ? "approved"
+      : outlineStatus(project.outline.filters);
+  project.estimate = estimateProject(project);
+  project.requirements = mergeRequirements(project.requirements ?? [], project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+/** The other half of the right-click flag-marker menu: "Always allow this
+ * issue" — mutes this filter code for the whole workspace going forward
+ * (Settings → Acceptable issues manages the list) and immediately
+ * resolves every currently-open hit with that code on this project, not
+ * just future ones. */
+export async function alwaysAllowFilterAction(projectId: string, filterCode: string) {
+  const { workspaceId, userId } = await requireWorkspaceContext();
+  await addAcceptableRule(workspaceId, filterCode, userId);
+
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  for (const filter of project.outline.filters) {
+    if (!filter.resolved && filter.code === filterCode) {
+      filter.resolved = true;
+      filter.dismissReason = "Always allowed (workspace rule)";
+    }
+  }
   project.outline.status =
     project.outline.status === "approved"
       ? "approved"

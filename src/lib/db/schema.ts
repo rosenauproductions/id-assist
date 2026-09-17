@@ -1,4 +1,13 @@
-import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 /**
  * A shared workspace — everyone invited into it sees/edits all of its
@@ -251,3 +260,38 @@ export const usageCounters = pgTable("usage_counters", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * Workspace-wide "always allow this issue" mute list for pedagogy filters
+ * (src/lib/id/filters.ts). One row per (workspace, filter code) the
+ * workspace has chosen to stop seeing — muting a code is deliberate and
+ * global to the workspace, not per-lesson, so a course that repeats a
+ * pattern on purpose (e.g. always fewer activities than objectives)
+ * doesn't need re-approving project after project. Applied in
+ * saveProject() (see lib/id/store.ts), which marks any FilterHit whose
+ * code is on this list as resolved before persisting — runFilters()
+ * itself is unchanged and always produces the full, unfiltered set.
+ */
+export const acceptableRules = pgTable(
+  "acceptable_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    // Matches FilterHit["code"] in lib/id/types.ts, e.g. "module.objective_gap".
+    filterCode: text("filter_code").notNull(),
+    addedByUserId: uuid("added_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    addedAt: timestamp("added_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("acceptable_rules_workspace_code_idx").on(
+      table.workspaceId,
+      table.filterCode,
+    ),
+  ],
+);

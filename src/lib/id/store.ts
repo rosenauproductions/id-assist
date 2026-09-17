@@ -5,6 +5,7 @@ import { projects as projectsTable, users } from "@/lib/db/schema";
 import { assertWorkspaceWritable } from "@/lib/billing/store";
 import type { IdProject } from "./types";
 import { migrateProject } from "./migrations";
+import { applyAcceptableRules } from "./acceptable-rules";
 
 type WriteContext = { userId: string; workspaceId: string };
 
@@ -39,10 +40,7 @@ async function requireWriteContext(): Promise<WriteContext> {
   return { userId, workspaceId: row.workspaceId };
 }
 
-/**
- * Backfills fields added after some projects were already saved (jsonb rows
- * don't get a schema migration, so older rows can be missing newer keys).
- */
+/** Brings a loaded row up to CURRENT_SCHEMA_VERSION — see migrations.ts. */
 function fromRow(row: { data: unknown }): IdProject {
   return migrateProject(row.data);
 }
@@ -54,6 +52,14 @@ export async function saveProject(project: IdProject): Promise<void> {
   // a suspended/canceled account or an expired trial gets locked out —
   // read-only, not deleted, per the roadmap's decision on trial expiry.
   await assertWorkspaceWritable(workspaceId);
+  // Quiets any filter hit whose code is on this workspace's "always
+  // allow" mute list (Settings → Acceptable issues) before persisting —
+  // see acceptable-rules.ts. runFilters() itself never filters anything;
+  // this is the one place that happens.
+  project.outline.filters = await applyAcceptableRules(
+    project.outline.filters,
+    workspaceId,
+  );
   project.updatedAt = new Date().toISOString();
   const title = project.outline.brief.title || "untitled-course";
   const status = project.outline.status;
