@@ -1,4 +1,5 @@
 import {
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -338,3 +339,35 @@ export const platformSettings = pgTable("platform_settings", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * One row per successful login, for the /admin login map. userId/workspaceId
+ * are set null (not cascade-deleted) so the map's history survives a user
+ * or account being removed later; ip/country/region/city/lat/lng are all
+ * nullable because the geolocation lookup (src/lib/admin/geolocation.ts) is
+ * best-effort and can come back empty. Written from src/auth.ts's
+ * Credentials authorize() callback via next/server's after(), so it never
+ * adds latency to — or can break — a real login.
+ */
+export const loginEvents = pgTable(
+  "login_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, {
+      onDelete: "set null",
+    }),
+    ip: text("ip"),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("login_events_created_at_idx").on(table.createdAt)],
+);

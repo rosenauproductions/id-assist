@@ -32,6 +32,12 @@ export default async function AdminPage() {
         </div>
         <div className="flex gap-4">
           <Link
+            href="/admin/logins"
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Login map →
+          </Link>
+          <Link
             href="/admin/settings"
             className="text-sm text-muted hover:text-foreground"
           >
