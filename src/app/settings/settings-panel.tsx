@@ -7,7 +7,7 @@ import {
   updateAppearanceAction,
   updateWorkspaceSettingsAction,
 } from "./actions";
-import type { BillingSummary } from "@/lib/billing/store";
+import type { BillingPlanOption, BillingSummary } from "@/lib/billing/store";
 import {
   ACCENT_THEMES,
   ACCENT_THEME_LABELS,
@@ -46,15 +46,17 @@ export function SettingsPanel({
   isOwner,
   workspace,
   billing,
+  planOptions,
 }: {
   appearance: Appearance;
   isOwner: boolean;
   workspace: WorkspaceSettings;
   billing: BillingSummary;
+  planOptions: BillingPlanOption[];
 }) {
   return (
     <div className="mt-8 grid gap-6">
-      <BillingSection isOwner={isOwner} billing={billing} />
+      <BillingSection isOwner={isOwner} billing={billing} planOptions={planOptions} />
       <AppearanceSection appearance={appearance} />
       <WorkspaceSection isOwner={isOwner} workspace={workspace} />
     </div>
@@ -80,9 +82,11 @@ const STATUS_TONE: Record<BillingSummary["status"], string> = {
 function BillingSection({
   isOwner,
   billing,
+  planOptions,
 }: {
   isOwner: boolean;
   billing: BillingSummary;
+  planOptions: BillingPlanOption[];
 }) {
   const usagePercent = Math.min(
     100,
@@ -159,11 +163,22 @@ function BillingSection({
           </button>
         </form>
       ) : (
-        <form action={startCheckoutAction} className="mt-4">
-          <button type="submit" className="btn-primary">
-            Upgrade
-          </button>
-        </form>
+        <div className="mt-4">
+          <div className="flex flex-wrap gap-2">
+            {planOptions.map((plan) => (
+              <form key={plan.interval} action={startCheckoutAction}>
+                <input type="hidden" name="interval" value={plan.interval} />
+                <button type="submit" className="btn-primary">
+                  Upgrade — {plan.amountLabel}
+                  {plan.interval === "year" ? " (save 2 months)" : ""}
+                </button>
+              </form>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Have a promo code? There&apos;s a spot for it on the checkout page.
+          </p>
+        </div>
       )}
 
       <style>{`

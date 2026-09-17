@@ -211,15 +211,60 @@ export async function getCurrentBillingBanner(): Promise<BillingBanner | null> {
   };
 }
 
+export type BillingInterval = "month" | "year";
+
+function priceIdForInterval(interval: BillingInterval): string | undefined {
+  return interval === "year"
+    ? process.env.STRIPE_PRICE_ID_ANNUAL
+    : process.env.STRIPE_PRICE_ID_MONTHLY;
+}
+
+export type BillingPlanOption = {
+  interval: BillingInterval;
+  priceId: string;
+  amountLabel: string;
+};
+
+function formatPriceLabel(price: Stripe.Price, suffix: string): string {
+  const amount = (price.unit_amount ?? 0) / 100;
+  const formatted = Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2);
+  return `$${formatted}/${suffix}`;
+}
+
+/** Reads whichever price ids are actually configured and asks Stripe for
+ * their current amount, so the displayed price always matches whatever is
+ * set in the Stripe dashboard — changing a price there never needs a code
+ * change here. Returns [] (not a throw) when billing isn't configured yet,
+ * so the settings page can render its "not set up" state instead. */
+export async function getAvailablePlanOptions(): Promise<BillingPlanOption[]> {
+  if (!hasStripe()) return [];
+  const stripe = getStripe();
+  const options: BillingPlanOption[] = [];
+  const monthlyId = process.env.STRIPE_PRICE_ID_MONTHLY;
+  const annualId = process.env.STRIPE_PRICE_ID_ANNUAL;
+  if (monthlyId) {
+    const price = await stripe.prices.retrieve(monthlyId);
+    options.push({ interval: "month", priceId: monthlyId, amountLabel: formatPriceLabel(price, "mo") });
+  }
+  if (annualId) {
+    const price = await stripe.prices.retrieve(annualId);
+    options.push({ interval: "year", priceId: annualId, amountLabel: formatPriceLabel(price, "yr") });
+  }
+  return options;
+}
+
 export async function createCheckoutSession(input: {
   workspaceId: string;
   email: string;
   baseUrl: string;
+  interval: BillingInterval;
 }): Promise<string> {
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_PRICE_ID;
+  const priceId = priceIdForInterval(input.interval);
   if (!priceId) {
-    throw new Error("STRIPE_PRICE_ID isn't configured yet — set it in Vercel.");
+    throw new Error(
+      `No Stripe price configured yet for ${input.interval === "year" ? "annual" : "monthly"} billing — set STRIPE_PRICE_ID_${input.interval === "year" ? "ANNUAL" : "MONTHLY"} in Vercel.`,
+    );
   }
 
   const [ws] = await db
@@ -233,6 +278,16 @@ export async function createCheckoutSession(input: {
     customer: ws?.stripeCustomerId ?? undefined,
     customer_email: ws?.stripeCustomerId ? undefined : input.email,
     line_items: [{ price: priceId, quantity: 1 }],
+    // Lets a signup coupon (e.g. a referral code) be redeemed right in
+    // Checkout, on either interval. Note: a coupon scoped to a fixed
+    // number of months (Stripe's "repeating" duration) still applies in
+    // full to whichever invoice it lands on — on the annual plan that
+    // means the whole first year, not just a few months of it, since
+    // annual bills as one invoice. Stripe has no per-price restriction on
+    // coupons (only per-product, and both intervals share one product), so
+    // that's a real interaction to know about if a "N months free" code is
+    // meant to be monthly-only.
+    allow_promotion_codes: true,
     success_url: `${input.baseUrl}/settings?billing=success`,
     cancel_url: `${input.baseUrl}/settings?billing=canceled`,
     client_reference_id: input.workspaceId,

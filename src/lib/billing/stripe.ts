@@ -7,14 +7,17 @@ import Stripe from "stripe";
 let client: Stripe | null = null;
 
 export function hasStripe(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
+  return Boolean(
+    process.env.STRIPE_SECRET_KEY &&
+      (process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID_ANNUAL),
+  );
 }
 
 export function getStripe(): Stripe {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     throw new Error(
-      "Billing isn't configured yet — add STRIPE_SECRET_KEY (and STRIPE_PRICE_ID, STRIPE_WEBHOOK_SECRET) in Vercel.",
+      "Billing isn't configured yet — add STRIPE_SECRET_KEY (and STRIPE_PRICE_ID_MONTHLY/STRIPE_PRICE_ID_ANNUAL, STRIPE_WEBHOOK_SECRET) in Vercel.",
     );
   }
   if (!client) {

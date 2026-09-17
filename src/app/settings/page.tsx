@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { requireWorkspaceContext } from "@/lib/team/store";
 import { getAppearance, getWorkspaceSettings } from "@/lib/settings/store";
-import { getBillingSummary } from "@/lib/billing/store";
+import { getAvailablePlanOptions, getBillingSummary } from "@/lib/billing/store";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
 import { SettingsPanel } from "./settings-panel";
 
 export default async function SettingsPage() {
   const context = await requireWorkspaceContext();
-  const [appearance, workspaceSettings, billing] = await Promise.all([
+  const [appearance, workspaceSettings, billing, planOptions] = await Promise.all([
     getAppearance(),
     getWorkspaceSettings(),
     getBillingSummary(context.workspaceId),
+    getAvailablePlanOptions(),
   ]);
 
   const workspace = workspaceSettings ?? {
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
         isOwner={context.role === "owner"}
         workspace={workspace}
         billing={billing}
+        planOptions={planOptions}
       />
     </main>
   );

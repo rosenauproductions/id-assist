@@ -63,14 +63,16 @@ async function resolveBaseUrl(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-export async function startCheckoutAction(): Promise<void> {
+export async function startCheckoutAction(formData: FormData): Promise<void> {
   const context = await requireWorkspaceContext();
   requireOwner(context);
+  const interval = formData.get("interval") === "year" ? "year" : "month";
   const baseUrl = await resolveBaseUrl();
   const url = await createCheckoutSession({
     workspaceId: context.workspaceId,
     email: context.email,
     baseUrl,
+    interval,
   });
   redirect(url);
 }
