@@ -39,7 +39,7 @@ export function TutorChat({
   return (
     <div className="mt-6 flex min-h-[60vh] flex-1 flex-col rounded-xl border border-line bg-card">
       <div className="border-b border-line px-4 py-3">
-        <p className="text-xs uppercase tracking-wide text-muted">Local Ollama tutor</p>
+        <p className="text-xs uppercase tracking-wide text-muted">AI tutor</p>
         <p className="font-medium">{courseTitle}</p>
       </div>
       <div className="flex-1 space-y-4 overflow-auto px-4 py-4">

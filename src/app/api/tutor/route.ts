@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         error:
-          "Configure a model in .env.local (OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_MODEL, or AI_GATEWAY_API_KEY).",
+          "Configure a model in .env.local (GOOGLE_GENERATIVE_AI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_MODEL, or AI_GATEWAY_API_KEY).",
       },
       { status: 503 },
     );

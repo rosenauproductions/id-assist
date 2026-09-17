@@ -184,7 +184,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
             onClick={() => run(() => refineOutlineAction(project.id))}
             className="btn-secondary disabled:opacity-40"
           >
-            {pending ? "Working…" : "Refine with Ollama"}
+            {pending ? "Working…" : "Refine with AI"}
           </button>
           <button
             disabled={pending || !approvable || outline.status === "approved"}

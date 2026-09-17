@@ -19,7 +19,7 @@ const DELIVERY_HINTS: Record<(typeof DELIVERY_TARGETS)[number], string> = {
   gdoc: "Job aids, templates, and written practice.",
   gslides: "Presentation decks for facilitated or self-paced review.",
   video: "Script + shot list — not a rendered video file.",
-  tutor: "Real-time Ollama coach that teaches the approved outline.",
+  tutor: "Real-time AI coach that teaches the approved outline.",
 };
 
 export default async function NewProjectPage() {
@@ -40,7 +40,7 @@ export default async function NewProjectPage() {
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
           Compile a pedagogy outline first. Approve it. Then create delivery
-          files and tutor with your local Ollama model.
+          files and tutor with the AI coach.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link

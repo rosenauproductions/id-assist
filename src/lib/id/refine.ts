@@ -37,7 +37,7 @@ export async function refineOutlineWithModel(
 ): Promise<IdProject> {
   if (!hasLanguageModel()) {
     throw new Error(
-      "Ollama is not configured. Start Ollama and set OLLAMA_MODEL=id-assist-tutor.",
+      "No AI model is configured for this deployment. Set GOOGLE_GENERATIVE_AI_API_KEY (or another supported provider) in the environment.",
     );
   }
 
