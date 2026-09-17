@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Lora, Playfair_Display } from "next/font/google";
 import {
   ChatBubbleLeftRightIcon,
   ShieldCheckIcon,
@@ -17,7 +18,41 @@ import {
   DEFAULT_HERO_SUBHEAD,
   getPlatformDefaults,
   getSiteSettings,
+  type FontFamilyId,
 } from "@/lib/platform/settings";
+
+// Only two extra fonts to load — "mono" reuses the Geist Mono already
+// loaded globally in layout.tsx, and "sans" is just the page's default
+// inherited font. Loaded here (not globally) because they're specific to
+// this one marketing page's theme, not the signed-in app.
+const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+const FONT_STACKS: Record<FontFamilyId, string> = {
+  sans: "var(--font-geist-sans)",
+  serif: "var(--font-lora), Georgia, serif",
+  mono: "var(--font-geist-mono)",
+  display: "var(--font-playfair), Georgia, serif",
+};
+
+/** True for a background dark enough that the page's normal light-mode
+ * text/card/border colors would be illegible against it — computed from
+ * the actual hex rather than tied to any specific preset, so a
+ * hand-tweaked custom background gets the same treatment as the three
+ * built-in dark presets. */
+function isDarkBackground(hex: string): boolean {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return false;
+  const value = parseInt(match[1], 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5;
+}
 
 // Icons stay fixed in code — /admin/settings only edits each card's copy —
 // so this array pairs each of DEFAULT_FEATURE_CARDS_COPY's slots with its
@@ -56,13 +91,35 @@ export default async function MarketingHome() {
     };
   });
 
+  const fontFamily = site.fontFamily ?? "sans";
+  const isDark = Boolean(site.backgroundColor) && isDarkBackground(site.backgroundColor!);
+
+  // "--background"/"--foreground" are kept in sync with the actual applied
+  // background so bg-foreground/text-background (the CTA buttons' inverse
+  // "photo negative" style) still pairs a readable dark-on-light or
+  // light-on-dark combination instead of quietly falling back to the
+  // root theme's white/black regardless of what this page looks like.
+  const themeStyle = {
+    fontFamily: FONT_STACKS[fontFamily],
+    ...(site.accentColor ? { "--accent": site.accentColor } : {}),
+    ...(site.backgroundColor
+      ? { background: site.backgroundColor, "--background": site.backgroundColor }
+      : {}),
+    ...(isDark
+      ? {
+          color: "#f1f5f9",
+          "--foreground": "#f1f5f9",
+          "--muted": "#94a3b8",
+          "--card": `color-mix(in srgb, ${site.backgroundColor} 88%, white)`,
+          "--line": `color-mix(in srgb, ${site.backgroundColor} 78%, white)`,
+        }
+      : {}),
+  } as CSSProperties;
+
   return (
     <main
-      style={
-        site.accentColor
-          ? ({ "--accent": site.accentColor } as CSSProperties)
-          : undefined
-      }
+      className={`${lora.variable} ${playfairDisplay.variable}`}
+      style={themeStyle}
     >
       <section className="mx-auto max-w-4xl px-6 pb-16 pt-20 text-center">
         <div className="flex justify-center">

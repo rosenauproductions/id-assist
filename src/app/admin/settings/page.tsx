@@ -14,7 +14,7 @@ import {
   getSiteSettings,
 } from "@/lib/platform/settings";
 import { updatePlatformDefaultsAction, updateSiteSettingsAction } from "../actions";
-import { AccentThemePicker } from "@/components/accent-theme-picker";
+import { LandingThemePicker } from "@/components/landing-theme-picker";
 
 export default async function AdminSettingsPage() {
   try {
@@ -84,25 +84,31 @@ export default async function AdminSettingsPage() {
               className="field"
             />
           </label>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              <span className="font-medium">CTA button label</span>
-              <input
-                name="heroCtaLabel"
-                defaultValue={site.heroCtaLabel ?? ""}
-                placeholder={DEFAULT_HERO_CTA_LABEL}
-                className="field"
+          <label className="grid gap-1 text-sm sm:max-w-xs">
+            <span className="font-medium">CTA button label</span>
+            <input
+              name="heroCtaLabel"
+              defaultValue={site.heroCtaLabel ?? ""}
+              placeholder={DEFAULT_HERO_CTA_LABEL}
+              className="field"
+            />
+          </label>
+
+          <div>
+            <p className="text-sm font-medium">Theme</p>
+            <p className="mt-1 text-xs text-muted">
+              Pick a preset (background, accent, and font bundled together),
+              or fine-tune the hex values and font afterward. Only affects
+              this public page — signed-in users keep their own accent
+              theme from Settings.
+            </p>
+            <div className="mt-2">
+              <LandingThemePicker
+                defaultAccentColor={site.accentColor ?? ""}
+                defaultBackgroundColor={site.backgroundColor ?? ""}
+                defaultFontFamily={site.fontFamily ?? "sans"}
               />
-            </label>
-            <label className="grid gap-1 text-sm">
-              <span className="font-medium">Theme</span>
-              <AccentThemePicker defaultValue={site.accentColor ?? ""} />
-              <span className="text-xs text-muted">
-                Pick a preset or type a hex value. Only affects this public
-                page — signed-in users keep their own accent theme from
-                Settings.
-              </span>
-            </label>
+            </div>
           </div>
 
           <div>

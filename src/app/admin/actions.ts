@@ -18,6 +18,7 @@ import {
 } from "@/lib/admin/store";
 import type { MemberRole } from "@/lib/team/store";
 import {
+  isFontFamilyId,
   updatePlatformDefaults,
   updateSiteSettings,
   type FeatureCardCopy,
@@ -159,12 +160,15 @@ export async function updateSiteSettingsAction(formData: FormData) {
     (card) => card.title || card.description,
   );
 
+  const fontFamilyRaw = formData.get("fontFamily");
   await updateSiteSettings({
     heroEyebrow: trimmedOrNull(formData.get("heroEyebrow")),
     heroHeadline: trimmedOrNull(formData.get("heroHeadline")),
     heroSubhead: trimmedOrNull(formData.get("heroSubhead")),
     heroCtaLabel: trimmedOrNull(formData.get("heroCtaLabel")),
     accentColor: trimmedOrNull(formData.get("accentColor")),
+    backgroundColor: trimmedOrNull(formData.get("backgroundColor")),
+    fontFamily: isFontFamilyId(fontFamilyRaw) ? fontFamilyRaw : null,
     featureCards: hasAnyCardCopy ? featureCards : null,
   });
   revalidatePath("/admin/settings");

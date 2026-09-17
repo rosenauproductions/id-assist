@@ -90,14 +90,63 @@ export const DEFAULT_FEATURE_CARDS_COPY: FeatureCardCopy[] = [
   },
 ];
 
+export const FONT_FAMILY_IDS = ["sans", "serif", "mono", "display"] as const;
+export type FontFamilyId = (typeof FONT_FAMILY_IDS)[number];
+
+export function isFontFamilyId(value: unknown): value is FontFamilyId {
+  return (FONT_FAMILY_IDS as readonly unknown[]).includes(value);
+}
+
 export type SiteSettingsData = {
   heroEyebrow: string | null;
   heroHeadline: string | null;
   heroSubhead: string | null;
   heroCtaLabel: string | null;
   accentColor: string | null;
+  backgroundColor: string | null;
+  fontFamily: FontFamilyId | null;
   featureCards: FeatureCardCopy[] | null;
 };
+
+// A bundled "theme" is background + accent + font picked together so they
+// actually look good as a set, rather than three independent raw pickers
+// an admin could combine into something illegible (light text on a light
+// custom background, say). Picking one fills all three fields at once in
+// /admin/settings; every field can still be fine-tuned afterward without
+// losing the rest of the bundle. There's no separate "is this dark" flag
+// here — src/app/page.tsx derives that from backgroundColor's actual
+// luminance at render time, so a hand-tweaked custom background (not just
+// the three dark presets below) still gets legible text automatically.
+export type LandingThemePreset = {
+  id: string;
+  name: string;
+  accentColor: string;
+  backgroundColor: string;
+  fontFamily: FontFamilyId;
+};
+
+export const LANDING_THEME_PRESETS: LandingThemePreset[] = [
+  {
+    id: "default",
+    name: "Default",
+    accentColor: "",
+    backgroundColor: "",
+    fontFamily: "sans",
+  },
+  { id: "forest", name: "Forest", accentColor: "#1f6b5a", backgroundColor: "#f4faf7", fontFamily: "sans" },
+  { id: "indigo", name: "Indigo", accentColor: "#4f46e5", backgroundColor: "#f5f5ff", fontFamily: "sans" },
+  { id: "slate", name: "Slate", accentColor: "#334155", backgroundColor: "#f8fafc", fontFamily: "sans" },
+  { id: "ocean", name: "Ocean", accentColor: "#0369a1", backgroundColor: "#f0f9ff", fontFamily: "sans" },
+  { id: "sage", name: "Sage", accentColor: "#4d7c0f", backgroundColor: "#f7fee7", fontFamily: "sans" },
+  { id: "crimson", name: "Crimson", accentColor: "#b91c1c", backgroundColor: "#fef2f2", fontFamily: "sans" },
+  { id: "sunset", name: "Sunset", accentColor: "#c2410c", backgroundColor: "#fff7ed", fontFamily: "display" },
+  { id: "berry", name: "Berry", accentColor: "#a21caf", backgroundColor: "#fdf4ff", fontFamily: "display" },
+  { id: "sand", name: "Warm Sand", accentColor: "#92400e", backgroundColor: "#fefce8", fontFamily: "serif" },
+  { id: "mono", name: "Mono", accentColor: "#18181b", backgroundColor: "#fafafa", fontFamily: "mono" },
+  { id: "midnight", name: "Midnight", accentColor: "#38bdf8", backgroundColor: "#0b1220", fontFamily: "sans" },
+  { id: "eclipse", name: "Eclipse", accentColor: "#c084fc", backgroundColor: "#150f23", fontFamily: "display" },
+  { id: "moss", name: "Moss", accentColor: "#65a30d", backgroundColor: "#0f1a0a", fontFamily: "serif" },
+];
 
 /** Reads the marketing page's editable copy/theme. Every field is nullable
  * — null means "use the page's own built-in default" — so page.tsx keeps
@@ -120,6 +169,8 @@ export async function getSiteSettings(): Promise<SiteSettingsData> {
     heroSubhead: row?.heroSubhead ?? null,
     heroCtaLabel: row?.heroCtaLabel ?? null,
     accentColor: row?.accentColor ?? null,
+    backgroundColor: row?.backgroundColor ?? null,
+    fontFamily: isFontFamilyId(row?.fontFamily) ? row.fontFamily : null,
     featureCards,
   };
 }
@@ -136,6 +187,8 @@ export async function updateSiteSettings(
       heroSubhead: input.heroSubhead,
       heroCtaLabel: input.heroCtaLabel,
       accentColor: input.accentColor,
+      backgroundColor: input.backgroundColor,
+      fontFamily: input.fontFamily,
       featureCards: input.featureCards,
       updatedAt: new Date(),
     })
@@ -147,6 +200,8 @@ export async function updateSiteSettings(
         heroSubhead: input.heroSubhead,
         heroCtaLabel: input.heroCtaLabel,
         accentColor: input.accentColor,
+        backgroundColor: input.backgroundColor,
+        fontFamily: input.fontFamily,
         featureCards: input.featureCards,
         updatedAt: new Date(),
       },

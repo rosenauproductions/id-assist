@@ -314,6 +314,16 @@ export const siteSettings = pgTable("site_settings", {
   // marketing page only — doesn't touch the signed-in app's per-workspace
   // accent theme (see settings/types.ts's AccentTheme).
   accentColor: text("accent_color"),
+  // Hex string for the page's background — paired with accentColor and
+  // fontFamily as one of the preset "themes" in /admin/settings, though a
+  // custom accentColor can still be layered on top of whichever theme set
+  // this. Null falls back to the page's own default (light) background.
+  backgroundColor: text("background_color"),
+  // One of FONT_FAMILY_IDS (src/lib/platform/settings.ts) — a key, not a
+  // raw CSS font stack, since actual font loading is a static next/font
+  // import and can't be driven by arbitrary user input. Null falls back
+  // to the app's default Geist Sans.
+  fontFamily: text("font_family"),
   // Four {title, description} pairs for the feature-card row below the
   // hero. Icons stay fixed in code (ComponentType props can't round-trip
   // through jsonb) — only the copy is editable.
