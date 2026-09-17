@@ -22,8 +22,8 @@ const HOLLOW =
 const TOPIC_ONLY =
   /\b(overview|introduction to|basics of|fundamentals of|awareness of|about)\b/i;
 
-function clean(value: string): string {
-  return value.trim().replace(/\s+/g, " ");
+function clean(value: string | undefined | null): string {
+  return (value ?? "").trim().replace(/\s+/g, " ");
 }
 
 function sentenceCase(value: string): string {
@@ -225,7 +225,7 @@ export const FIELD_COACH: Record<WizardStepId, FieldCoachPlan> = {
     compose: (answers) => {
       if (/^none$/i.test(clean(answers.none || ""))) return "None";
       const parts = [answers.modality, answers.tools]
-        .map(clean)
+        .map((value) => clean(value))
         .filter(Boolean);
       return parts.length ? parts.join("; ") : "None";
     },
