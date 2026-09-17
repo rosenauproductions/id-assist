@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteProjectAction } from "@/app/actions";
+import { StatusPill } from "@/components/status";
 import type { IdProject } from "@/lib/id/types";
 
 export function ProjectList({ projects }: { projects: IdProject[] }) {
@@ -75,21 +76,5 @@ function ProjectListItem({ project }: { project: IdProject }) {
       </div>
       {error ? <p className="mt-2 text-xs text-danger">{error}</p> : null}
     </li>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const tone =
-    status === "approved"
-      ? "bg-accent/10 text-accent"
-      : status === "needs_review"
-        ? "bg-warn/10 text-warn"
-        : "bg-muted/10 text-muted";
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${tone}`}
-    >
-      {status.replace("_", " ")}
-    </span>
   );
 }

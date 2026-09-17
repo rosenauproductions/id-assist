@@ -23,6 +23,7 @@ import {
 } from "@/app/actions";
 import { canApprove } from "@/lib/id/filters";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
+import { StatusPill, StatusIcon } from "@/components/status";
 import {
   BLOOM_LEVELS,
   COURSE_PHASE_LABELS,
@@ -537,22 +538,6 @@ function labelForArtifact(filename: string, delivery: string): string {
   if (filename.includes("slides")) return labels.gslides;
   if (filename.includes("tutor")) return labels.tutor;
   return labels[delivery] ?? filename;
-}
-
-function StatusPill({ status }: { status: string }) {
-  const tone =
-    status === "approved"
-      ? "bg-accent/10 text-accent"
-      : status === "needs_review"
-        ? "bg-warn/10 text-warn"
-        : "bg-muted/10 text-muted";
-  return (
-    <span
-      className={`rounded-full px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide ${tone}`}
-    >
-      {status.replace("_", " ")}
-    </span>
-  );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -1119,7 +1104,10 @@ function PhaseCard({
   return (
     <li className={`rounded-lg border p-3 text-sm ${tone}`}>
       <div className="flex items-center justify-between">
-        <span className="font-medium">{COURSE_PHASE_LABELS[phase.phase]}</span>
+        <span className="flex items-center gap-1.5 font-medium">
+          <StatusIcon status={phase.status} className="h-3.5 w-3.5" />
+          {COURSE_PHASE_LABELS[phase.phase]}
+        </span>
         {phase.overridden ? (
           <span className="text-[10px] uppercase tracking-wide text-muted">
             manual

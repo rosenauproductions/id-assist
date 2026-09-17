@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listInterviewSessions } from "@/lib/interview/store";
+import { StatusPill } from "@/components/status";
 import { createInterviewAction, deleteInterviewSessionAction } from "./actions";
 
 function relativeTime(iso: string): string {
@@ -11,22 +12,6 @@ function relativeTime(iso: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.round(hours / 24);
   return `${days}d ago`;
-}
-
-function StatusPill({ status }: { status: string }) {
-  const tone =
-    status === "completed"
-      ? "bg-accent/10 text-accent"
-      : status === "submitted"
-        ? "bg-warn/10 text-warn"
-        : "bg-muted/10 text-muted";
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${tone}`}
-    >
-      {status.replace("_", " ")}
-    </span>
-  );
 }
 
 export default async function InterviewListPage() {

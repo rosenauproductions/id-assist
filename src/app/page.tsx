@@ -1,8 +1,22 @@
 import Link from "next/link";
+import {
+  FolderIcon,
+  BoltIcon,
+  FunnelIcon,
+  ClockIcon,
+} from "@heroicons/react/20/solid";
+import {
+  ChatBubbleLeftRightIcon,
+  SparklesIcon,
+  DocumentTextIcon,
+  ArrowUpTrayIcon,
+} from "@heroicons/react/24/outline";
 import { ProjectList } from "@/app/projects/project-list";
 import { listProjects } from "@/lib/id/store";
 import { listPendingInvitations, listWorkspaceMembers, requireWorkspaceContext } from "@/lib/team/store";
+import { StatusPill } from "@/components/status";
 import type { IdProject } from "@/lib/id/types";
+import type { ComponentType, SVGProps } from "react";
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -68,10 +82,10 @@ export default async function Home() {
       </div>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Projects in flight" value={String(activeProjects)} />
-        <Stat label="Total projects" value={String(projects.length)} />
-        <Stat label="Open filter findings" value={String(openFindings)} />
-        <Stat label="Hours logged this week" value={hoursThisWeek.toFixed(1)} />
+        <Stat icon={BoltIcon} label="Projects in flight" value={String(activeProjects)} />
+        <Stat icon={FolderIcon} label="Total projects" value={String(projects.length)} />
+        <Stat icon={FunnelIcon} label="Open filter findings" value={String(openFindings)} />
+        <Stat icon={ClockIcon} label="Hours logged this week" value={hoursThisWeek.toFixed(1)} />
       </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
@@ -79,24 +93,28 @@ export default async function Home() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <LaunchTile
               href="/interview"
+              icon={ChatBubbleLeftRightIcon}
               eyebrow="Talk to a SME"
               title="Interview an expert"
               description="Work through adaptive questions live on a call, or send a link they answer on their own."
             />
             <LaunchTile
               href="/wizard"
+              icon={SparklesIcon}
               eyebrow="Guided"
               title="Start wizard"
               description="Step through the brief one question at a time, with coaching as you go."
             />
             <LaunchTile
               href="/projects/new"
+              icon={DocumentTextIcon}
               eyebrow="Fast"
               title="New course brief"
               description="Fill the full brief form in one pass if you already know the shape of it."
             />
             <LaunchTile
               href="/import"
+              icon={ArrowUpTrayIcon}
               eyebrow="Import"
               title="Drop in an outline"
               description="Already have one written? Paste it in and let the model map it into a designable outline."
@@ -184,12 +202,23 @@ export default async function Home() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-xl border border-line bg-card px-4 py-3">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-        {label}
-      </p>
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 text-accent" />
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+          {label}
+        </p>
+      </div>
       <p className="mt-1 text-xl font-semibold">{value}</p>
     </div>
   );
@@ -197,11 +226,13 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function LaunchTile({
   href,
+  icon: Icon,
   eyebrow,
   title,
   description,
 }: {
   href: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   eyebrow: string;
   title: string;
   description: string;
@@ -211,7 +242,10 @@ function LaunchTile({
       href={href}
       className="group rounded-xl border border-line bg-card p-5 transition-colors hover:border-accent/40 hover:bg-accent/5"
     >
-      <p className="text-[11px] font-medium uppercase tracking-wide text-accent">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent">
+        <Icon className="h-5 w-5" />
+      </div>
+      <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-accent">
         {eyebrow}
       </p>
       <p className="mt-1 text-lg font-semibold">{title}</p>
@@ -220,21 +254,5 @@ function LaunchTile({
         Launch →
       </span>
     </Link>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const tone =
-    status === "approved"
-      ? "bg-accent/10 text-accent"
-      : status === "needs_review"
-        ? "bg-warn/10 text-warn"
-        : "bg-muted/10 text-muted";
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${tone}`}
-    >
-      {status.replace("_", " ")}
-    </span>
   );
 }
