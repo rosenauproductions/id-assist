@@ -58,7 +58,7 @@ export async function refineOutlineWithModel(
   };
 
   const { output } = await generateText({
-    model: getLanguageModel(),
+    model: await getLanguageModel(),
     output: Output.object({ schema: refineSchema }),
     prompt: `You are an instructional designer refining an ID Assist course outline.
 

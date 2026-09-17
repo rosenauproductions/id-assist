@@ -46,10 +46,19 @@ type CoachResponse = {
   source: "rules" | "model";
 };
 
-export function BriefWizard() {
+export function BriefWizard({
+  defaultDelivery,
+}: {
+  defaultDelivery?: DeliveryTarget[];
+} = {}) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
-  const [draft, setDraft] = useState<BriefDraft>(emptyBriefDraft);
+  const [draft, setDraft] = useState<BriefDraft>(() => {
+    const base = emptyBriefDraft();
+    return defaultDelivery?.length
+      ? { ...base, delivery: defaultDelivery }
+      : base;
+  });
   const [evaluation, setEvaluation] = useState<FieldEvaluation | null>(null);
   const [liveEval, setLiveEval] = useState<FieldEvaluation | null>(null);
   const [suggestedRewrites, setSuggestedRewrites] = useState<string[]>([]);

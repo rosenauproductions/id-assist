@@ -93,7 +93,7 @@ export async function parseOutlineText(rawText: string): Promise<ImportedOutline
   }
 
   const { output } = await generateText({
-    model: getLanguageModel(),
+    model: await getLanguageModel(),
     output: Output.object({ schema: importedOutlineSchema }),
     prompt: `You are an instructional designer digesting an existing course outline pasted in by its author. It may be messy, informal, a bullet list, headings with prose, or a table copied as text — reorganize it into a Bloom's-taxonomy-gated, ADDIE-style structure without inventing an unrelated course.
 

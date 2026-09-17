@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   const result = streamText({
-    model: getLanguageModel(),
+    model: await getLanguageModel(),
     system: tutorSystemPrompt(project),
     messages: await convertToModelMessages(body.messages),
   });

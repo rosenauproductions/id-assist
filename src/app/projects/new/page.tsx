@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { createProjectAction } from "@/app/actions";
+import { getWorkspaceSettings } from "@/lib/settings/store";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
 
 const LABELS: Record<(typeof DELIVERY_TARGETS)[number], string> = {
@@ -21,7 +22,10 @@ const DELIVERY_HINTS: Record<(typeof DELIVERY_TARGETS)[number], string> = {
   tutor: "Real-time Ollama coach that teaches the approved outline.",
 };
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  const workspace = await getWorkspaceSettings();
+  const defaultDelivery = workspace?.defaultDelivery ?? [...DELIVERY_TARGETS];
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <Link href="/" className="text-sm text-muted hover:text-foreground">
@@ -135,7 +139,7 @@ export default function NewProjectPage() {
                     <input
                       type="checkbox"
                       name={`delivery-${target}`}
-                      defaultChecked
+                      defaultChecked={defaultDelivery.includes(target)}
                     />
                     {LABELS[target]}
                   </span>

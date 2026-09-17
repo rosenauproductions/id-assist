@@ -7,6 +7,12 @@ import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-cor
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
+  // Default delivery-channel mix (DeliveryTarget[]) pre-checked on new
+  // briefs. Null means "no override" — falls back to every channel checked.
+  defaultDelivery: jsonb("default_delivery"),
+  // Owner-set Gemini model name (e.g. "gemini-2.5-pro") that overrides
+  // GOOGLE_MODEL for this workspace. Null means "use the deploy default."
+  modelOverride: text("model_override"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -24,6 +30,10 @@ export const users = pgTable(
     // "owner" can invite/remove teammates and change roles; "member" can
     // create and edit projects like anyone else in the workspace.
     role: text("role").notNull().default("member"),
+    // Personal appearance preference, saved to the account so it follows
+    // you across devices. "system" means "match the OS preference."
+    themeMode: text("theme_mode").notNull().default("system"),
+    accentTheme: text("accent_theme").notNull().default("teal"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

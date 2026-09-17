@@ -3,6 +3,7 @@ import { google } from "@ai-sdk/google";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { openai } from "@ai-sdk/openai";
 import { gateway } from "ai";
+import { getWorkspaceModelOverride } from "@/lib/settings/store";
 
 export function hasLanguageModel(): boolean {
   return Boolean(
@@ -14,7 +15,7 @@ export function hasLanguageModel(): boolean {
   );
 }
 
-export function getLanguageModel() {
+export async function getLanguageModel() {
   const provider = (process.env.ID_ASSIST_PROVIDER ?? "auto").toLowerCase();
 
   // Google Gemini first in "auto": it's the default for the hosted deployment
@@ -24,7 +25,13 @@ export function getLanguageModel() {
     provider === "google" ||
     (provider === "auto" && process.env.GOOGLE_GENERATIVE_AI_API_KEY)
   ) {
-    return google(process.env.GOOGLE_MODEL ?? "gemini-2.5-flash");
+    // An owner can override the model name from Settings; falls back to the
+    // env var, then the hard default. Never throws — a lookup failure just
+    // means "no override," not "fail the whole generation call."
+    const workspaceOverride = await getWorkspaceModelOverride();
+    return google(
+      workspaceOverride || process.env.GOOGLE_MODEL || "gemini-2.5-flash",
+    );
   }
 
   if (provider === "ollama" || (provider === "auto" && process.env.OLLAMA_MODEL)) {

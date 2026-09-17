@@ -9,6 +9,64 @@
   --accent: #1f6b5a;
   --warn: #9a6700;
   --danger: #b42318;
+  --body-glow: #e8eef5;
+}
+
+/* Accent presets (light mode). Picked on the Settings page, saved to the
+   account, applied here via data-accent on <html>. */
+:root[data-accent="teal"] { --accent: #1f6b5a; }
+:root[data-accent="blue"] { --accent: #1d4ed8; }
+:root[data-accent="violet"] { --accent: #6d28d9; }
+:root[data-accent="amber"] { --accent: #b45309; }
+:root[data-accent="rose"] { --accent: #be123c; }
+
+/* Explicit dark mode — the account's saved theme mode is "dark". */
+:root[data-theme="dark"] {
+  --background: #0f1115;
+  --foreground: #e7eaee;
+  --muted: #8b93a1;
+  --line: #262b33;
+  --card: #171b21;
+  --accent: #2fae90;
+  --warn: #d7a34d;
+  --danger: #ef6461;
+  --body-glow: #1a2530;
+}
+:root[data-theme="dark"][data-accent="teal"] { --accent: #2fae90; }
+:root[data-theme="dark"][data-accent="blue"] { --accent: #5b8def; }
+:root[data-theme="dark"][data-accent="violet"] { --accent: #9c7cf0; }
+:root[data-theme="dark"][data-accent="amber"] { --accent: #e0a233; }
+:root[data-theme="dark"][data-accent="rose"] { --accent: #ea6a86; }
+
+/* "system" mode (theme mode is unset or "system"): follow the OS/browser
+   preference. Explicit data-theme="light" or "dark" above always wins. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --background: #0f1115;
+    --foreground: #e7eaee;
+    --muted: #8b93a1;
+    --line: #262b33;
+    --card: #171b21;
+    --accent: #2fae90;
+    --warn: #d7a34d;
+    --danger: #ef6461;
+    --body-glow: #1a2530;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"])[data-accent="teal"] {
+    --accent: #2fae90;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"])[data-accent="blue"] {
+    --accent: #5b8def;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"])[data-accent="violet"] {
+    --accent: #9c7cf0;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"])[data-accent="amber"] {
+    --accent: #e0a233;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"])[data-accent="rose"] {
+    --accent: #ea6a86;
+  }
 }
 
 @theme inline {
@@ -26,10 +84,11 @@
 
 body {
   background:
-    radial-gradient(1200px 500px at 10% -10%, #e8eef5 0%, transparent 55%),
+    radial-gradient(1200px 500px at 10% -10%, var(--body-glow) 0%, transparent 55%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
 input,

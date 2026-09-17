@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+import { getAppearance } from "@/lib/settings/store";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,10 +27,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const appearance = await getAppearance();
 
   return (
     <html
       lang="en"
+      data-theme={appearance.themeMode}
+      data-accent={appearance.accentTheme}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
@@ -42,6 +46,12 @@ export default async function RootLayout({
               <div className="flex items-center gap-4">
                 <Link href="/team" className="text-sm text-muted hover:text-foreground">
                   Team
+                </Link>
+                <Link
+                  href="/settings"
+                  className="text-sm text-muted hover:text-foreground"
+                >
+                  Settings
                 </Link>
                 <form
                   action={async () => {

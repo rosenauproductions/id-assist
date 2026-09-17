@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
   try {
     const { output } = await generateText({
-      model: getLanguageModel(),
+      model: await getLanguageModel(),
       output: Output.object({ schema: coachSchema }),
       prompt: `You are an instructional-design brief coach helping an author fill one field.
 
