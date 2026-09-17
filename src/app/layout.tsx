@@ -16,6 +16,7 @@ import {
   isPlatformAdmin,
 } from "@/lib/admin/store";
 import { getCurrentBillingBanner } from "@/lib/billing/store";
+import { countOpenTickets } from "@/lib/tickets/store";
 import { stopImpersonationAction } from "@/app/admin/actions";
 import { LogoMark } from "@/components/logo-mark";
 import "./globals.css";
@@ -43,11 +44,13 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   const appearance = await getAppearance();
-  const [impersonation, showAdminNav, billingBanner] = await Promise.all([
-    getCurrentImpersonationBanner(),
-    session?.user?.id ? isPlatformAdmin(session.user.id) : Promise.resolve(false),
-    session?.user?.id ? getCurrentBillingBanner() : Promise.resolve(null),
-  ]);
+  const [impersonation, showAdminNav, billingBanner, openTicketCount] =
+    await Promise.all([
+      getCurrentImpersonationBanner(),
+      session?.user?.id ? isPlatformAdmin(session.user.id) : Promise.resolve(false),
+      session?.user?.id ? getCurrentBillingBanner() : Promise.resolve(null),
+      session?.user?.id ? countOpenTickets() : Promise.resolve(0),
+    ]);
 
   return (
     <html
@@ -142,6 +145,14 @@ export default async function RootLayout({
                   >
                     <ShieldCheckIcon className="h-4 w-4" />
                     Admin
+                    {openTicketCount > 0 ? (
+                      <span
+                        className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white"
+                        title={`${openTicketCount} ticket${openTicketCount === 1 ? "" : "s"} awaiting resolution`}
+                      >
+                        {openTicketCount > 99 ? "99+" : openTicketCount}
+                      </span>
+                    ) : null}
                   </Link>
                 ) : null}
                 <form

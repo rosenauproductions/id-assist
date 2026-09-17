@@ -91,6 +91,19 @@ export async function listWorkspaceTickets(): Promise<TicketSummary[]> {
 
 /** Every ticket on the platform, newest first — for /admin/tickets. Filters
  * are applied in application code since the expected volume is small. */
+/** Count of tickets not yet resolved or closed — powers the attention
+ * badge on /admin's Tickets tab so a platform admin can tell there's
+ * something to look at without opening the page. Loads just the status
+ * column and filters in memory, same pattern as listAllTickets's own
+ * client-side filtering — this app's ticket volume never justifies a
+ * COUNT(*) WHERE query. */
+export async function countOpenTickets(): Promise<number> {
+  const rows = await db.select({ status: tickets.status }).from(tickets);
+  return rows.filter(
+    (row) => row.status === "open" || row.status === "in_progress",
+  ).length;
+}
+
 export async function listAllTickets(filters?: {
   type?: TicketType;
   status?: TicketStatus;
