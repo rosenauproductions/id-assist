@@ -28,7 +28,7 @@ export default async function NewProjectPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
+      <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
       <section className="mt-4 rounded-xl border border-line bg-card p-6 shadow-sm">

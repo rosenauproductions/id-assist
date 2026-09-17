@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { projects as projectsTable, users } from "@/lib/db/schema";
+import { assertWorkspaceWritable } from "@/lib/billing/store";
 import { COURSE_PHASES, type IdProject } from "./types";
 
 type WriteContext = { userId: string; workspaceId: string };
@@ -57,6 +58,11 @@ function fromRow(row: { data: unknown }): IdProject {
 
 export async function saveProject(project: IdProject): Promise<void> {
   const { userId, workspaceId } = await requireWriteContext();
+  // The single enforcement choke point for account state: every project
+  // create/edit in the app funnels through saveProject, so this is where
+  // a suspended/canceled account or an expired trial gets locked out —
+  // read-only, not deleted, per the roadmap's decision on trial expiry.
+  await assertWorkspaceWritable(workspaceId);
   project.updatedAt = new Date().toISOString();
   const title = project.outline.brief.title || "untitled-course";
   const status = project.outline.status;

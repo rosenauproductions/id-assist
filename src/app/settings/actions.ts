@@ -1,6 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { requireOwner, requireWorkspaceContext } from "@/lib/team/store";
+import { createCheckoutSession, createPortalSession } from "@/lib/billing/store";
 import {
   ACCENT_THEMES,
   updateAppearance,
@@ -45,7 +49,39 @@ export async function updateWorkspaceSettingsAction(formData: FormData) {
   });
   revalidatePath("/settings");
   revalidatePath("/");
+  revalidatePath("/app");
   revalidatePath("/team");
   revalidatePath("/wizard");
   revalidatePath("/projects/new");
+}
+
+
+async function resolveBaseUrl(): Promise<string> {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("host");
+  return `${proto}://${host}`;
+}
+
+export async function startCheckoutAction(): Promise<void> {
+  const context = await requireWorkspaceContext();
+  requireOwner(context);
+  const baseUrl = await resolveBaseUrl();
+  const url = await createCheckoutSession({
+    workspaceId: context.workspaceId,
+    email: context.email,
+    baseUrl,
+  });
+  redirect(url);
+}
+
+export async function openBillingPortalAction(): Promise<void> {
+  const context = await requireWorkspaceContext();
+  requireOwner(context);
+  const baseUrl = await resolveBaseUrl();
+  const url = await createPortalSession({
+    workspaceId: context.workspaceId,
+    baseUrl,
+  });
+  redirect(url);
 }

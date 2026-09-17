@@ -33,6 +33,7 @@ export async function inviteMemberAction(formData: FormData) {
   });
   revalidatePath("/team");
   revalidatePath("/");
+  revalidatePath("/app");
 }
 
 export async function revokeInvitationAction(invitationId: string) {
@@ -48,6 +49,7 @@ export async function removeMemberAction(memberUserId: string) {
   await removeMember(memberUserId, context.workspaceId);
   revalidatePath("/team");
   revalidatePath("/");
+  revalidatePath("/app");
 }
 
 export async function setMemberRoleAction(formData: FormData) {

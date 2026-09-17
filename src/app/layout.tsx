@@ -14,6 +14,7 @@ import {
   getCurrentImpersonationBanner,
   isPlatformAdmin,
 } from "@/lib/admin/store";
+import { getCurrentBillingBanner } from "@/lib/billing/store";
 import { stopImpersonationAction } from "@/app/admin/actions";
 import { LogoMark } from "@/components/logo-mark";
 import "./globals.css";
@@ -41,9 +42,10 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   const appearance = await getAppearance();
-  const [impersonation, showAdminNav] = await Promise.all([
+  const [impersonation, showAdminNav, billingBanner] = await Promise.all([
     getCurrentImpersonationBanner(),
     session?.user?.id ? isPlatformAdmin(session.user.id) : Promise.resolve(false),
+    session?.user?.id ? getCurrentBillingBanner() : Promise.resolve(null),
   ]);
 
   return (
@@ -71,10 +73,31 @@ export default async function RootLayout({
             </form>
           </div>
         ) : null}
+        {billingBanner ? (
+          <div
+            className={`flex flex-wrap items-center justify-between gap-2 border-b px-6 py-2 text-sm ${
+              billingBanner.status === "suspended" ||
+              billingBanner.status === "canceled" ||
+              billingBanner.isTrialExpired
+                ? "border-danger/30 bg-danger/10 text-danger"
+                : "border-warn/30 bg-warn/10 text-warn"
+            }`}
+          >
+            <p>{billingBannerMessage(billingBanner)}</p>
+            {billingBanner.isOwner ? (
+              <Link
+                href="/settings"
+                className="rounded-md border border-current/40 px-3 py-1 text-xs font-medium hover:bg-current/10"
+              >
+                Manage billing
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
         <header className="border-b border-line bg-card/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
             <Link
-              href="/"
+              href={session?.user ? "/app" : "/"}
               className="flex items-center gap-2 text-base font-semibold tracking-tight"
             >
               <LogoMark className="h-6 w-6" />
@@ -138,4 +161,27 @@ export default async function RootLayout({
       </body>
     </html>
   );
+}
+
+function billingBannerMessage(banner: {
+  status: "trialing" | "active" | "past_due" | "suspended" | "canceled";
+  trialDaysLeft: number | null;
+  isTrialExpired: boolean;
+}): string {
+  if (banner.status === "suspended") {
+    return "This account has been suspended. Contact support to reactivate it.";
+  }
+  if (banner.status === "canceled") {
+    return "This account's subscription was canceled — upgrade to keep creating and editing courses.";
+  }
+  if (banner.status === "past_due") {
+    return "There's a problem with this account's card — update payment to avoid interruption.";
+  }
+  if (banner.isTrialExpired) {
+    return "Your free trial has ended — upgrade to keep creating and editing courses.";
+  }
+  if (banner.trialDaysLeft !== null) {
+    return `${banner.trialDaysLeft} day${banner.trialDaysLeft === 1 ? "" : "s"} left in your free trial.`;
+  }
+  return "Your free trial is ending soon.";
 }

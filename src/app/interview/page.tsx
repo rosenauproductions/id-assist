@@ -19,7 +19,7 @@ export default async function InterviewListPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
+      <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
       <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">

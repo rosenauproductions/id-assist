@@ -12,6 +12,8 @@ import {
   WIZARD_STEPS,
 } from "@/lib/id/brief-validate";
 import { getLanguageModel, hasLanguageModel } from "@/lib/id/model";
+import { assertAndConsumeGeneration } from "@/lib/billing/store";
+import { requireWorkspaceContext } from "@/lib/team/store";
 
 const coachSchema = z.object({
   suggestedRewrites: z.array(z.string()).max(3),
@@ -61,6 +63,26 @@ export async function POST(request: Request) {
         : evaluation.ok
           ? evaluation.summary
           : "Try a suggested rewrite, or open Help me develop this.",
+      source: "rules" as const,
+    });
+  }
+
+  try {
+    const context = await requireWorkspaceContext();
+    await assertAndConsumeGeneration(context.workspaceId);
+  } catch (error) {
+    return Response.json({
+      evaluation,
+      suggestedRewrites: localRewrites,
+      clarifyingQuestions:
+        evaluation.clarifyingQuestions.length > 0
+          ? evaluation.clarifyingQuestions
+          : FIELD_COACH[step].questions.map((q) => q.prompt),
+      composedValue: composedLocal || undefined,
+      coachNote:
+        error instanceof Error
+          ? `${error.message} Using rule-based suggestions for now.`
+          : "Using rule-based suggestions for now.",
       source: "rules" as const,
     });
   }

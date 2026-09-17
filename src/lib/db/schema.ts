@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * A shared workspace — everyone invited into it sees/edits all of its
@@ -230,3 +230,24 @@ export const accountNotes = pgTable(
   },
   (table) => [index("account_notes_workspace_id_idx").on(table.workspaceId)],
 );
+
+/**
+ * Monthly AI-generation usage counter per workspace — the cost-protection
+ * guardrail called out in the admin/monetization roadmap: the app runs on
+ * Chris's own Gemini API key, so a paying account generating unlimited
+ * outlines/refinements/tutor replies is the one realistic way this
+ * platform could start costing him real money. One row per workspace;
+ * periodStart rolls forward (and generationCount resets to 0) whenever the
+ * calendar month changes, checked in application code rather than a cron
+ * job — see lib/billing/store.ts.
+ */
+export const usageCounters = pgTable("usage_counters", {
+  workspaceId: uuid("workspace_id")
+    .primaryKey()
+    .references(() => workspaces.id, { onDelete: "cascade" }),
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  generationCount: integer("generation_count").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

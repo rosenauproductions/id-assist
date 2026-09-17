@@ -121,7 +121,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
     <main className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/" className="text-sm text-muted hover:text-foreground">
+          <Link href="/app" className="text-sm text-muted hover:text-foreground">
             ← Projects
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">

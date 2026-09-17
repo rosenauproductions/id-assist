@@ -402,5 +402,6 @@ export async function updateSmeAction(formData: FormData) {
 export async function deleteProjectAction(projectId: string) {
   await deleteProject(projectId);
   revalidatePath("/");
+  revalidatePath("/app");
   revalidatePath(`/projects/${projectId}`);
 }

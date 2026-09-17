@@ -8,6 +8,8 @@ import {
 import { getLanguageModel, hasLanguageModel } from "@/lib/id/model";
 import { loadProject } from "@/lib/id/store";
 import { tutorSystemPrompt } from "@/lib/id/tutor-prompt";
+import { assertAndConsumeGeneration } from "@/lib/billing/store";
+import { requireWorkspaceContext } from "@/lib/team/store";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -37,6 +39,16 @@ export async function POST(request: Request) {
           "Configure a model in .env.local (OPENAI_API_KEY, ANTHROPIC_API_KEY, OLLAMA_MODEL, or AI_GATEWAY_API_KEY).",
       },
       { status: 503 },
+    );
+  }
+
+  try {
+    const context = await requireWorkspaceContext();
+    await assertAndConsumeGeneration(context.workspaceId);
+  } catch (error) {
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Not authorized." },
+      { status: 402 },
     );
   }
 

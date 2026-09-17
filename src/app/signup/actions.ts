@@ -47,9 +47,10 @@ export async function signupAction(
     role = invitation.role as "owner" | "member";
     acceptedInvitationId = invitation.id;
   } else {
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const [workspace] = await db
       .insert(workspaces)
-      .values({ name: `${email}'s workspace` })
+      .values({ name: `${email}'s workspace`, status: "trialing", trialEndsAt })
       .returning({ id: workspaces.id });
     workspaceId = workspace.id;
   }
@@ -69,7 +70,7 @@ export async function signupAction(
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { email, password, redirectTo: "/app" });
   } catch (error) {
     if (error instanceof AuthError) {
       return "Account created — sign in below.";

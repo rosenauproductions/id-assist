@@ -40,7 +40,7 @@ export default function ImportOutlinePage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
+      <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
 

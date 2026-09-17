@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { requireWorkspaceContext } from "@/lib/team/store";
 import { getAppearance, getWorkspaceSettings } from "@/lib/settings/store";
+import { getBillingSummary } from "@/lib/billing/store";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
 import { SettingsPanel } from "./settings-panel";
 
 export default async function SettingsPage() {
   const context = await requireWorkspaceContext();
-  const [appearance, workspaceSettings] = await Promise.all([
+  const [appearance, workspaceSettings, billing] = await Promise.all([
     getAppearance(),
     getWorkspaceSettings(),
+    getBillingSummary(context.workspaceId),
   ]);
 
   const workspace = workspaceSettings ?? {
@@ -19,7 +21,7 @@ export default async function SettingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
+      <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
       <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">
@@ -34,6 +36,7 @@ export default async function SettingsPage() {
         appearance={appearance}
         isOwner={context.role === "owner"}
         workspace={workspace}
+        billing={billing}
       />
     </main>
   );

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateAppearanceAction, updateWorkspaceSettingsAction } from "./actions";
+import {
+  openBillingPortalAction,
+  startCheckoutAction,
+  updateAppearanceAction,
+  updateWorkspaceSettingsAction,
+} from "./actions";
+import type { BillingSummary } from "@/lib/billing/store";
 import {
   ACCENT_THEMES,
   ACCENT_THEME_LABELS,
@@ -39,16 +45,138 @@ export function SettingsPanel({
   appearance,
   isOwner,
   workspace,
+  billing,
 }: {
   appearance: Appearance;
   isOwner: boolean;
   workspace: WorkspaceSettings;
+  billing: BillingSummary;
 }) {
   return (
     <div className="mt-8 grid gap-6">
+      <BillingSection isOwner={isOwner} billing={billing} />
       <AppearanceSection appearance={appearance} />
       <WorkspaceSection isOwner={isOwner} workspace={workspace} />
     </div>
+  );
+}
+
+const STATUS_LABEL: Record<BillingSummary["status"], string> = {
+  trialing: "Free trial",
+  active: "Active",
+  past_due: "Payment issue",
+  suspended: "Suspended",
+  canceled: "Canceled",
+};
+
+const STATUS_TONE: Record<BillingSummary["status"], string> = {
+  trialing: "bg-accent/10 text-accent",
+  active: "bg-accent/10 text-accent",
+  past_due: "bg-warn/10 text-warn",
+  suspended: "bg-danger/10 text-danger",
+  canceled: "bg-danger/10 text-danger",
+};
+
+function BillingSection({
+  isOwner,
+  billing,
+}: {
+  isOwner: boolean;
+  billing: BillingSummary;
+}) {
+  const usagePercent = Math.min(
+    100,
+    Math.round(
+      (billing.generationsUsedThisMonth / Math.max(1, billing.monthlyGenerationLimit)) *
+        100,
+    ),
+  );
+
+  return (
+    <section className="rounded-xl border border-line bg-card p-5">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-semibold">Billing</h2>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${STATUS_TONE[billing.status]}`}
+        >
+          {STATUS_LABEL[billing.status]}
+        </span>
+      </div>
+
+      {billing.status === "trialing" ? (
+        <p className="mt-2 text-sm text-muted">
+          {billing.isTrialExpired
+            ? "Your free trial has ended. Upgrade to keep creating and editing courses."
+            : billing.trialDaysLeft !== null
+              ? `${billing.trialDaysLeft} day${billing.trialDaysLeft === 1 ? "" : "s"} left in your free trial.`
+              : "You're on a free trial."}
+        </p>
+      ) : billing.status === "past_due" ? (
+        <p className="mt-2 text-sm text-warn">
+          There&apos;s a problem with this account&apos;s card. Update payment
+          to avoid interruption.
+        </p>
+      ) : billing.status === "suspended" ? (
+        <p className="mt-2 text-sm text-danger">
+          This account has been suspended. Contact support to reactivate it.
+        </p>
+      ) : billing.status === "canceled" ? (
+        <p className="mt-2 text-sm text-danger">
+          This subscription was canceled. Upgrade to keep creating and
+          editing courses.
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-muted">Thanks for subscribing.</p>
+      )}
+
+      <div className="mt-4">
+        <div className="flex items-baseline justify-between text-xs text-muted">
+          <span>AI generations this month</span>
+          <span>
+            {billing.generationsUsedThisMonth} / {billing.monthlyGenerationLimit}
+          </span>
+        </div>
+        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full rounded-full bg-accent"
+            style={{ width: `${usagePercent}%` }}
+          />
+        </div>
+      </div>
+
+      {!isOwner ? (
+        <p className="mt-4 text-xs text-muted">
+          Only a workspace owner can manage billing.
+        </p>
+      ) : !billing.billingConfigured ? (
+        <p className="mt-4 text-xs text-muted">
+          Billing isn&apos;t set up on this deployment yet.
+        </p>
+      ) : billing.hasStripeCustomer ? (
+        <form action={openBillingPortalAction} className="mt-4">
+          <button type="submit" className="btn-primary">
+            Manage billing
+          </button>
+        </form>
+      ) : (
+        <form action={startCheckoutAction} className="mt-4">
+          <button type="submit" className="btn-primary">
+            Upgrade
+          </button>
+        </form>
+      )}
+
+      <style>{`
+        .btn-primary {
+          border-radius: 0.5rem;
+          background: var(--foreground);
+          color: var(--background);
+          padding: 0.55rem 0.95rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+      `}</style>
+    </section>
   );
 }
 

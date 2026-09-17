@@ -14,7 +14,7 @@ export default async function AdminPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
+      <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">

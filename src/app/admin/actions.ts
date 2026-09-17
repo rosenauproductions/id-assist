@@ -103,7 +103,7 @@ export async function startImpersonationAction(formData: FormData) {
     path: "/",
     expires: expiresAt,
   });
-  redirect("/");
+  redirect("/app");
 }
 
 export async function stopImpersonationAction() {
