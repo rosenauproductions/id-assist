@@ -10,6 +10,7 @@ import {
   endImpersonation,
   impersonationCookieName,
   isAccountStatus,
+  renameAccount,
   requirePlatformAdmin,
   setAccountManagerLabel,
   setAccountStatus,
@@ -68,6 +69,16 @@ export async function setAccountManagerAction(formData: FormData) {
   const label = String(formData.get("label") ?? "");
 
   await setAccountManagerLabel({ workspaceId, actorUserId: admin.userId, label });
+  revalidatePath(`/admin/accounts/${workspaceId}`);
+  revalidatePath("/admin");
+}
+
+export async function renameAccountAction(formData: FormData) {
+  const admin = await requirePlatformAdmin();
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const name = String(formData.get("name") ?? "");
+
+  await renameAccount({ workspaceId, actorUserId: admin.userId, name });
   revalidatePath(`/admin/accounts/${workspaceId}`);
   revalidatePath("/admin");
 }

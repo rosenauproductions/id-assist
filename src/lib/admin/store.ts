@@ -299,6 +299,25 @@ export async function setAccountStatus(input: {
   });
 }
 
+export async function renameAccount(input: {
+  workspaceId: string;
+  actorUserId: string;
+  name: string;
+}): Promise<void> {
+  const name = input.name.trim();
+  if (!name) throw new Error("Account name can't be empty.");
+  await db
+    .update(workspaces)
+    .set({ name })
+    .where(eq(workspaces.id, input.workspaceId));
+  await logAdminAction({
+    actorUserId: input.actorUserId,
+    action: "rename_account",
+    targetWorkspaceId: input.workspaceId,
+    metadata: { name },
+  });
+}
+
 export async function setAccountManagerLabel(input: {
   workspaceId: string;
   actorUserId: string;

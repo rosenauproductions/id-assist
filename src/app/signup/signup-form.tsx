@@ -15,7 +15,19 @@ export function SignupForm({
     <form action={formAction} className="mt-6 grid gap-4">
       {invitePreview ? (
         <input type="hidden" name="invite" value={invitePreview.token} />
-      ) : null}
+      ) : (
+        <label className="grid gap-1.5 text-sm font-medium">
+          Company / organization name
+          <input
+            required
+            name="companyName"
+            type="text"
+            autoComplete="organization"
+            className="field"
+            placeholder="Acme University"
+          />
+        </label>
+      )}
       <label className="grid gap-1.5 text-sm font-medium">
         Email
         <input

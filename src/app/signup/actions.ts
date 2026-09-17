@@ -15,9 +15,13 @@ export async function signupAction(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const inviteToken = String(formData.get("invite") ?? "").trim();
+  const companyName = String(formData.get("companyName") ?? "").trim();
 
   if (!email || !password) return "Email and password are required.";
   if (password.length < 8) return "Password must be at least 8 characters.";
+  if (!inviteToken && !companyName) {
+    return "Company or organization name is required.";
+  }
 
   const [existing] = await db
     .select({ id: users.id })
@@ -52,7 +56,7 @@ export async function signupAction(
     const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
     const [workspace] = await db
       .insert(workspaces)
-      .values({ name: `${email}'s workspace`, status: "trialing", trialEndsAt })
+      .values({ name: companyName, status: "trialing", trialEndsAt })
       .returning({ id: workspaces.id });
     workspaceId = workspace.id;
   }

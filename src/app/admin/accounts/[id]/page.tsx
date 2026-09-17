@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/status";
 import {
   addAccountNoteAction,
   addUserToAccountAction,
+  renameAccountAction,
   setAccountManagerAction,
   setAccountStatusAction,
   startImpersonationAction,
@@ -64,6 +65,25 @@ export default async function AdminAccountPage({
       </p>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-line bg-card p-5">
+          <h2 className="text-sm font-semibold">Account name</h2>
+          <form action={renameAccountAction} className="mt-3 flex gap-2">
+            <input type="hidden" name="workspaceId" value={account.id} />
+            <input
+              name="name"
+              defaultValue={account.name}
+              placeholder="Company or organization name"
+              className="field"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-md border border-line px-3 py-1.5 text-xs font-medium hover:border-accent/40"
+            >
+              Save
+            </button>
+          </form>
+        </div>
+
         <div className="rounded-xl border border-line bg-card p-5">
           <h2 className="text-sm font-semibold">Status</h2>
           <div className="mt-3 flex flex-wrap gap-2">
