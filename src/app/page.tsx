@@ -14,20 +14,8 @@ import {
 import { ProjectList } from "@/app/projects/project-list";
 import { listProjects } from "@/lib/id/store";
 import { listPendingInvitations, listWorkspaceMembers, requireWorkspaceContext } from "@/lib/team/store";
-import { StatusPill } from "@/components/status";
 import type { IdProject } from "@/lib/id/types";
 import type { ComponentType, SVGProps } from "react";
-
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const minutes = Math.round(diffMs / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
-}
 
 function openFilterCount(project: IdProject): number {
   return project.outline.filters.filter(
@@ -62,11 +50,6 @@ export default async function Home() {
   );
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const hoursThisWeek = hoursLoggedSince(projects, weekAgo);
-  const recent = [...projects]
-    .sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-    .slice(0, 5);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -123,33 +106,10 @@ export default async function Home() {
 
           <section className="rounded-xl border border-line bg-card p-5">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-semibold">Recent activity</h2>
-              <span className="text-xs text-muted">last updated</span>
+              <h2 className="text-lg font-semibold">Projects</h2>
+              <span className="text-xs text-muted">{projects.length} saved</span>
             </div>
-            {recent.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">
-                Nothing yet — compile a brief to get started.
-              </p>
-            ) : (
-              <ul className="mt-3 grid gap-2">
-                {recent.map((project) => (
-                  <li key={project.id}>
-                    <Link
-                      href={`/projects/${project.id}`}
-                      className="flex items-center justify-between gap-3 rounded-md border border-line bg-background px-3 py-2 text-sm hover:border-accent/40"
-                    >
-                      <span className="min-w-0 flex-1 truncate font-medium">
-                        {project.outline.brief.title || "Untitled course"}
-                      </span>
-                      <StatusPill status={project.outline.status} />
-                      <span className="shrink-0 text-xs text-muted">
-                        {relativeTime(project.updatedAt)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ProjectList projects={projects} />
           </section>
         </div>
 
@@ -187,16 +147,6 @@ export default async function Home() {
             Invite a teammate
           </Link>
         </section>
-      </section>
-
-      <section className="mt-10">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted">
-            Projects
-          </h2>
-          <span className="text-xs text-muted">{projects.length} saved</span>
-        </div>
-        <ProjectList projects={projects} />
       </section>
     </main>
   );
