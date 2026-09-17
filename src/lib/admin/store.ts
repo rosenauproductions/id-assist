@@ -522,3 +522,18 @@ export async function isPlatformAdmin(userId: string): Promise<boolean> {
   return row?.platformRole === "admin";
 }
 
+/** Same check by email instead of userId, for use at login time — before a
+ * session/userId exists yet. Used only to choose where a successful login
+ * lands (/admin vs /app); it never gates access on its own (the actual
+ * /admin routes and actions still re-check requirePlatformAdmin() against
+ * the real session), so a lookup here carries no security weight beyond
+ * picking a redirect. */
+export async function isPlatformAdminByEmail(email: string): Promise<boolean> {
+  const [row] = await db
+    .select({ platformRole: users.platformRole })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  return row?.platformRole === "admin";
+}
+
