@@ -79,7 +79,8 @@ export default async function RootLayout({
             className={`flex flex-wrap items-center justify-between gap-2 border-b px-6 py-2 text-sm ${
               billingBanner.status === "suspended" ||
               billingBanner.status === "canceled" ||
-              billingBanner.isTrialExpired
+              billingBanner.isTrialExpired ||
+              (billingBanner.trialDaysLeft !== null && billingBanner.trialDaysLeft <= 2)
                 ? "border-danger/30 bg-danger/10 text-danger"
                 : "border-warn/30 bg-warn/10 text-warn"
             }`}

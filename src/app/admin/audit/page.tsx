@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listAuditLog, requirePlatformAdmin } from "@/lib/admin/store";
+import { AdminTabs } from "@/components/admin-tabs";
 
 const ACTION_LABEL: Record<string, string> = {
   create_account: "Created account",
+  rename_account: "Renamed account",
   set_status_active: "Activated account",
   set_status_suspended: "Suspended account",
   set_status_canceled: "Canceled account",
@@ -27,7 +29,8 @@ export default async function AdminAuditPage() {
       <Link href="/admin" className="text-sm text-muted hover:text-foreground">
         ← Accounts
       </Link>
-      <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">
+      <AdminTabs active="audit" />
+      <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-accent">
         Platform admin
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">Audit log</h1>

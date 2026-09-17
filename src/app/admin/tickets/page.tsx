@@ -4,6 +4,7 @@ import { requirePlatformAdmin } from "@/lib/admin/store";
 import { listAllTickets, isTicketStatus } from "@/lib/tickets/store";
 import { isTicketType, TICKET_TYPE_LABELS } from "@/lib/tickets/scripts";
 import { StatusPill } from "@/components/status";
+import { AdminTabs } from "@/components/admin-tabs";
 
 const STATUS_FILTERS = ["open", "in_progress", "resolved", "closed"] as const;
 const TYPE_FILTERS = ["bug", "suggestion"] as const;
@@ -39,7 +40,8 @@ export default async function AdminTicketsPage({
       <Link href="/admin" className="text-sm text-muted hover:text-foreground">
         ← Accounts
       </Link>
-      <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">
+      <AdminTabs active="tickets" />
+      <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-accent">
         Platform admin
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">Tickets</h1>

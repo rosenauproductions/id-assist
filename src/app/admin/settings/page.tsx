@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/admin/store";
+import { AdminTabs } from "@/components/admin-tabs";
 import {
   DEFAULT_FEATURE_CARDS_COPY,
   DEFAULT_HERO_CTA_LABEL,
@@ -13,6 +14,7 @@ import {
   getSiteSettings,
 } from "@/lib/platform/settings";
 import { updatePlatformDefaultsAction, updateSiteSettingsAction } from "../actions";
+import { AccentThemePicker } from "@/components/accent-theme-picker";
 
 export default async function AdminSettingsPage() {
   try {
@@ -34,7 +36,8 @@ export default async function AdminSettingsPage() {
       <Link href="/admin" className="text-sm text-muted hover:text-foreground">
         ← Accounts
       </Link>
-      <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">
+      <AdminTabs active="settings" />
+      <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-accent">
         Platform admin
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">
@@ -92,16 +95,12 @@ export default async function AdminSettingsPage() {
               />
             </label>
             <label className="grid gap-1 text-sm">
-              <span className="font-medium">Accent color</span>
-              <input
-                name="accentColor"
-                defaultValue={site.accentColor ?? ""}
-                placeholder="#1f6b5a"
-                className="field"
-              />
+              <span className="font-medium">Theme</span>
+              <AccentThemePicker defaultValue={site.accentColor ?? ""} />
               <span className="text-xs text-muted">
-                Hex value. Only affects this public page — signed-in users
-                keep their own accent theme from Settings.
+                Pick a preset or type a hex value. Only affects this public
+                page — signed-in users keep their own accent theme from
+                Settings.
               </span>
             </label>
           </div>

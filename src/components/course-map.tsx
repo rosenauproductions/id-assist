@@ -44,7 +44,7 @@ export function CourseMap({
           {modules.map((courseModule) => {
             const lessons = byParent(data.nodes, courseModule.id, "lesson");
             return (
-              <li key={courseModule.id}>
+              <li key={courseModule.id} className="min-w-0">
                 <MapRow
                   node={courseModule}
                   activeId={activeId}
@@ -59,7 +59,7 @@ export function CourseMap({
                         ...byParent(data.nodes, lesson.id, "assessment"),
                       ];
                       return (
-                        <li key={lesson.id}>
+                        <li key={lesson.id} className="min-w-0">
                           <MapRow
                             node={lesson}
                             activeId={activeId}
@@ -116,9 +116,10 @@ function MapRow({
   return (
     <button
       type="button"
+      title={node.label}
       disabled={!clickable}
       onClick={() => clickable && onSelect?.(node)}
-      className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm transition-colors ${
+      className={`flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm transition-colors ${
         clickable ? "cursor-pointer hover:bg-line/40" : "cursor-default"
       } ${activeId === node.id ? "bg-accent/10 text-accent" : ""} ${
         node.placeholder ? "text-muted opacity-70" : ""
@@ -130,7 +131,7 @@ function MapRow({
           className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger"
         />
       ) : null}
-      <span className="truncate">{node.label}</span>
+      <span className="min-w-0 flex-1 truncate">{node.label}</span>
     </button>
   );
 }

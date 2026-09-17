@@ -194,11 +194,14 @@ export async function getCurrentBillingBanner(): Promise<BillingBanner | null> {
   }
 
   const summary = await getBillingSummary(context.workspaceId);
+  // Surfaced a full week out (not just the last 3 days) so an owner has
+  // real runway to act before the account actually locks — see
+  // isWorkspaceStatusWritable() above for what "locks" means.
   const nearTrialEnd =
     summary.status === "trialing" &&
     !summary.isTrialExpired &&
     summary.trialDaysLeft !== null &&
-    summary.trialDaysLeft <= 3;
+    summary.trialDaysLeft <= 7;
   const noteworthy =
     summary.status === "suspended" ||
     summary.status === "canceled" ||

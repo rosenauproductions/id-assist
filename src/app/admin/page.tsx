@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { listAccounts, requirePlatformAdmin } from "@/lib/admin/store";
 import { getPlatformDefaults } from "@/lib/platform/settings";
 import { StatusPill } from "@/components/status";
+import { AdminTabs } from "@/components/admin-tabs";
 import { createAccountAction } from "./actions";
 
 export default async function AdminPage() {
@@ -21,7 +22,8 @@ export default async function AdminPage() {
       <Link href="/app" className="text-sm text-muted hover:text-foreground">
         ← Home
       </Link>
-      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
+      <AdminTabs active="accounts" />
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-accent">
             Platform admin
@@ -29,32 +31,6 @@ export default async function AdminPage() {
           <h1 className="mt-1 text-3xl font-semibold tracking-tight">
             Accounts
           </h1>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <Link
-            href="/admin/tickets"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            Tickets →
-          </Link>
-          <Link
-            href="/admin/logins"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            Login map →
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            Settings →
-          </Link>
-          <Link
-            href="/admin/audit"
-            className="text-sm text-muted hover:text-foreground"
-          >
-            Audit log →
-          </Link>
         </div>
       </div>
       <p className="mt-2 max-w-xl text-sm leading-6 text-muted">

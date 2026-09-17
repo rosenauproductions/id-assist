@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/admin/store";
 import { listLoginEvents, type LoginMapRange } from "@/lib/admin/login-events";
-import { LoginMap } from "@/components/login-map";
+import { AdminTabs } from "@/components/admin-tabs";
+import { LoginTable } from "@/components/login-map";
 
 const RANGES: { id: LoginMapRange; label: string }[] = [
   { id: "day", label: "Today" },
@@ -38,11 +39,12 @@ export default async function AdminLoginsPage({
       <Link href="/admin" className="text-sm text-muted hover:text-foreground">
         ← Accounts
       </Link>
-      <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-accent">
+      <AdminTabs active="logins" />
+      <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-accent">
         Platform admin
       </p>
       <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-        Login map
+        Logins
       </h1>
       <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
         A snapshot of where logins have come from, as of right now — this
@@ -66,15 +68,13 @@ export default async function AdminLoginsPage({
       </div>
 
       <div className="mt-4">
-        <LoginMap points={located} />
+        <LoginTable events={events} />
       </div>
 
       <p className="mt-3 text-xs text-muted">
-        {located.length} login{located.length === 1 ? "" : "s"} plotted
-        {unlocated > 0
-          ? ` · ${unlocated} more logged but couldn't be located`
-          : ""}
-        .
+        {located.length} of {events.length} login{events.length === 1 ? "" : "s"} had a
+        resolvable location
+        {unlocated > 0 ? ` · ${unlocated} from an unresolved IP` : ""}.
       </p>
     </main>
   );

@@ -6,6 +6,9 @@ import {
   ArrowPathIcon,
   PaperAirplaneIcon,
   MinusCircleIcon,
+  SparklesIcon,
+  CreditCardIcon,
+  NoSymbolIcon,
 } from "@heroicons/react/16/solid";
 
 // One status vocabulary, shared everywhere a status shows up: outline gate
@@ -18,6 +21,10 @@ import {
 type StatusMeta = {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   tone: string;
+  /** Overrides the auto-generated "status_name" → "status name" text —
+   * for values (like account status "trialing") where the raw word isn't
+   * what should show up in the UI. */
+  label?: string;
 };
 
 const STATUS_META: Record<string, StatusMeta> = {
@@ -35,6 +42,13 @@ const STATUS_META: Record<string, StatusMeta> = {
   open: { icon: ExclamationTriangleIcon, tone: "bg-warn/10 text-warn" },
   resolved: { icon: CheckCircleIcon, tone: "bg-accent/10 text-accent" },
   closed: { icon: MinusCircleIcon, tone: "bg-muted/10 text-muted" },
+  // Account status (src/lib/admin/store.ts's AccountStatus), shown by
+  // StatusPill on /admin's accounts list and account detail page.
+  trialing: { icon: SparklesIcon, tone: "bg-accent/10 text-accent", label: "Free trial" },
+  active: { icon: CheckCircleIcon, tone: "bg-accent/10 text-accent", label: "Active" },
+  past_due: { icon: CreditCardIcon, tone: "bg-warn/10 text-warn", label: "Payment issue" },
+  suspended: { icon: NoSymbolIcon, tone: "bg-danger/10 text-danger", label: "Suspended" },
+  canceled: { icon: MinusCircleIcon, tone: "bg-danger/10 text-danger", label: "Canceled" },
 };
 
 const FALLBACK_META: StatusMeta = {
@@ -47,13 +61,13 @@ function getStatusMeta(status: string): StatusMeta {
 }
 
 export function StatusPill({ status }: { status: string }) {
-  const { icon: Icon, tone } = getStatusMeta(status);
+  const { icon: Icon, tone, label } = getStatusMeta(status);
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${tone}`}
     >
       <Icon className="h-3 w-3" />
-      {status.replace("_", " ")}
+      {label ?? status.replace("_", " ")}
     </span>
   );
 }

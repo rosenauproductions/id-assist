@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   FolderIcon,
   BoltIcon,
@@ -14,6 +15,7 @@ import {
 import { ProjectList } from "@/app/projects/project-list";
 import { listProjects } from "@/lib/id/store";
 import { listPendingInvitations, listWorkspaceMembers, requireWorkspaceContext } from "@/lib/team/store";
+import { getBillingSummary } from "@/lib/billing/store";
 import type { IdProject } from "@/lib/id/types";
 import type { ComponentType, SVGProps } from "react";
 
@@ -35,6 +37,16 @@ function hoursLoggedSince(projects: IdProject[], since: Date): number {
 
 export default async function Home() {
   const context = await requireWorkspaceContext();
+
+  // Locked-out accounts (trial expired, suspended, canceled) never land on
+  // the course dashboard — they're bounced straight to the upgrade page
+  // instead, right after login, rather than seeing a dashboard full of
+  // content they can't act on.
+  const billing = await getBillingSummary(context.workspaceId);
+  if (!billing.isWritable) {
+    redirect("/locked");
+  }
+
   const [projects, members, pendingInvitations] = await Promise.all([
     listProjects(),
     listWorkspaceMembers(context.workspaceId),
