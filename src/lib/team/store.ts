@@ -1,8 +1,19 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { invitations, users, workspaces } from "@/lib/db/schema";
+import {
+  impersonationSessions,
+  invitations,
+  users,
+  workspaces,
+} from "@/lib/db/schema";
 import { generateInviteToken } from "@/lib/auth/invite-token";
+
+// Kept as a plain string constant (not imported from lib/admin/store) to
+// avoid a circular import — lib/admin/store.ts already imports from this
+// file. Must match impersonationCookieName() there.
+const IMPERSONATION_COOKIE = "id-assist-impersonate";
 
 export type MemberRole = "owner" | "member";
 
@@ -28,6 +39,11 @@ export type WorkspaceContext = {
   workspaceId: string;
   workspaceName: string;
   role: MemberRole;
+  /** Set when a platform admin is currently viewing as this user — see
+   * lib/admin/store.ts. Every page reading this context can use it to show
+   * the "you're impersonating" banner state, though the root layout banner
+   * is the primary place it's surfaced. */
+  impersonatedBy?: { adminUserId: string; adminEmail: string };
 };
 
 /**
@@ -37,8 +53,49 @@ export type WorkspaceContext = {
  */
 export async function requireWorkspaceContext(): Promise<WorkspaceContext> {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) throw new Error("Not signed in.");
+  const realUserId = session?.user?.id;
+  if (!realUserId) throw new Error("Not signed in.");
+
+  // A platform admin "acting as" this user overlays a different effective
+  // user id on top of their own real login — the login session itself never
+  // changes, so requirePlatformAdmin() (lib/admin/store.ts) keeps working
+  // correctly for the real admin throughout.
+  let effectiveUserId = realUserId;
+  let impersonatedBy: WorkspaceContext["impersonatedBy"];
+
+  const cookieStore = await cookies();
+  const impersonationToken = cookieStore.get(IMPERSONATION_COOKIE)?.value;
+  if (impersonationToken) {
+    const [impersonation] = await db
+      .select({
+        adminUserId: impersonationSessions.adminUserId,
+        targetUserId: impersonationSessions.targetUserId,
+        expiresAt: impersonationSessions.expiresAt,
+        endedAt: impersonationSessions.endedAt,
+      })
+      .from(impersonationSessions)
+      .where(eq(impersonationSessions.token, impersonationToken))
+      .limit(1);
+
+    const isValid =
+      impersonation &&
+      !impersonation.endedAt &&
+      impersonation.expiresAt.getTime() > Date.now() &&
+      impersonation.adminUserId === realUserId;
+
+    if (isValid && impersonation) {
+      effectiveUserId = impersonation.targetUserId;
+      const [adminRow] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, realUserId))
+        .limit(1);
+      impersonatedBy = {
+        adminUserId: realUserId,
+        adminEmail: adminRow?.email ?? "",
+      };
+    }
+  }
 
   const [row] = await db
     .select({
@@ -49,16 +106,17 @@ export async function requireWorkspaceContext(): Promise<WorkspaceContext> {
     })
     .from(users)
     .innerJoin(workspaces, eq(workspaces.id, users.workspaceId))
-    .where(eq(users.id, userId))
+    .where(eq(users.id, effectiveUserId))
     .limit(1);
   if (!row) throw new Error("Account not found.");
 
   return {
-    userId,
+    userId: effectiveUserId,
     email: row.email,
     workspaceId: row.workspaceId,
     workspaceName: row.workspaceName,
     role: row.role as MemberRole,
+    impersonatedBy,
   };
 }
 

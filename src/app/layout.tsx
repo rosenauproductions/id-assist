@@ -6,9 +6,15 @@ import {
   UsersIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/20/solid";
 import { auth, signOut } from "@/auth";
 import { getAppearance } from "@/lib/settings/store";
+import {
+  getCurrentImpersonationBanner,
+  isPlatformAdmin,
+} from "@/lib/admin/store";
+import { stopImpersonationAction } from "@/app/admin/actions";
 import { LogoMark } from "@/components/logo-mark";
 import "./globals.css";
 
@@ -35,6 +41,10 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   const appearance = await getAppearance();
+  const [impersonation, showAdminNav] = await Promise.all([
+    getCurrentImpersonationBanner(),
+    session?.user?.id ? isPlatformAdmin(session.user.id) : Promise.resolve(false),
+  ]);
 
   return (
     <html
@@ -44,6 +54,23 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {impersonation ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-warn/30 bg-warn/10 px-6 py-2 text-sm text-warn">
+            <p>
+              Viewing as <strong>{impersonation.targetEmail}</strong> —
+              impersonated by {impersonation.adminEmail}, expires{" "}
+              {new Date(impersonation.expiresAt).toLocaleTimeString()}
+            </p>
+            <form action={stopImpersonationAction}>
+              <button
+                type="submit"
+                className="rounded-md border border-warn/40 px-3 py-1 text-xs font-medium hover:bg-warn/10"
+              >
+                Stop impersonating
+              </button>
+            </form>
+          </div>
+        ) : null}
         <header className="border-b border-line bg-card/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
             <Link
@@ -76,6 +103,15 @@ export default async function RootLayout({
                   <Cog6ToothIcon className="h-4 w-4" />
                   Settings
                 </Link>
+                {showAdminNav ? (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+                  >
+                    <ShieldCheckIcon className="h-4 w-4" />
+                    Admin
+                  </Link>
+                ) : null}
                 <form
                   action={async () => {
                     "use server";
