@@ -4,38 +4,21 @@ import { db } from "@/lib/db/client";
 import { users, workspaces } from "@/lib/db/schema";
 import { requireOwner, requireWorkspaceContext } from "@/lib/team/store";
 import { DELIVERY_TARGETS, type DeliveryTarget } from "@/lib/id/types";
+import {
+  ACCENT_THEMES,
+  DEFAULT_APPEARANCE,
+  type AccentTheme,
+  type Appearance,
+  type ThemeMode,
+  type WorkspaceSettings,
+} from "./types";
+
+// Re-exported so existing server-side imports of these from "./store" keep
+// working unchanged. settings-panel.tsx (a client component) must import
+// them from "./types" directly instead — see that file's comment for why.
+export * from "./types";
 
 // --- Appearance (personal, saved to the account) ---------------------------
-
-export type ThemeMode = "light" | "dark" | "system";
-
-export const ACCENT_THEMES = [
-  "teal",
-  "blue",
-  "violet",
-  "amber",
-  "rose",
-] as const;
-
-export type AccentTheme = (typeof ACCENT_THEMES)[number];
-
-export const ACCENT_THEME_LABELS: Record<AccentTheme, string> = {
-  teal: "Teal",
-  blue: "Blue",
-  violet: "Violet",
-  amber: "Amber",
-  rose: "Rose",
-};
-
-export type Appearance = {
-  themeMode: ThemeMode;
-  accentTheme: AccentTheme;
-};
-
-const DEFAULT_APPEARANCE: Appearance = {
-  themeMode: "system",
-  accentTheme: "teal",
-};
 
 function isThemeMode(value: string): value is ThemeMode {
   return value === "light" || value === "dark" || value === "system";
@@ -88,12 +71,6 @@ export async function updateAppearance(input: {
 }
 
 // --- Workspace settings (owner-editable, shared by everyone in it) --------
-
-export type WorkspaceSettings = {
-  name: string;
-  defaultDelivery: DeliveryTarget[];
-  modelOverride: string | null;
-};
 
 function isDeliveryTarget(value: unknown): value is DeliveryTarget {
   return (

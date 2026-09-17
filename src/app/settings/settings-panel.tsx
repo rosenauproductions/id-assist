@@ -9,7 +9,7 @@ import {
   type Appearance,
   type ThemeMode,
   type WorkspaceSettings,
-} from "@/lib/settings/store";
+} from "@/lib/settings/types";
 import { DELIVERY_TARGETS, type DeliveryTarget } from "@/lib/id/types";
 
 const THEME_MODES: { id: ThemeMode; label: string; hint: string }[] = [
