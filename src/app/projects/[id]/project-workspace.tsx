@@ -37,6 +37,15 @@ import {
   type RequirementItem,
 } from "@/lib/id/types";
 
+type WorkspaceTabId =
+  | "outcomes"
+  | "lessons"
+  | "assessments"
+  | "filters"
+  | "requirements"
+  | "time-cost"
+  | "delivery";
+
 export function ProjectWorkspace({ project }: { project: IdProject }) {
   const router = useRouter();
   const { outline, estimate } = project;
@@ -44,6 +53,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
   const [reason, setReason] = useState("accepted compiler rewrite");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<WorkspaceTabId>("outcomes");
   const openFilters = outline.filters.filter(
     (filter) => !filter.resolved && filter.severity !== "pass",
   ).length;
@@ -53,6 +63,32 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
   );
   const phases = effectivePhaseProgress(project);
   const requirements = project.requirements ?? [];
+
+  const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
+    { id: "outcomes", label: "Outcomes", badge: String(outline.outcomes.length) },
+    { id: "lessons", label: "Lessons", badge: String(outline.lessons.length) },
+    {
+      id: "assessments",
+      label: "Assessments",
+      badge: String(outline.assessments.length),
+    },
+    {
+      id: "filters",
+      label: "Filters",
+      badge: openFilters > 0 ? String(openFilters) : undefined,
+    },
+    {
+      id: "requirements",
+      label: "Requirements",
+      badge: `${requirements.filter((item) => item.done).length}/${requirements.length}`,
+    },
+    { id: "time-cost", label: "Time & cost" },
+    {
+      id: "delivery",
+      label: "Delivery files",
+      badge: project.artifacts.length > 0 ? String(project.artifacts.length) : undefined,
+    },
+  ];
 
   function run(action: () => Promise<void>) {
     setError(null);
@@ -171,176 +207,212 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
       </section>
       <p className="mt-2 text-sm text-muted">Bottleneck: {estimate.bottleneck}</p>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1.35fr_0.65fr]">
-        <div className="grid gap-8">
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Outcomes</h2>
-            <p className="mt-1 text-sm text-muted">
-              Edit Bloom and Mager fields. Saving re-runs filters.
-            </p>
-            <ul className="mt-4 grid gap-4">
-              {outline.outcomes.map((outcome) => (
-                <OutcomeEditor
-                  key={outcome.id}
-                  projectId={project.id}
-                  outcome={outcome}
-                  locked={outline.status === "approved"}
-                />
-              ))}
-            </ul>
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Lessons</h2>
-            <ul className="mt-4 grid gap-4">
-              {outline.lessons.map((lesson) => (
-                <LessonEditor
-                  key={lesson.id}
-                  project={project}
-                  lesson={lesson}
-                  locked={outline.status === "approved"}
-                />
-              ))}
-            </ul>
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Assessments</h2>
-            <p className="mt-1 text-sm text-muted">
-              Set target/actual item counts to catch quantity gaps — e.g. “20
-              items built but the spec calls for 25.”
-            </p>
-            <ul className="mt-4 grid gap-4">
-              {outline.assessments.map((assessment) => (
-                <AssessmentCountEditor
-                  key={assessment.id}
-                  projectId={project.id}
-                  assessment={assessment}
-                  outcome={outline.outcomes.find(
-                    (outcome) => outcome.id === assessment.outcomeId,
-                  )}
-                />
-              ))}
-            </ul>
-          </section>
+      <div className="mt-10">
+        <div role="tablist" className="flex flex-wrap gap-1 border-b border-line">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`-mb-px rounded-t-lg border border-b-0 px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "border-line bg-card text-foreground"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+              {tab.badge !== undefined ? (
+                <span className="ml-1.5 text-xs text-muted">{tab.badge}</span>
+              ) : null}
+            </button>
+          ))}
         </div>
 
-        <div className="grid gap-6 self-start">
-          <section className="rounded-xl border border-line bg-card p-5">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-semibold">Filter log</h2>
-              <span className="text-xs text-muted">{openFilters} open</span>
-            </div>
-            <ul className="mt-3 grid max-h-[28rem] gap-2 overflow-auto">
-              {outline.filters.map((filter) => (
-                <FilterRow
-                  key={filter.id}
-                  projectId={project.id}
-                  filter={filter}
-                  reason={reason}
-                  onReason={setReason}
-                />
-              ))}
-            </ul>
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-semibold">Requirements checklist</h2>
-              <span className="text-xs text-muted">
-                {requirements.filter((item) => item.done).length}/
-                {requirements.length} done
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-muted">
-              Required / Recommended / Optional. Auto items track the outline
-              live; add your own for anything the engine can&apos;t check.
-            </p>
-            <RequirementsChecklist
-              projectId={project.id}
-              requirements={requirements}
-            />
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Log actuals</h2>
-            <p className="mt-1 text-sm text-muted">
-              Logged hours reforecast remaining cost and calendar.
-            </p>
-            <TimeLogForm project={project} />
-            {(project.timeLogs ?? []).length > 0 ? (
-              <ul className="mt-3 grid gap-1 text-sm">
-                {[...(project.timeLogs ?? [])]
-                  .reverse()
-                  .slice(0, 6)
-                  .map((log) => (
-                    <li key={log.id} className="flex justify-between gap-3">
-                      <span className="text-muted">
-                        {log.phase}
-                        {log.lessonId ? ` · lesson` : ""} · {log.note || "—"}
-                      </span>
-                      <span>{log.hours} h</span>
-                    </li>
-                  ))}
-              </ul>
-            ) : null}
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">SME</h2>
-            <SmeForm project={project} />
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Cost</h2>
-            <ul className="mt-3 grid gap-1 text-sm">
-              {estimate.buckets.map((bucket) => (
-                <li key={bucket.label} className="flex justify-between gap-4">
-                  <span>
-                    {bucket.label}
-                    <span className="text-muted"> — {bucket.note}</span>
-                  </span>
-                  <span>${bucket.amountUsd.toLocaleString()}</span>
-                </li>
-              ))}
-            </ul>
-            {estimate.notes.map((note) => (
-              <p key={note} className="mt-2 text-sm text-muted">
-                {note}
+        <div className="rounded-b-xl rounded-tr-xl border border-line bg-card p-5">
+          {activeTab === "outcomes" ? (
+            <section>
+              <h2 className="text-lg font-semibold">Outcomes</h2>
+              <p className="mt-1 text-sm text-muted">
+                Edit Bloom and Mager fields. Saving re-runs filters.
               </p>
-            ))}
-          </section>
-
-          <section className="rounded-xl border border-line bg-card p-5">
-            <h2 className="text-lg font-semibold">Delivery files</h2>
-            <p className="mt-2 text-sm text-muted">
-              Markdown packs you use to build the course in each channel — not
-              finished Rise/Canvas courses. Open a file, then build from it.
-            </p>
-            {project.artifacts.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">
-                Approve the outline, then create delivery files.
-              </p>
-            ) : (
-              <ul className="mt-3 grid gap-2 text-sm">
-                {project.artifacts.map((artifact) => (
-                  <li key={artifact.id}>
-                    <a
-                      className="text-accent underline-offset-2 hover:underline"
-                      href={`/api/projects/${project.id}/artifacts/${artifact.filename}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {labelForArtifact(artifact.filename, artifact.delivery)}
-                    </a>
-                    <span className="ml-2 text-xs text-muted">
-                      {artifact.filename}
-                    </span>
-                  </li>
+              <ul className="mt-4 grid gap-4">
+                {outline.outcomes.map((outcome) => (
+                  <OutcomeEditor
+                    key={outcome.id}
+                    projectId={project.id}
+                    outcome={outcome}
+                    locked={outline.status === "approved"}
+                  />
                 ))}
               </ul>
-            )}
-          </section>
+            </section>
+          ) : null}
+
+          {activeTab === "lessons" ? (
+            <section>
+              <h2 className="text-lg font-semibold">Lessons</h2>
+              <ul className="mt-4 grid gap-4">
+                {outline.lessons.map((lesson) => (
+                  <LessonEditor
+                    key={lesson.id}
+                    project={project}
+                    lesson={lesson}
+                    locked={outline.status === "approved"}
+                  />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {activeTab === "assessments" ? (
+            <section>
+              <h2 className="text-lg font-semibold">Assessments</h2>
+              <p className="mt-1 text-sm text-muted">
+                Set target/actual item counts to catch quantity gaps — e.g. “20
+                items built but the spec calls for 25.”
+              </p>
+              <ul className="mt-4 grid gap-4">
+                {outline.assessments.map((assessment) => (
+                  <AssessmentCountEditor
+                    key={assessment.id}
+                    projectId={project.id}
+                    assessment={assessment}
+                    outcome={outline.outcomes.find(
+                      (outcome) => outcome.id === assessment.outcomeId,
+                    )}
+                  />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {activeTab === "filters" ? (
+            <section>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-semibold">Filter log</h2>
+                <span className="text-xs text-muted">{openFilters} open</span>
+              </div>
+              <ul className="mt-3 grid max-h-[28rem] gap-2 overflow-auto">
+                {outline.filters.map((filter) => (
+                  <FilterRow
+                    key={filter.id}
+                    projectId={project.id}
+                    filter={filter}
+                    reason={reason}
+                    onReason={setReason}
+                  />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {activeTab === "requirements" ? (
+            <section>
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-lg font-semibold">Requirements checklist</h2>
+                <span className="text-xs text-muted">
+                  {requirements.filter((item) => item.done).length}/
+                  {requirements.length} done
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                Required / Recommended / Optional. Auto items track the outline
+                live; add your own for anything the engine can&apos;t check.
+              </p>
+              <RequirementsChecklist
+                projectId={project.id}
+                requirements={requirements}
+              />
+            </section>
+          ) : null}
+
+          {activeTab === "time-cost" ? (
+            <div className="grid gap-8 sm:grid-cols-2">
+              <section>
+                <h2 className="text-lg font-semibold">Log actuals</h2>
+                <p className="mt-1 text-sm text-muted">
+                  Logged hours reforecast remaining cost and calendar.
+                </p>
+                <TimeLogForm project={project} />
+                {(project.timeLogs ?? []).length > 0 ? (
+                  <ul className="mt-3 grid gap-1 text-sm">
+                    {[...(project.timeLogs ?? [])]
+                      .reverse()
+                      .slice(0, 6)
+                      .map((log) => (
+                        <li key={log.id} className="flex justify-between gap-3">
+                          <span className="text-muted">
+                            {log.phase}
+                            {log.lessonId ? ` · lesson` : ""} · {log.note || "—"}
+                          </span>
+                          <span>{log.hours} h</span>
+                        </li>
+                      ))}
+                  </ul>
+                ) : null}
+              </section>
+
+              <section>
+                <h2 className="text-lg font-semibold">SME</h2>
+                <SmeForm project={project} />
+              </section>
+
+              <section className="sm:col-span-2">
+                <h2 className="text-lg font-semibold">Cost</h2>
+                <ul className="mt-3 grid gap-1 text-sm">
+                  {estimate.buckets.map((bucket) => (
+                    <li key={bucket.label} className="flex justify-between gap-4">
+                      <span>
+                        {bucket.label}
+                        <span className="text-muted"> — {bucket.note}</span>
+                      </span>
+                      <span>${bucket.amountUsd.toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+                {estimate.notes.map((note) => (
+                  <p key={note} className="mt-2 text-sm text-muted">
+                    {note}
+                  </p>
+                ))}
+              </section>
+            </div>
+          ) : null}
+
+          {activeTab === "delivery" ? (
+            <section>
+              <h2 className="text-lg font-semibold">Delivery files</h2>
+              <p className="mt-2 text-sm text-muted">
+                Markdown packs you use to build the course in each channel — not
+                finished Rise/Canvas courses. Open a file, then build from it.
+              </p>
+              {project.artifacts.length === 0 ? (
+                <p className="mt-3 text-sm text-muted">
+                  Approve the outline, then create delivery files.
+                </p>
+              ) : (
+                <ul className="mt-3 grid gap-2 text-sm">
+                  {project.artifacts.map((artifact) => (
+                    <li key={artifact.id}>
+                      <a
+                        className="text-accent underline-offset-2 hover:underline"
+                        href={`/api/projects/${project.id}/artifacts/${artifact.filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {labelForArtifact(artifact.filename, artifact.delivery)}
+                      </a>
+                      <span className="ml-2 text-xs text-muted">
+                        {artifact.filename}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
         </div>
       </div>
 
