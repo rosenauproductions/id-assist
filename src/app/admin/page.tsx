@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listAccounts, requirePlatformAdmin } from "@/lib/admin/store";
+import { getPlatformDefaults } from "@/lib/platform/settings";
 import { StatusPill } from "@/components/status";
 import { createAccountAction } from "./actions";
 
@@ -10,7 +11,10 @@ export default async function AdminPage() {
   } catch {
     notFound();
   }
-  const accounts = await listAccounts();
+  const [accounts, { trialDays }] = await Promise.all([
+    listAccounts(),
+    getPlatformDefaults(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -26,12 +30,20 @@ export default async function AdminPage() {
             Accounts
           </h1>
         </div>
-        <Link
-          href="/admin/audit"
-          className="text-sm text-muted hover:text-foreground"
-        >
-          Audit log →
-        </Link>
+        <div className="flex gap-4">
+          <Link
+            href="/admin/settings"
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Settings →
+          </Link>
+          <Link
+            href="/admin/audit"
+            className="text-sm text-muted hover:text-foreground"
+          >
+            Audit log →
+          </Link>
+        </div>
       </div>
       <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
         Every account on the platform — schools, agencies, and solo
@@ -42,9 +54,13 @@ export default async function AdminPage() {
       <section className="mt-6 rounded-xl border border-line bg-card p-5">
         <h2 className="text-lg font-semibold">Add an account</h2>
         <p className="mt-1 text-sm text-muted">
-          Creates a new account on a 14-day trial and a pending owner invite
-          you can send them — for onboarding someone yourself rather than
-          them signing up on their own.
+          Creates a new account on a {trialDays}-day trial and a pending
+          owner invite you can send them — for onboarding someone yourself
+          rather than them signing up on their own. Adjust the default in{" "}
+          <Link href="/admin/settings" className="text-accent hover:underline">
+            Settings
+          </Link>
+          .
         </p>
         <form action={createAccountAction} className="mt-4 grid gap-3 sm:grid-cols-[1.5fr_1.5fr_auto]">
           <input

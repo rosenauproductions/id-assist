@@ -6,6 +6,7 @@ import { signIn } from "@/auth";
 import { db } from "@/lib/db/client";
 import { invitations, users, workspaces } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
+import { getPlatformDefaults } from "@/lib/platform/settings";
 
 export async function signupAction(
   _prevState: string | undefined,
@@ -47,7 +48,8 @@ export async function signupAction(
     role = invitation.role as "owner" | "member";
     acceptedInvitationId = invitation.id;
   } else {
-    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const { trialDays } = await getPlatformDefaults();
+    const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
     const [workspace] = await db
       .insert(workspaces)
       .values({ name: `${email}'s workspace`, status: "trialing", trialEndsAt })

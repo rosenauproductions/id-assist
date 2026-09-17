@@ -4,15 +4,19 @@ import { db } from "@/lib/db/client";
 import { usageCounters, workspaces } from "@/lib/db/schema";
 import { requireWorkspaceContext } from "@/lib/team/store";
 import type { AccountStatus } from "@/lib/admin/store";
+import { getPlatformDefaults } from "@/lib/platform/settings";
 import { getStripe, hasStripe } from "./stripe";
 
 export { hasStripe };
 
-const DEFAULT_MONTHLY_GENERATION_LIMIT = 150;
-
-function monthlyGenerationLimit(): number {
+// USAGE_MONTHLY_GENERATION_LIMIT stays as an ops-level override (set it in
+// Vercel to force a cap regardless of what's saved in /admin/settings); the
+// platform_settings value from getPlatformDefaults() is the normal way to
+// change it now, and its own fallback (150) applies only if neither is set.
+async function monthlyGenerationLimit(): Promise<number> {
   const raw = Number(process.env.USAGE_MONTHLY_GENERATION_LIMIT);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_MONTHLY_GENERATION_LIMIT;
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return (await getPlatformDefaults()).monthlyGenerationLimit;
 }
 
 function currentPeriodStart(): Date {
@@ -113,7 +117,7 @@ export async function assertWorkspaceWritable(workspaceId: string): Promise<void
  * way — callers (tutor route, brief-coach route) decide how to surface it. */
 export async function assertAndConsumeGeneration(workspaceId: string): Promise<void> {
   await assertWorkspaceWritable(workspaceId);
-  const limit = monthlyGenerationLimit();
+  const limit = await monthlyGenerationLimit();
   const usage = await getOrResetUsageRow(workspaceId);
   if (usage.generationCount >= limit) {
     throw new Error(
@@ -164,7 +168,7 @@ export async function getBillingSummary(workspaceId: string): Promise<BillingSum
     isTrialExpired,
     isWritable: isWorkspaceStatusWritable(status, trialEndsAt),
     hasStripeCustomer: Boolean(ws.stripeCustomerId),
-    monthlyGenerationLimit: monthlyGenerationLimit(),
+    monthlyGenerationLimit: await monthlyGenerationLimit(),
     generationsUsedThisMonth: usage.generationCount,
     billingConfigured: hasStripe(),
   };

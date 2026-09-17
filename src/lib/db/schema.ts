@@ -295,3 +295,46 @@ export const acceptableRules = pgTable(
     ),
   ],
 );
+
+/**
+ * Single-row table for the public marketing page's editable copy and
+ * theme, managed from /admin/settings (see src/lib/platform/settings.ts).
+ * A row is created lazily on first save; src/app/page.tsx falls back to
+ * its original hardcoded copy when no row exists yet, so the landing page
+ * keeps working with zero configuration.
+ */
+export const siteSettings = pgTable("site_settings", {
+  id: text("id").primaryKey().default("default"),
+  heroEyebrow: text("hero_eyebrow"),
+  heroHeadline: text("hero_headline"),
+  heroSubhead: text("hero_subhead"),
+  heroCtaLabel: text("hero_cta_label"),
+  // Hex string (e.g. "#1f6b5a") overriding the --accent CSS variable on the
+  // marketing page only — doesn't touch the signed-in app's per-workspace
+  // accent theme (see settings/types.ts's AccentTheme).
+  accentColor: text("accent_color"),
+  // Four {title, description} pairs for the feature-card row below the
+  // hero. Icons stay fixed in code (ComponentType props can't round-trip
+  // through jsonb) — only the copy is editable.
+  featureCards: jsonb("feature_cards"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Single-row table for platform-wide defaults that used to be hardcoded
+ * constants: the trial length (admin/store.ts's DEFAULT_TRIAL_DAYS and the
+ * literal 14 in signup/actions.ts) and the monthly generation cap
+ * (billing/store.ts's DEFAULT_MONTHLY_GENERATION_LIMIT). Read through
+ * src/lib/platform/settings.ts, which falls back to those same original
+ * numbers when no row exists yet.
+ */
+export const platformSettings = pgTable("platform_settings", {
+  id: text("id").primaryKey().default("default"),
+  trialDays: integer("trial_days"),
+  monthlyGenerationLimit: integer("monthly_generation_limit"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

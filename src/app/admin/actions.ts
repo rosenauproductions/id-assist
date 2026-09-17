@@ -16,6 +16,11 @@ import {
   startImpersonation,
 } from "@/lib/admin/store";
 import type { MemberRole } from "@/lib/team/store";
+import {
+  updatePlatformDefaults,
+  updateSiteSettings,
+  type FeatureCardCopy,
+} from "@/lib/platform/settings";
 
 function parseRole(value: FormDataEntryValue | null): MemberRole {
   return value === "owner" ? "owner" : "member";
@@ -120,4 +125,51 @@ export async function stopImpersonationAction() {
     cookieStore.delete(impersonationCookieName());
   }
   redirect("/admin");
+}
+
+function trimmedOrNull(value: FormDataEntryValue | null): string | null {
+  const str = String(value ?? "").trim();
+  return str || null;
+}
+
+export async function updateSiteSettingsAction(formData: FormData) {
+  await requirePlatformAdmin();
+
+  const featureCards: FeatureCardCopy[] = [0, 1, 2, 3].map((index) => ({
+    title: String(formData.get(`cardTitle${index}`) ?? "").trim(),
+    description: String(formData.get(`cardDescription${index}`) ?? "").trim(),
+  }));
+  const hasAnyCardCopy = featureCards.some(
+    (card) => card.title || card.description,
+  );
+
+  await updateSiteSettings({
+    heroEyebrow: trimmedOrNull(formData.get("heroEyebrow")),
+    heroHeadline: trimmedOrNull(formData.get("heroHeadline")),
+    heroSubhead: trimmedOrNull(formData.get("heroSubhead")),
+    heroCtaLabel: trimmedOrNull(formData.get("heroCtaLabel")),
+    accentColor: trimmedOrNull(formData.get("accentColor")),
+    featureCards: hasAnyCardCopy ? featureCards : null,
+  });
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
+}
+
+export async function updatePlatformDefaultsAction(formData: FormData) {
+  await requirePlatformAdmin();
+
+  const trialDays = Number(formData.get("trialDays"));
+  const monthlyGenerationLimit = Number(formData.get("monthlyGenerationLimit"));
+  if (!Number.isFinite(trialDays) || trialDays <= 0) {
+    throw new Error("Trial length must be a positive number of days.");
+  }
+  if (!Number.isFinite(monthlyGenerationLimit) || monthlyGenerationLimit <= 0) {
+    throw new Error("Monthly generation cap must be a positive number.");
+  }
+
+  await updatePlatformDefaults({
+    trialDays: Math.round(trialDays),
+    monthlyGenerationLimit: Math.round(monthlyGenerationLimit),
+  });
+  revalidatePath("/admin/settings");
 }

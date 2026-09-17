@@ -14,6 +14,7 @@ import {
 } from "@/lib/db/schema";
 import { generateInviteToken } from "@/lib/auth/invite-token";
 import { createInvitation, type MemberRole } from "@/lib/team/store";
+import { getPlatformDefaults } from "@/lib/platform/settings";
 
 export type AccountStatus =
   | "trialing"
@@ -29,7 +30,6 @@ export type PlatformAdminContext = {
 
 const IMPERSONATION_COOKIE = "id-assist-impersonate";
 const IMPERSONATION_MINUTES = 30;
-const DEFAULT_TRIAL_DAYS = 14;
 
 export function impersonationCookieName(): string {
   return IMPERSONATION_COOKIE;
@@ -244,7 +244,10 @@ export async function createAccount(input: {
     throw new Error("Enter a valid owner email address.");
   }
 
-  const trialDays = input.trialDays ?? DEFAULT_TRIAL_DAYS;
+  // Falls back to /admin/settings' saved trial length (itself defaulting
+  // to 14) rather than a bare constant, so changing that setting also
+  // changes what this form does without a code change.
+  const trialDays = input.trialDays ?? (await getPlatformDefaults()).trialDays;
   const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
 
   const [workspace] = await db
