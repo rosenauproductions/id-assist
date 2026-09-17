@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import {
   addRequirementAction,
@@ -23,6 +23,8 @@ import {
 } from "@/app/actions";
 import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
+import { CourseMap } from "@/components/course-map";
+import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
 import {
@@ -65,6 +67,46 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
   );
   const phases = effectivePhaseProgress(project);
   const requirements = project.requirements ?? [];
+  const courseMap = useMemo(() => buildCourseMap(outline), [outline]);
+  const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
+
+  // Clicking a course-map node jumps to that piece in the editor: switches
+  // to the tab that owns it, scrolls the matching list item into view (see
+  // the id={`lesson-${lesson.id}`}-style ids below), and briefly rings it
+  // so it's obvious what just got focused. A module has no editor of its
+  // own — it's just a grouping of lessons — so it jumps to its first
+  // lesson instead.
+  function focusMapNode(node: MapNode) {
+    setActiveMapNodeId(node.id);
+    let tab: WorkspaceTabId | null = null;
+    let targetId: string | null = null;
+    if (node.kind === "module") {
+      tab = "lessons";
+      const firstLesson = courseMap.nodes.find(
+        (candidate) => candidate.parentId === node.id && candidate.kind === "lesson",
+      );
+      targetId = firstLesson ? `lesson-${firstLesson.id}` : null;
+    } else if (node.kind === "lesson") {
+      tab = "lessons";
+      targetId = `lesson-${node.id}`;
+    } else if (node.kind === "unit") {
+      tab = "lessons";
+      targetId = node.parentId ? `lesson-${node.parentId}` : null;
+    } else if (node.kind === "assessment") {
+      tab = "assessments";
+      targetId = `assessment-${node.id}`;
+    }
+    if (tab) setActiveTab(tab);
+    if (targetId) {
+      window.setTimeout(() => {
+        const el = document.getElementById(targetId!);
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-accent");
+        window.setTimeout(() => el.classList.remove("ring-2", "ring-accent"), 1500);
+      }, 50);
+    }
+  }
 
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
     { id: "outcomes", label: "Outcomes", badge: String(outline.outcomes.length) },
@@ -119,7 +161,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link href="/app" className="text-sm text-muted hover:text-foreground">
@@ -209,7 +251,8 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
       </section>
       <p className="mt-2 text-sm text-muted">Bottleneck: {estimate.bottleneck}</p>
 
-      <div className="mt-10">
+      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+      <div>
         <div role="tablist" className="flex flex-wrap gap-1 border-b border-line">
           {tabs.map((tab) => (
             <button
@@ -422,6 +465,16 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
             </section>
           ) : null}
         </div>
+      </div>
+
+      <aside className="lg:sticky lg:top-6">
+        <CourseMap
+          data={courseMap}
+          activeId={activeMapNodeId}
+          onSelect={focusMapNode}
+          emptyHint="Nothing compiled yet."
+        />
+      </aside>
       </div>
 
       <style>{`
@@ -678,7 +731,10 @@ function OutcomeEditor({
   filters: FilterHit[];
 }) {
   return (
-    <li className="rounded-lg border border-line bg-background p-4">
+    <li
+      id={`outcome-${outcome.id}`}
+      className="rounded-lg border border-line bg-background p-4 transition-shadow"
+    >
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
         {outcome.kind}
         <FlagMarker projectId={projectId} filters={filters} />
@@ -774,7 +830,10 @@ function LessonEditor({
     (outcome) => outcome.id === lesson.objectiveId,
   );
   return (
-    <li className="rounded-lg border border-line bg-background p-4">
+    <li
+      id={`lesson-${lesson.id}`}
+      className="rounded-lg border border-line bg-background p-4 transition-shadow"
+    >
       <ActionForm
         className="grid gap-2 text-sm"
         action={async (formData) => {
@@ -1369,7 +1428,10 @@ function AssessmentCountEditor({
   filters: FilterHit[];
 }) {
   return (
-    <li className="rounded-lg border border-line bg-background p-4">
+    <li
+      id={`assessment-${assessment.id}`}
+      className="rounded-lg border border-line bg-background p-4 transition-shadow"
+    >
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
         {assessment.format} · {assessment.bloom}
         <FlagMarker projectId={projectId} filters={filters} />

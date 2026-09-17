@@ -27,6 +27,8 @@ import {
   type FieldEvaluation,
   type WizardStepId,
 } from "@/lib/id/brief-validate";
+import { CourseMap } from "@/components/course-map";
+import { estimateSkeletonMap } from "@/lib/id/course-map";
 
 const DELIVERY_LABELS: Record<DeliveryTarget, string> = {
   rise: "Rise build sheet",
@@ -77,6 +79,13 @@ export function BriefWizard({
   const step = WIZARD_STEPS[stepIndex];
   const progress = ((stepIndex + 1) / WIZARD_STEPS.length) * 100;
   const developQuestions = FIELD_COACH[step.id].questions;
+  // Rough module/lesson/unit skeleton from seat time alone, no AI call —
+  // grows as the duration answer changes, then gets replaced by the real
+  // course map (project-workspace.tsx) the moment compileBrief() runs.
+  const skeletonMap = useMemo(
+    () => estimateSkeletonMap(draft.durationMinutes),
+    [draft.durationMinutes],
+  );
 
   const currentValue = useMemo(() => {
     if (step.id === "durationMinutes") return String(draft.durationMinutes);
@@ -280,9 +289,7 @@ export function BriefWizard({
         Step {stepIndex + 1} of {WIZARD_STEPS.length} · {step.title}
       </p>
 
-      <div
-        className={`mt-6 grid gap-6 ${showAside ? "lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start" : ""}`}
-      >
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] lg:items-start">
         <section className="rounded-xl border border-line bg-card p-6">
           <h2 className="text-xl font-semibold">{step.prompt}</h2>
           <p className="mt-2 text-sm text-muted">{step.hint}</p>
@@ -466,11 +473,18 @@ export function BriefWizard({
           </div>
         </section>
 
-        {showAside ? (
-          <aside className="grid gap-4 lg:sticky lg:top-6">
-            {coachNote ? (
-              <p className="text-sm text-muted">{coachNote}</p>
-            ) : null}
+        <aside className="grid gap-4 lg:sticky lg:top-6">
+          <CourseMap
+            data={skeletonMap}
+            title="Course map (estimate)"
+            emptyHint="Answer seat time to estimate a shape."
+          />
+
+          {showAside ? (
+            <>
+              {coachNote ? (
+                <p className="text-sm text-muted">{coachNote}</p>
+              ) : null}
 
             {showCoach && displayEval && !displayEval.ok ? (
               <div className="rounded-xl border border-warn/40 bg-warn/5 px-4 py-3">
@@ -555,8 +569,9 @@ export function BriefWizard({
                 onClose={() => setDevelopOpen(false)}
               />
             ) : null}
-          </aside>
-        ) : null}
+            </>
+          ) : null}
+        </aside>
       </div>
 
       <details className="mt-6 rounded-xl border border-line bg-card p-4 text-sm">
