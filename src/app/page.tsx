@@ -76,7 +76,13 @@ export default async function Home() {
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="grid gap-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <LaunchTile
+              href="/interview"
+              eyebrow="Talk to a SME"
+              title="Interview an expert"
+              description="Work through adaptive questions live on a call, or send a link they answer on their own."
+            />
             <LaunchTile
               href="/wizard"
               eyebrow="Guided"

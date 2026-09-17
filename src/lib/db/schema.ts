@@ -98,3 +98,41 @@ export const projects = pgTable(
   },
   (table) => [index("projects_workspace_id_idx").on(table.workspaceId)],
 );
+
+export const interviewSessions = pgTable(
+  "interview_sessions",
+  {
+    // Same nid("intv") id shape projects use nid("prj").
+    id: text("id").primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    createdByUserId: uuid("created_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    // Opaque, unguessable — the SME's share link is /interview/link/<token>.
+    token: text("token").notNull().unique(),
+    smeName: text("sme_name"),
+    courseWorkingTitle: text("course_working_title"),
+    // Record<WizardStepId, Record<questionId, string>> — raw per-question
+    // answers from either the live interview or the SME's own link. Null
+    // means "no answers yet" (same nullable-jsonb pattern as
+    // workspaces.defaultDelivery); the store layer defaults it to {}.
+    answers: jsonb("answers"),
+    // "in_progress" (still being answered) | "submitted" (SME or the ID
+    // marked it ready for review) | "completed" (a project was created).
+    status: text("status").notNull().default("in_progress"),
+    projectId: text("project_id").references(() => projects.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("interview_sessions_workspace_id_idx").on(table.workspaceId),
+  ],
+);

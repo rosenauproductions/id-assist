@@ -44,6 +44,12 @@ export default async function RootLayout({
             </Link>
             {session?.user ? (
               <div className="flex items-center gap-4">
+                <Link
+                  href="/interview"
+                  className="text-sm text-muted hover:text-foreground"
+                >
+                  Interview
+                </Link>
                 <Link href="/team" className="text-sm text-muted hover:text-foreground">
                   Team
                 </Link>
