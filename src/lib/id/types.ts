@@ -274,6 +274,12 @@ export type IdProject = {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** Shape version of this object, per src/lib/id/migrations.ts. Every
+   * stored project is brought up to CURRENT_SCHEMA_VERSION when it's
+   * loaded, so new code never has to guard against an old shape by hand —
+   * add a migration instead. Absent on a project written before this
+   * field existed; treated as version 0. */
+  schemaVersion: number;
   outline: CourseOutline;
   team: Resource[];
   estimate: ProductionEstimate;

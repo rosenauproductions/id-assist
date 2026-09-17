@@ -1,5 +1,6 @@
 import { estimateProject, defaultTeam } from "./estimate";
 import { nid } from "./ids";
+import { CURRENT_SCHEMA_VERSION } from "./migrations";
 import { outlineStatus, runFilters } from "./filters";
 import { mergeRequirements } from "./requirements";
 import {
@@ -262,6 +263,7 @@ export function compileBrief(brief: CourseBrief): IdProject {
   const project: IdProject = {
     id: nid("prj"),
     createdAt: new Date().toISOString(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     updatedAt: new Date().toISOString(),
     outline: {
       status: "draft",

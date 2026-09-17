@@ -9,6 +9,7 @@ import {
 import { outlineStatus, runFilters } from "./filters";
 import { defaultTeam, estimateProject } from "./estimate";
 import { nid } from "./ids";
+import { CURRENT_SCHEMA_VERSION } from "./migrations";
 import { getLanguageModel, hasLanguageModel } from "./model";
 import { mergeRequirements } from "./requirements";
 import {
@@ -244,6 +245,7 @@ export function buildProjectFromImportedOutline(parsed: ImportedOutline): IdProj
   const project: IdProject = {
     id: nid("prj"),
     createdAt: new Date().toISOString(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     updatedAt: new Date().toISOString(),
     outline: {
       status: "draft",

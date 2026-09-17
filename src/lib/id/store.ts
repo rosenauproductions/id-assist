@@ -3,7 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { projects as projectsTable, users } from "@/lib/db/schema";
 import { assertWorkspaceWritable } from "@/lib/billing/store";
-import { COURSE_PHASES, type IdProject } from "./types";
+import type { IdProject } from "./types";
+import { migrateProject } from "./migrations";
 
 type WriteContext = { userId: string; workspaceId: string };
 
@@ -42,18 +43,8 @@ async function requireWriteContext(): Promise<WriteContext> {
  * Backfills fields added after some projects were already saved (jsonb rows
  * don't get a schema migration, so older rows can be missing newer keys).
  */
-function normalizeProject(project: IdProject): IdProject {
-  if (!project.requirements) {
-    project.requirements = [];
-  }
-  if (!project.phaseProgress) {
-    project.phaseProgress = COURSE_PHASES.map((phase) => ({ phase }));
-  }
-  return project;
-}
-
 function fromRow(row: { data: unknown }): IdProject {
-  return normalizeProject(row.data as IdProject);
+  return migrateProject(row.data);
 }
 
 export async function saveProject(project: IdProject): Promise<void> {
