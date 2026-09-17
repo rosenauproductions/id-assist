@@ -11,7 +11,7 @@ import {
   type WizardStepId,
   WIZARD_STEPS,
 } from "@/lib/id/brief-validate";
-import { getLanguageModel, hasLanguageModel } from "@/lib/id/model";
+import { hasLanguageModel, withLanguageModel } from "@/lib/id/model";
 import { assertAndConsumeGeneration } from "@/lib/billing/store";
 import { requireWorkspaceContext } from "@/lib/team/store";
 
@@ -96,10 +96,11 @@ export async function POST(request: Request) {
         : String(draft[step] ?? "");
 
   try {
-    const { output } = await generateText({
-      model: await getLanguageModel(),
-      output: Output.object({ schema: coachSchema }),
-      prompt: `You are an instructional-design brief coach helping an author fill one field.
+    const { output } = await withLanguageModel((model) =>
+      generateText({
+        model,
+        output: Output.object({ schema: coachSchema }),
+        prompt: `You are an instructional-design brief coach helping an author fill one field.
 
 Field: ${stepMeta.title}
 Prompt: ${stepMeta.prompt}
@@ -128,7 +129,8 @@ Rules:
 - For jobTask, prefer Mager style: condition + behavior + criterion.
 - Do not invent unrelated industries. Stay close to the author's draft.
 - Keep each rewrite under 220 characters.`,
-    });
+      }),
+    );
 
     if (!output) {
       throw new Error("No coach output");

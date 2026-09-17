@@ -1,6 +1,6 @@
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { getLanguageModel, hasLanguageModel } from "./model";
+import { hasLanguageModel, withLanguageModel } from "./model";
 import { BLOOM_LEVELS, DELIVERY_TARGETS, type IdProject } from "./types";
 
 const refineSchema = z.object({
@@ -57,10 +57,11 @@ export async function refineOutlineWithModel(
     ),
   };
 
-  const { output } = await generateText({
-    model: await getLanguageModel(),
-    output: Output.object({ schema: refineSchema }),
-    prompt: `You are an instructional designer refining an ID Assist course outline.
+  const { output } = await withLanguageModel((model) =>
+    generateText({
+      model,
+      output: Output.object({ schema: refineSchema }),
+      prompt: `You are an instructional designer refining an ID Assist course outline.
 
 Rules:
 - Keep the same outcome ids and lesson ids. Do not add or remove ids.
@@ -73,7 +74,8 @@ Rules:
 
 Current outline JSON:
 ${JSON.stringify(snapshot, null, 2)}`,
-  });
+    }),
+  );
 
   if (!output) {
     throw new Error("Model returned no structured refine output.");

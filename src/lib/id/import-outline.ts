@@ -10,7 +10,7 @@ import { outlineStatus, runFilters } from "./filters";
 import { defaultTeam, estimateProject } from "./estimate";
 import { nid } from "./ids";
 import { CURRENT_SCHEMA_VERSION } from "./migrations";
-import { getLanguageModel, hasLanguageModel } from "./model";
+import { hasLanguageModel, withLanguageModel } from "./model";
 import { mergeRequirements } from "./requirements";
 import {
   BLOOM_LEVELS,
@@ -93,10 +93,11 @@ export async function parseOutlineText(rawText: string): Promise<ImportedOutline
     );
   }
 
-  const { output } = await generateText({
-    model: await getLanguageModel(),
-    output: Output.object({ schema: importedOutlineSchema }),
-    prompt: `You are an instructional designer digesting an existing course outline pasted in by its author. It may be messy, informal, a bullet list, headings with prose, or a table copied as text — reorganize it into a Bloom's-taxonomy-gated, ADDIE-style structure without inventing an unrelated course.
+  const { output } = await withLanguageModel((model) =>
+    generateText({
+      model,
+      output: Output.object({ schema: importedOutlineSchema }),
+      prompt: `You are an instructional designer digesting an existing course outline pasted in by its author. It may be messy, informal, a bullet list, headings with prose, or a table copied as text — reorganize it into a Bloom's-taxonomy-gated, ADDIE-style structure without inventing an unrelated course.
 
 What to extract:
 - title, audience, jobTask (the overall terminal job performance), whyNow, durationMinutes (total learner seat time in minutes, only if stated or clearly implied), constraints, deliveryHints (rise/canvas/gdoc/gslides/video/tutor — only if the source names or clearly implies a delivery channel).
@@ -113,7 +114,8 @@ Source outline (verbatim, pasted by the author):
 """
 ${rawText}
 """`,
-  });
+    }),
+  );
 
   if (!output) {
     throw new Error("The model returned no structured output for this outline.");
