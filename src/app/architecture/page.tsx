@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import { StatusIcon, StatusPill } from "@/components/status";
+import { ArchitectureFlow } from "@/components/architecture-flow";
+import { StatusPill } from "@/components/status";
 import {
   ARCHITECTURE_UPDATED_AT,
   CROSS_CUTTING,
@@ -35,40 +35,12 @@ export default function ArchitecturePage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
           Pipeline
         </h2>
-        <div className="mt-3 flex items-stretch gap-2 overflow-x-auto pb-2">
-          {PIPELINE_STAGES.map((stage, index) => (
-            <div key={stage.id} className="flex items-stretch gap-2">
-              <div className="flex w-56 shrink-0 flex-col gap-2 rounded-xl border border-line bg-card p-4">
-                <span className="font-mono text-xs text-muted">
-                  {String(stage.order).padStart(2, "0")}
-                </span>
-                <h3 className="text-base font-semibold">{stage.title}</h3>
-                <p className="font-mono text-[11px] text-muted">
-                  {stage.file}
-                </p>
-                <ul className="mt-1 flex flex-col gap-1.5">
-                  {stage.chips.map((chip) => (
-                    <li
-                      key={chip.label}
-                      className="flex items-start gap-2 text-xs text-muted"
-                    >
-                      <StatusIcon
-                        status={chip.status}
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                      />
-                      <span>{chip.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {index < PIPELINE_STAGES.length - 1 ? (
-                <div className="flex items-center text-muted">
-                  <ChevronRightIcon className="h-4 w-4" />
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
+        <ArchitectureFlow stages={PIPELINE_STAGES} />
+        <p className="mt-1 text-center text-xs text-danger">
+          dashed line — approval is soft: any edit or AI refine after
+          approving resets status to needs_review and wipes the generated
+          artifacts
+        </p>
       </section>
 
       <section className="mt-10">
