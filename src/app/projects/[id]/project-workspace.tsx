@@ -1103,7 +1103,9 @@ function LessonEditor({
                 saving="Saving lesson…"
                 done="Lesson saved"
               />
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted">Reopen outline to edit.</p>
+            )}
           </>
         )}
       </ActionForm>
