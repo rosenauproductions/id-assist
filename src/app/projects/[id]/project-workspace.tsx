@@ -1071,11 +1071,27 @@ function LessonEditor({
                 )}
               />
             </p>
-            <ul className="grid gap-1 text-sm text-muted">
+            <ul className="grid gap-2">
               {lesson.units.map((unit) => (
-                <li key={unit.id}>
-                  {unit.gagne}
-                  {unit.riseBlock ? ` / ${unit.riseBlock}` : ""} — {unit.purpose}
+                <li
+                  key={unit.id}
+                  className="grid gap-1.5 rounded-md border border-line/60 bg-card/40 p-2.5"
+                >
+                  <p className="text-xs text-muted">
+                    <span className="font-medium text-foreground">
+                      {unit.gagne}
+                      {unit.riseBlock ? ` / ${unit.riseBlock}` : ""}
+                    </span>{" "}
+                    — {unit.purpose}
+                  </p>
+                  <textarea
+                    name={`unit-content-${unit.id}`}
+                    defaultValue={unit.content ?? ""}
+                    disabled={locked || pending}
+                    rows={2}
+                    placeholder="Write the actual content for this beat — script, narration, bullet points…"
+                    className="field"
+                  />
                 </li>
               ))}
             </ul>

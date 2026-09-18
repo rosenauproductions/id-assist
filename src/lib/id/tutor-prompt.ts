@@ -1,3 +1,4 @@
+import { unitText } from "./types";
 import type { IdProject, Outcome } from "./types";
 
 export function tutorSystemPrompt(project: IdProject): string {
@@ -28,7 +29,7 @@ export function tutorSystemPrompt(project: IdProject): string {
             .join(" | ") || "none"
         }`,
         `Evidence: ${assessment ? `${assessment.format} — ${assessment.correctPerformance}` : "none (enabling)"}`,
-        `Beats: ${lesson.units.map((unit) => unit.purpose).join(" | ")}`,
+        `Beats: ${lesson.units.map((unit) => unitText(unit)).join(" | ")}`,
       ].join("\n");
     })
     .join("\n\n");

@@ -233,6 +233,13 @@ export async function updateLessonAction(formData: FormData) {
     lesson.delivery = delivery as DeliveryTarget;
   }
 
+  for (const unitItem of lesson.units) {
+    const raw = formData.get(`unit-content-${unitItem.id}`);
+    if (raw === null) continue;
+    const trimmed = String(raw).trim();
+    unitItem.content = trimmed === "" ? undefined : trimmed;
+  }
+
   if (project.outline.status === "approved") {
     project.outline.status = "needs_review";
     project.artifacts = [];

@@ -62,6 +62,9 @@ function lessonBlock(project: IdProject, lesson: Lesson): string {
     lines.push(
       `- [${unit.gagne}${unit.riseBlock ? ` / ${unit.riseBlock}` : ""}] ${unit.purpose}`,
     );
+    if (unit.content?.trim()) {
+      lines.push(`  ${unit.content.trim().split("\n").join("\n  ")}`);
+    }
   }
   return lines.join("\n");
 }
@@ -118,12 +121,15 @@ function videoScript(project: IdProject): string {
   for (const lesson of lessons) {
     lines.push(`## ${lesson.title} (${lesson.estimatedMinutes} min)`, "");
     for (const unit of lesson.units) {
+      const vo = unit.content?.trim()
+        ? unit.content.trim()
+        : `${unit.purpose}. Keep this beat under 75 seconds.`;
       lines.push(
         `### Shot ${shot} — ${unit.gagne}`,
         "",
         `On-screen: ${unit.purpose}`,
         "",
-        `VO: ${unit.purpose}. Keep this beat under 75 seconds.`,
+        `VO: ${vo}`,
         "",
       );
       shot += 1;
@@ -168,6 +174,9 @@ function googleSlides(project: IdProject): string {
   for (const lesson of lessons) {
     for (const unit of lesson.units) {
       lines.push(`## Slide ${n}: ${unit.purpose}`, "", `(${unit.gagne})`, "");
+      if (unit.content?.trim()) {
+        lines.push(unit.content.trim(), "");
+      }
       n += 1;
     }
   }

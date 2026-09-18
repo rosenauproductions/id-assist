@@ -34,7 +34,7 @@ export type ArchNote = {
 
 // Bump this whenever the arrays below change so the page's "Updated" line
 // stays honest.
-export const ARCHITECTURE_UPDATED_AT = "2026-09-18";
+export const ARCHITECTURE_UPDATED_AT = "2026-09-18";  // lesson-content editor shipped
 
 export const PIPELINE_STAGES: ArchStage[] = [
   {
@@ -57,7 +57,7 @@ export const PIPELINE_STAGES: ArchStage[] = [
       { label: "compileBrief() — deterministic, no LLM", status: "done" },
       { label: "1 lesson per outcome, single module", status: "done" },
       { label: "Gagné-event units from fixed templates", status: "done" },
-      { label: "Direct edit of unit content", status: "blocked" },
+      { label: "Direct edit of unit content", status: "done" },
     ],
   },
   {
@@ -119,10 +119,10 @@ export const GAPS: ArchGap[] = [
   },
   {
     id: "no-unit-editor",
-    title: "No hand-edit path for lesson content",
+    title: "Lesson content is now hand-editable",
     detail:
-      "The Gagné-event bullets inside a lesson are read-only. The only way to change them is Refine with AI regenerating the whole outline — no field-level editor exists today.",
-    status: "not_started",
+      "Each Gagné-event beat in a lesson has its own content field (project-workspace.tsx's LessonEditor, saved by updateLessonAction). Every generated artifact and the live tutor prompt use the written content once it's non-empty, falling back to the auto-generated label until then (see unitText() in lib/id/types.ts).",
+    status: "done",
   },
 ];
 

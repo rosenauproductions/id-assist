@@ -93,7 +93,25 @@ export type ContentUnit = {
   gagne: GagneEvent;
   delivery: DeliveryTarget;
   riseBlock?: RiseBlockKind;
+  /**
+   * The actual instructional content for this beat — script, narration,
+   * bullet points, whatever the ID/SME writes by hand. `purpose` stays a
+   * short structural label generated at compile time; this is empty until
+   * a person fills it in via the Lesson editor. Every generated artifact
+   * (adapters.ts) and the live tutor prompt (tutor-prompt.ts) prefer this
+   * over `purpose` once it's non-empty — see unitText() below.
+   */
+  content?: string;
 };
+
+/** The text a generated artifact or the live tutor should show for a unit:
+ * the hand-written content once someone's written it, otherwise the
+ * auto-generated purpose label. Centralized so every export stays in sync
+ * once content editing lands. */
+export function unitText(unit: ContentUnit): string {
+  const written = unit.content?.trim();
+  return written ? written : unit.purpose;
+}
 
 export type FilterHit = {
   id: string;
