@@ -15,11 +15,10 @@ import {
 // Design/Develop/Implement/Evaluate); SAM gets 3 (Preparation/Iterative
 // Design/Iterative Development) — SAM's active segment isn't drawn any
 // differently for being non-sequential (that's a property of how it's set,
-// in the selector this indicator opens, not how it's drawn). Only the
-// current phase's segment glows; the rest sit dim on the ring. This is a
-// visual restyle (glowing LED segments on a recessed plate, matching the
-// Xbox achievement-ring reference) plus a phase-name label to the right
-// of the ring — same underlying data/behavior as before.
+// not how it's drawn). Only the current phase's segment glows; the rest sit
+// dim on the ring. To the right of the ring: the current phase name, its
+// position (e.g. "3/5"), and a slide toggle to switch ADDIE/SAM directly
+// (switching resets to that mode's first phase, same as the popover does).
 
 const SIZE = 40;
 const STROKE = 6;
@@ -27,6 +26,7 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CENTER = SIZE / 2;
 const GAP_DEG = 14;
 const LONG_PRESS_MS = 500;
+const TOGGLE_OPTION_WIDTH = 40; // px — must match the w-10 buttons below
 
 export function phasesFor(mode: CourseMode): readonly MethodologyPhase[] {
   return mode === "sam" ? SAM_PHASES : ADDIE_PHASES;
@@ -55,11 +55,56 @@ function describeSegment(startAngle: number, endAngle: number): string {
   return `M ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
 }
 
+function ModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: CourseMode;
+  onChange: (mode: CourseMode) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Switch ADDIE or SAM"
+      className="relative inline-flex h-6 shrink-0 items-center rounded-full border border-line bg-card p-0.5 text-[10px] font-semibold uppercase tracking-wide"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-0.5 left-0.5 w-10 rounded-full bg-accent/15 transition-transform duration-200 ease-out"
+        style={{
+          transform: mode === "sam" ? `translateX(${TOGGLE_OPTION_WIDTH}px)` : "translateX(0)",
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => onChange("addie")}
+        aria-pressed={mode === "addie"}
+        className={`relative z-10 w-10 rounded-full py-0.5 text-center transition-colors ${
+          mode === "addie" ? "text-accent" : "text-muted hover:text-foreground"
+        }`}
+      >
+        ADDIE
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("sam")}
+        aria-pressed={mode === "sam"}
+        className={`relative z-10 w-10 rounded-full py-0.5 text-center transition-colors ${
+          mode === "sam" ? "text-accent" : "text-muted hover:text-foreground"
+        }`}
+      >
+        SAM
+      </button>
+    </div>
+  );
+}
+
 export function ModeIndicator({
   mode,
   phase,
   onOpenMap,
   onOpenSelector,
+  onModeChange,
   className = "",
 }: {
   mode: CourseMode;
@@ -69,6 +114,9 @@ export function ModeIndicator({
   /** Secondary action: caret click, right-click, or long-press open a
    * mode/phase selector directly, without navigating. */
   onOpenSelector?: () => void;
+  /** Slide-toggle action: switch straight to ADDIE or SAM (resets to that
+   * mode's first phase). Omit to hide the toggle. */
+  onModeChange?: (mode: CourseMode) => void;
   className?: string;
 }) {
   const phases = phasesFor(mode);
@@ -178,11 +226,14 @@ export function ModeIndicator({
           </svg>
         </button>
       </span>
-      <span className="flex flex-col items-start leading-tight">
-        <span className="text-[10px] font-medium uppercase tracking-wide text-muted">
-          {modeLabel}
+      <span className="flex items-center gap-2">
+        <span className="flex items-baseline gap-1.5">
+          <span className="text-sm font-semibold text-foreground">{phaseLabel}</span>
+          <span className="text-xs font-medium tabular-nums text-muted">
+            {activeIndex + 1}/{n}
+          </span>
         </span>
-        <span className="text-sm font-semibold text-foreground">{phaseLabel}</span>
+        {onModeChange ? <ModeToggle mode={mode} onChange={onModeChange} /> : null}
       </span>
     </span>
   );

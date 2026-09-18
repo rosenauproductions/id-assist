@@ -26,7 +26,7 @@ import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
 import { CourseMap } from "@/components/course-map";
 import { ConstructionMap } from "@/components/construction-map";
-import { ModeIndicator } from "@/components/mode-indicator";
+import { ModeIndicator, phasesFor } from "@/components/mode-indicator";
 import { ModeSelector } from "@/components/mode-selector";
 import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
@@ -38,6 +38,7 @@ import {
   DELIVERY_TARGETS,
   TIME_PHASES,
   type AssessmentSpec,
+  type CourseMode,
   type FilterHit,
   type IdProject,
   type Lesson,
@@ -142,6 +143,15 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
       formData.set("phase", next.phase);
       await updateMethodologyAction(formData);
     });
+  }
+
+  // The indicator's slide toggle jumps straight to ADDIE or SAM, same as
+  // picking a new mode in the popover selector: land on that mode's first
+  // phase rather than trying to carry over a phase index across the two
+  // differently-shaped phase lists.
+  function handleModeToggle(mode: CourseMode) {
+    if (mode === project.methodology.mode) return;
+    handleMethodologyChange({ mode, phase: phasesFor(mode)[0] });
   }
 
   // Clicking a course-map node jumps to that piece in the editor: switches
@@ -253,6 +263,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
                 phase={project.methodology.phase}
                 onOpenMap={openMapFromModeIndicator}
                 onOpenSelector={() => setModeSelectorOpen((open) => !open)}
+                onModeChange={handleModeToggle}
               />
               {modeSelectorOpen ? (
                 <ModeSelector
