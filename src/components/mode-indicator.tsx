@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import {
   ADDIE_PHASES,
   ADDIE_PHASE_LABELS,
@@ -10,18 +10,22 @@ import {
   type MethodologyPhase,
 } from "@/lib/id/types";
 
-// Xbox-style segmented ring course-mode indicator (roadmap section 13
-// follow-up). ADDIE gets 5 sequential-looking segments (Analyze/Design/
-// Develop/Implement/Evaluate); SAM gets 3 (Preparation/Iterative Design/
-// Iterative Development) — SAM's active segment isn't drawn any
-// differently for being non-sequential (that's a property of how it's
-// set, in the selector this indicator opens, not how it's drawn).
+// Xbox-achievement-style segmented LED ring course-mode indicator (roadmap
+// section 13 follow-up). ADDIE gets 5 sequential-looking segments (Analyze/
+// Design/Develop/Implement/Evaluate); SAM gets 3 (Preparation/Iterative
+// Design/Iterative Development) — SAM's active segment isn't drawn any
+// differently for being non-sequential (that's a property of how it's set,
+// in the selector this indicator opens, not how it's drawn). Only the
+// current phase's segment glows; the rest sit dim on the ring. This is a
+// visual restyle (glowing LED segments on a recessed plate, matching the
+// Xbox achievement-ring reference) plus a phase-name label to the right
+// of the ring — same underlying data/behavior as before.
 
-const SIZE = 28;
-const STROKE = 3.5;
+const SIZE = 40;
+const STROKE = 6;
 const RADIUS = (SIZE - STROKE) / 2;
 const CENTER = SIZE / 2;
-const GAP_DEG = 10;
+const GAP_DEG = 14;
 const LONG_PRESS_MS = 500;
 
 export function phasesFor(mode: CourseMode): readonly MethodologyPhase[] {
@@ -72,6 +76,7 @@ export function ModeIndicator({
   const segAngle = 360 / n;
   const activeIndex = phases.indexOf(phase);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const glowId = useId();
 
   function handleContextMenu(event: React.MouseEvent) {
     event.preventDefault();
@@ -94,50 +99,91 @@ export function ModeIndicator({
   const phaseLabel = labelFor(mode, phase);
 
   return (
-    <span className={`inline-flex items-center gap-0.5 ${className}`}>
-      <button
-        type="button"
-        title={`${modeLabel} · ${phaseLabel} — open the map`}
-        aria-label={`Course mode: ${modeLabel}, phase ${phaseLabel}. Click to open the map.`}
-        onClick={onOpenMap}
-        onContextMenu={handleContextMenu}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={clearLongPress}
-        onTouchMove={clearLongPress}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-opacity hover:opacity-80"
-      >
-        <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-          {phases.map((segmentPhase, index) => {
-            const start = index * segAngle + GAP_DEG / 2;
-            const end = (index + 1) * segAngle - GAP_DEG / 2;
-            const isActive = index === activeIndex;
-            return (
-              <path
-                key={segmentPhase}
-                d={describeSegment(start, end)}
-                fill="none"
-                stroke={isActive ? "var(--accent)" : "var(--line)"}
-                strokeWidth={STROKE}
-                strokeLinecap="round"
-              />
-            );
-          })}
-        </svg>
-      </button>
-      <button
-        type="button"
-        title="Switch mode or phase"
-        aria-label="Open mode and phase selector"
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpenSelector?.();
-        }}
-        className="flex h-5 w-4 shrink-0 items-center justify-center text-muted hover:text-foreground"
-      >
-        <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden>
-          <path d="M1 2.5 L4 5.5 L7 2.5" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <span className="relative inline-flex shrink-0 items-center">
+        <button
+          type="button"
+          title={`${modeLabel} · ${phaseLabel} — open the map`}
+          aria-label={`Course mode: ${modeLabel}, phase ${phaseLabel}. Click to open the map.`}
+          onClick={onOpenMap}
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={clearLongPress}
+          onTouchMove={clearLongPress}
+          className="flex shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105"
+          style={{ width: SIZE, height: SIZE }}
+        >
+          <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+            <defs>
+              <filter id={glowId} x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur1" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur2" />
+                <feMerge>
+                  <feMergeNode in="blur1" />
+                  <feMergeNode in="blur2" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+            {/* recessed plate behind the ring */}
+            <circle
+              cx={CENTER}
+              cy={CENTER}
+              r={SIZE / 2 - 0.5}
+              fill="var(--card)"
+              stroke="var(--line)"
+              strokeWidth={1}
+            />
+            {/* inner bezel line around the center "button" */}
+            <circle
+              cx={CENTER}
+              cy={CENTER}
+              r={RADIUS - STROKE / 2 - 2.5}
+              fill="none"
+              stroke="var(--line)"
+              strokeWidth={1}
+              opacity={0.6}
+            />
+            {phases.map((segmentPhase, index) => {
+              const start = index * segAngle + GAP_DEG / 2;
+              const end = (index + 1) * segAngle - GAP_DEG / 2;
+              const isActive = index === activeIndex;
+              return (
+                <path
+                  key={segmentPhase}
+                  d={describeSegment(start, end)}
+                  fill="none"
+                  stroke={isActive ? "var(--accent)" : "var(--line)"}
+                  strokeWidth={STROKE}
+                  strokeLinecap="round"
+                  opacity={isActive ? 1 : 0.5}
+                  filter={isActive ? `url(#${glowId})` : undefined}
+                />
+              );
+            })}
+          </svg>
+        </button>
+        <button
+          type="button"
+          title="Switch mode or phase"
+          aria-label="Open mode and phase selector"
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpenSelector?.();
+          }}
+          className="absolute -right-1 -bottom-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted hover:text-foreground"
+        >
+          <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden>
+            <path d="M1 2.5 L4 5.5 L7 2.5" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </span>
+      <span className="flex flex-col items-start leading-tight">
+        <span className="text-[10px] font-medium uppercase tracking-wide text-muted">
+          {modeLabel}
+        </span>
+        <span className="text-sm font-semibold text-foreground">{phaseLabel}</span>
+      </span>
     </span>
   );
 }
