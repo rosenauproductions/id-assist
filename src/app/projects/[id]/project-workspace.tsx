@@ -724,6 +724,7 @@ function Workflow({
   openFilters: number;
 }) {
   const steps = [
+    { id: "brief", label: "Brief", done: true },
     { id: "outline", label: "Outline", done: true },
     {
       id: "filters",
@@ -734,18 +735,18 @@ function Workflow({
     { id: "artifacts", label: "Delivery files", done: hasArtifacts },
   ];
   return (
-    <ol className="mt-6 grid gap-2 sm:grid-cols-4">
+    <ol className="mt-6 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
       {steps.map((step, index) => (
         <li
           key={step.id}
-          className={`rounded-lg border px-3 py-2 text-sm ${
+          className={`rounded-md border px-2 py-1.5 text-xs leading-tight ${
             step.done
               ? "border-accent/30 bg-accent/5 text-accent"
               : "border-line bg-card text-muted"
           }`}
         >
-          <span className="text-[11px] uppercase tracking-wide">
-            Step {index + 2}
+          <span className="text-[10px] uppercase tracking-wide">
+            Step {index + 1}
           </span>
           <div className="font-medium text-foreground">{step.label}</div>
         </li>
@@ -1343,7 +1344,7 @@ function PhaseTimeline({
         Discovery → Publishing. Auto-calculated from the requirements
         checklist below — override a phase if reality doesn&apos;t match yet.
       </p>
-      <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {phases.map((phase) => (
           <PhaseCard key={phase.phase} projectId={projectId} phase={phase} />
         ))}
@@ -1369,30 +1370,26 @@ function PhaseCard({
   const [editing, setEditing] = useState(false);
   const tone = PHASE_STATUS_TONE[phase.status] ?? PHASE_STATUS_TONE.not_started;
   return (
-    <li className={`rounded-lg border p-3 text-sm ${tone}`}>
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-medium">
-          <StatusIcon status={phase.status} className="h-3.5 w-3.5" />
+    <li className={`rounded-md border p-2 text-xs ${tone}`}>
+      <div className="flex items-center gap-1 font-medium leading-tight">
+        <StatusIcon status={phase.status} className="h-3 w-3 shrink-0" />
+        <span className="truncate" title={COURSE_PHASE_LABELS[phase.phase]}>
           {COURSE_PHASE_LABELS[phase.phase]}
         </span>
         {phase.overridden ? (
-          <span className="text-[10px] uppercase tracking-wide text-muted">
-            manual
-          </span>
+          <span
+            className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60"
+            title="Manually overridden"
+          />
         ) : null}
       </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line/60">
+      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-line/60">
         <div
           className="h-full rounded-full bg-current opacity-70"
           style={{ width: `${phase.percent}%` }}
         />
       </div>
-      <p className="mt-1 text-xs text-muted">
-        {phase.percent}% · {phase.status.replace("_", " ")}
-        {phase.requiredTotal > 0
-          ? ` · ${phase.requiredDone}/${phase.requiredTotal} required`
-          : ""}
-      </p>
+      <p className="mt-1 text-[11px] text-muted">{phase.percent}%</p>
       {editing ? (
         <ActionForm
           className="mt-2 grid gap-1"
