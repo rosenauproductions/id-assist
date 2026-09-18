@@ -24,11 +24,11 @@ const CENTER = SIZE / 2;
 const GAP_DEG = 10;
 const LONG_PRESS_MS = 500;
 
-function phasesFor(mode: CourseMode): readonly MethodologyPhase[] {
+export function phasesFor(mode: CourseMode): readonly MethodologyPhase[] {
   return mode === "sam" ? SAM_PHASES : ADDIE_PHASES;
 }
 
-function labelFor(mode: CourseMode, phase: MethodologyPhase): string {
+export function labelFor(mode: CourseMode, phase: MethodologyPhase): string {
   if (mode === "sam") {
     return SAM_PHASE_LABELS[phase as (typeof SAM_PHASES)[number]] ?? phase;
   }

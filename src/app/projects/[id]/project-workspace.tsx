@@ -18,6 +18,7 @@ import {
   toggleRequirementAction,
   updateAssessmentCountsAction,
   updateLessonAction,
+  updateMethodologyAction,
   updateOutcomeAction,
   updateSmeAction,
 } from "@/app/actions";
@@ -25,6 +26,8 @@ import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
 import { CourseMap } from "@/components/course-map";
 import { ConstructionMap } from "@/components/construction-map";
+import { ModeIndicator } from "@/components/mode-indicator";
+import { ModeSelector } from "@/components/mode-selector";
 import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
@@ -38,6 +41,7 @@ import {
   type FilterHit,
   type IdProject,
   type Lesson,
+  type Methodology,
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
@@ -53,6 +57,41 @@ type WorkspaceTabId =
   | "delivery";
 
 type MapSubView = "construction" | "alignment" | "learner-path";
+
+const MAP_VIEW_STORAGE_PREFIX = "id-assist:map-view:";
+const MAP_SUB_VIEWS: MapSubView[] = ["construction", "alignment", "learner-path"];
+
+function loadStoredMapView(projectId: string): MapSubView {
+  if (typeof window === "undefined") return "construction";
+  try {
+    const stored = window.localStorage.getItem(MAP_VIEW_STORAGE_PREFIX + projectId);
+    if (stored && (MAP_SUB_VIEWS as string[]).includes(stored)) {
+      return stored as MapSubView;
+    }
+  } catch {
+    // best-effort only — fall through to the default
+  }
+  return "construction";
+}
+
+function storeMapView(projectId: string, view: MapSubView) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(MAP_VIEW_STORAGE_PREFIX + projectId, view);
+  } catch {
+    // best-effort only
+  }
+}
+
+/** Context-aware default view for the mode indicator's primary click.
+ * Only Construction/Completion exists so far (roadmap section 13, phase
+ * 1) — this always resolves there until the Alignment (phase 2) and
+ * Learner Path (phase 3) views exist to route to for the mode/phase
+ * combinations that call for them. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- methodology param kept for the future Alignment/Learner Path routing
+function defaultMapViewFor(_methodology: Methodology): MapSubView {
+  return "construction";
+}
 
 export function ProjectWorkspace({ project }: { project: IdProject }) {
   const router = useRouter();
@@ -76,7 +115,34 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
     [outline, requirements],
   );
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
-  const [mapSubView, setMapSubView] = useState<MapSubView>("construction");
+  const [mapSubView, setMapSubViewState] = useState<MapSubView>(() =>
+    loadStoredMapView(project.id),
+  );
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
+
+  function setMapSubView(view: MapSubView) {
+    setMapSubViewState(view);
+    storeMapView(project.id, view);
+  }
+
+  // The mode indicator's primary click always overrides whatever view was
+  // last viewed with the context-aware default for the project's current
+  // mode/phase (only Construction exists so far — see defaultMapViewFor).
+  function openMapFromModeIndicator() {
+    setMapSubView(defaultMapViewFor(project.methodology));
+    setActiveTab("map");
+  }
+
+  function handleMethodologyChange(next: Methodology) {
+    setModeSelectorOpen(false);
+    run(async () => {
+      const formData = new FormData();
+      formData.set("projectId", project.id);
+      formData.set("mode", next.mode);
+      formData.set("phase", next.phase);
+      await updateMethodologyAction(formData);
+    });
+  }
 
   // Clicking a course-map node jumps to that piece in the editor: switches
   // to the tab that owns it, scrolls the matching list item into view (see
@@ -181,6 +247,21 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
             <span className="text-xs text-muted">
               estimate basis: {estimate.basis}
             </span>
+            <div className="relative inline-block">
+              <ModeIndicator
+                mode={project.methodology.mode}
+                phase={project.methodology.phase}
+                onOpenMap={openMapFromModeIndicator}
+                onOpenSelector={() => setModeSelectorOpen((open) => !open)}
+              />
+              {modeSelectorOpen ? (
+                <ModeSelector
+                  methodology={project.methodology}
+                  onChange={handleMethodologyChange}
+                  onClose={() => setModeSelectorOpen(false)}
+                />
+              ) : null}
+            </div>
           </div>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
             {outline.brief.title}

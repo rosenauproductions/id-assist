@@ -15,13 +15,17 @@ import { deleteProject, loadProject, saveProject } from "@/lib/id/store";
 import { addAcceptableRule } from "@/lib/id/acceptable-rules";
 import { requireWorkspaceContext } from "@/lib/team/store";
 import {
+  ADDIE_PHASES,
   BLOOM_LEVELS,
   COURSE_PHASES,
   DELIVERY_TARGETS,
+  SAM_PHASES,
   TIME_PHASES,
   type Bloom,
+  type CourseMode,
   type CoursePhase,
   type DeliveryTarget,
+  type MethodologyPhase,
   type PhaseStatus,
   type RequirementPriority,
   type SmeEngagement,
@@ -325,6 +329,30 @@ export async function deleteRequirementAction(
   project.requirements = (project.requirements ?? []).filter(
     (item) => !(item.id === requirementId && item.source === "manual"),
   );
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function updateMethodologyAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const mode = String(formData.get("mode") ?? "");
+  if (mode !== "addie" && mode !== "sam") {
+    throw new Error("Invalid course mode");
+  }
+  const phase = String(formData.get("phase") ?? "");
+  const validPhases: readonly string[] = mode === "sam" ? SAM_PHASES : ADDIE_PHASES;
+  if (!validPhases.includes(phase)) {
+    throw new Error("Invalid phase for mode");
+  }
+
+  project.methodology = {
+    mode: mode as CourseMode,
+    phase: phase as MethodologyPhase,
+  };
+
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }
