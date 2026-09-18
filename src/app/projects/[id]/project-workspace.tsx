@@ -24,6 +24,7 @@ import {
 import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
 import { CourseMap } from "@/components/course-map";
+import { ConstructionMap } from "@/components/construction-map";
 import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
@@ -47,8 +48,11 @@ type WorkspaceTabId =
   | "assessments"
   | "filters"
   | "requirements"
+  | "map"
   | "time-cost"
   | "delivery";
+
+type MapSubView = "construction" | "alignment" | "learner-path";
 
 export function ProjectWorkspace({ project }: { project: IdProject }) {
   const router = useRouter();
@@ -72,6 +76,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
     [outline, requirements],
   );
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
+  const [mapSubView, setMapSubView] = useState<MapSubView>("construction");
 
   // Clicking a course-map node jumps to that piece in the editor: switches
   // to the tab that owns it, scrolls the matching list item into view (see
@@ -129,6 +134,7 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
       label: "Requirements",
       badge: `${requirements.filter((item) => item.done).length}/${requirements.length}`,
     },
+    { id: "map", label: "Map" },
     { id: "time-cost", label: "Time & cost" },
     {
       id: "delivery",
@@ -254,7 +260,11 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
       </section>
       <p className="mt-2 text-sm text-muted">Bottleneck: {estimate.bottleneck}</p>
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+      <div
+        className={`mt-10 grid gap-6 lg:items-start ${
+          activeTab === "map" ? "lg:grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_18rem]"
+        }`}
+      >
       <div>
         <div role="tablist" className="flex flex-wrap gap-1 border-b border-line">
           {tabs.map((tab) => (
@@ -382,6 +392,65 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
             </section>
           ) : null}
 
+          {activeTab === "map" ? (
+            <section>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold">Map</h2>
+                <div
+                  role="tablist"
+                  aria-label="Map view"
+                  className="flex gap-1 rounded-lg border border-line p-1"
+                >
+                  {(
+                    [
+                      { id: "construction", label: "Construction" },
+                      { id: "alignment", label: "Alignment" },
+                      { id: "learner-path", label: "Learner Path" },
+                    ] as { id: MapSubView; label: string }[]
+                  ).map((view) => (
+                    <button
+                      key={view.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={mapSubView === view.id}
+                      onClick={() => setMapSubView(view.id)}
+                      className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                        mapSubView === view.id
+                          ? "bg-line/60 text-foreground"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {view.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {mapSubView === "construction" ? (
+                <>
+                  <p className="mt-1 text-sm text-muted">
+                    Coloring reflects the Requirements checklist for each
+                    piece&apos;s phase, overlaid red where a filter finding is
+                    still open.
+                  </p>
+                  <div className="mt-4">
+                    <ConstructionMap
+                      data={courseMap}
+                      activeId={activeMapNodeId}
+                      onSelect={focusMapNode}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="mt-4 text-sm text-muted">
+                  {mapSubView === "alignment"
+                    ? "Alignment view (outcomes vs. lessons/assessments) is coming in a later phase."
+                    : "Learner Path view (full-course sequential flow) is coming in a later phase."}
+                </p>
+              )}
+            </section>
+          ) : null}
+
           {activeTab === "time-cost" ? (
             <div className="grid gap-8 sm:grid-cols-2">
               <section>
@@ -470,14 +539,16 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
         </div>
       </div>
 
-      <aside className="lg:sticky lg:top-6">
-        <CourseMap
-          data={courseMap}
-          activeId={activeMapNodeId}
-          onSelect={focusMapNode}
-          emptyHint="Nothing compiled yet."
-        />
-      </aside>
+      {activeTab === "map" ? null : (
+        <aside className="lg:sticky lg:top-6">
+          <CourseMap
+            data={courseMap}
+            activeId={activeMapNodeId}
+            onSelect={focusMapNode}
+            emptyHint="Nothing compiled yet."
+          />
+        </aside>
+      )}
       </div>
 
       <style>{`
