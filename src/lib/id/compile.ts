@@ -1,6 +1,7 @@
 import { estimateProject, defaultTeam } from "./estimate";
 import { nid } from "./ids";
 import { CURRENT_SCHEMA_VERSION } from "./migrations";
+import { DEFAULT_METHODOLOGY } from "./types";
 import { outlineStatus, runFilters } from "./filters";
 import { mergeRequirements } from "./requirements";
 import {
@@ -298,6 +299,7 @@ export function compileBrief(brief: CourseBrief): IdProject {
     timeLogs: [],
     requirements: [],
     phaseProgress: COURSE_PHASES.map((phase) => ({ phase })),
+    methodology: { ...DEFAULT_METHODOLOGY },
   };
 
   project.outline.filters = runFilters(project.outline);

@@ -230,6 +230,60 @@ export const COURSE_PHASES = [
 
 export type CoursePhase = (typeof COURSE_PHASES)[number];
 
+/**
+ * Instructional-design methodology + where the project currently sits
+ * within it. Distinct from CoursePhase/COURSE_PHASES above (the 8-step
+ * Discovery→Publishing production/assembly timeline) — this is the
+ * coarser ADDIE/SAM methodology framing shown by the course mode
+ * indicator. ADDIE's phases are sequential; SAM's are not (its active
+ * phase can move freely, reflecting SAM's iterative-loop nature).
+ */
+export const ADDIE_PHASES = [
+  "analyze",
+  "design",
+  "develop",
+  "implement",
+  "evaluate",
+] as const;
+
+export type AddiePhase = (typeof ADDIE_PHASES)[number];
+
+export const ADDIE_PHASE_LABELS: Record<AddiePhase, string> = {
+  analyze: "Analyze",
+  design: "Design",
+  develop: "Develop",
+  implement: "Implement",
+  evaluate: "Evaluate",
+};
+
+export const SAM_PHASES = [
+  "preparation",
+  "iterative_design",
+  "iterative_development",
+] as const;
+
+export type SamPhase = (typeof SAM_PHASES)[number];
+
+export const SAM_PHASE_LABELS: Record<SamPhase, string> = {
+  preparation: "Preparation",
+  iterative_design: "Iterative Design",
+  iterative_development: "Iterative Development",
+};
+
+export type CourseMode = "addie" | "sam";
+
+export type MethodologyPhase = AddiePhase | SamPhase;
+
+export type Methodology = {
+  mode: CourseMode;
+  phase: MethodologyPhase;
+};
+
+export const DEFAULT_METHODOLOGY: Methodology = {
+  mode: "addie",
+  phase: "analyze",
+};
+
 export const COURSE_PHASE_LABELS: Record<CoursePhase, string> = {
   discovery: "Discovery",
   design: "Design",
@@ -287,4 +341,5 @@ export type IdProject = {
   timeLogs: TimeLog[];
   requirements: RequirementItem[];
   phaseProgress: PhaseProgress[];
+  methodology: Methodology;
 };

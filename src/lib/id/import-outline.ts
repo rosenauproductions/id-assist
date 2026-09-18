@@ -10,6 +10,7 @@ import { outlineStatus, runFilters } from "./filters";
 import { defaultTeam, estimateProject } from "./estimate";
 import { nid } from "./ids";
 import { CURRENT_SCHEMA_VERSION } from "./migrations";
+import { DEFAULT_METHODOLOGY } from "./types";
 import { hasLanguageModel, withLanguageModel } from "./model";
 import { mergeRequirements } from "./requirements";
 import {
@@ -276,6 +277,7 @@ export function buildProjectFromImportedOutline(parsed: ImportedOutline): IdProj
     timeLogs: [],
     requirements: [],
     phaseProgress: COURSE_PHASES.map((phase) => ({ phase })),
+    methodology: { ...DEFAULT_METHODOLOGY },
   };
 
   project.outline.filters = runFilters(project.outline);

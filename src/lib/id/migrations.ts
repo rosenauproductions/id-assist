@@ -1,4 +1,4 @@
-import { COURSE_PHASES, type IdProject } from "./types";
+import { COURSE_PHASES, DEFAULT_METHODOLOGY, type IdProject } from "./types";
 
 /**
  * Versioned migrations for the `IdProject` JSON blob stored in
@@ -70,6 +70,16 @@ const MIGRATIONS: Migration[] = [
           lesson.objectiveIds = lesson.objectiveId ? [lesson.objectiveId] : [];
         }
         delete lesson.objectiveId;
+      }
+    },
+  },
+  {
+    version: 4,
+    description:
+      "Add methodology { mode, phase } (ADDIE/SAM course mode indicator). Defaults every existing project to ADDIE / Analyze.",
+    up: (project) => {
+      if (!project.methodology) {
+        project.methodology = { ...DEFAULT_METHODOLOGY };
       }
     },
   },
