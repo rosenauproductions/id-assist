@@ -2,11 +2,11 @@
 
 import type { CourseMapData, MapNode } from "@/lib/id/course-map";
 
-// Renders the course-structure map as a compact, top-to-bottom tree:
-// modules stacked vertically, their lessons nested one level in, and each
-// lesson's Gagné-event units (plus its check) drawn as a small horizontal
-// chain of connected dots — the "flow" Chris asked for, scaled to fit a
-// narrow sticky sidebar rather than a full 2D flowchart.
+// Renders the course-structure map as a traditional nested tree: modules
+// at the root, their lessons indented one level in, and each lesson's
+// Gagné-event units (plus its check) indented a level further still, each
+// row prefixed with a branch glyph (├─ / └─) — an actual outline, not a
+// row of connected dots — scaled to fit a narrow sticky sidebar.
 
 function byParent(nodes: MapNode[], parentId: string, kind: MapNode["kind"]) {
   return nodes
@@ -66,26 +66,20 @@ export function CourseMap({
                             onSelect={onSelect}
                           />
                           {chain.length > 0 ? (
-                            <div className="mt-1 flex flex-wrap items-center gap-1 pl-0.5">
+                            <ol className="mt-1 ml-1.5 grid gap-0.5 border-l border-line pl-3">
                               {chain.map((step, index) => (
-                                <span
-                                  key={step.id}
-                                  className="flex items-center gap-1"
-                                >
-                                  {index > 0 ? (
-                                    <span
-                                      aria-hidden
-                                      className="h-px w-2.5 bg-line"
-                                    />
-                                  ) : null}
-                                  <FlowDot
+                                <li key={step.id} className="min-w-0">
+                                  <MapRow
                                     node={step}
                                     activeId={activeId}
                                     onSelect={onSelect}
+                                    branch={
+                                      index === chain.length - 1 ? "└─" : "├─"
+                                    }
                                   />
-                                </span>
+                                </li>
                               ))}
-                            </div>
+                            </ol>
                           ) : null}
                         </li>
                       );
@@ -106,11 +100,16 @@ function MapRow({
   activeId,
   onSelect,
   emphasize = false,
+  branch,
 }: {
   node: MapNode;
   activeId?: string;
   onSelect?: (node: MapNode) => void;
   emphasize?: boolean;
+  /** Tree connector glyph ("├─" / "└─") shown before the label — set only
+   * for a nested row (units/assessments under a lesson) so it reads as an
+   * outline branch rather than a top-level item. */
+  branch?: string;
 }) {
   const clickable = Boolean(onSelect) && !node.placeholder;
   return (
@@ -119,12 +118,19 @@ function MapRow({
       title={node.label}
       disabled={!clickable}
       onClick={() => clickable && onSelect?.(node)}
-      className={`flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm transition-colors ${
+      className={`flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left ${
+        branch ? "text-xs" : "text-sm"
+      } transition-colors ${
         clickable ? "cursor-pointer hover:bg-line/40" : "cursor-default"
       } ${activeId === node.id ? "bg-accent/10 text-accent" : ""} ${
         node.placeholder ? "text-muted opacity-70" : ""
       } ${emphasize ? "font-semibold" : ""}`}
     >
+      {branch ? (
+        <span aria-hidden className="shrink-0 font-mono text-muted">
+          {branch}
+        </span>
+      ) : null}
       {node.hasOpenFlag ? (
         <span
           aria-hidden
@@ -133,36 +139,5 @@ function MapRow({
       ) : null}
       <span className="min-w-0 flex-1 truncate">{node.label}</span>
     </button>
-  );
-}
-
-function FlowDot({
-  node,
-  activeId,
-  onSelect,
-}: {
-  node: MapNode;
-  activeId?: string;
-  onSelect?: (node: MapNode) => void;
-}) {
-  const clickable = Boolean(onSelect) && !node.placeholder;
-  const tone = node.placeholder
-    ? "bg-line"
-    : node.kind === "assessment"
-      ? "bg-accent"
-      : "bg-muted";
-  return (
-    <button
-      type="button"
-      title={node.label}
-      aria-label={node.label}
-      disabled={!clickable}
-      onClick={() => clickable && onSelect?.(node)}
-      className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone} ${
-        clickable ? "cursor-pointer" : ""
-      } ${activeId === node.id ? "ring-2 ring-accent ring-offset-1 ring-offset-card" : ""} ${
-        node.hasOpenFlag ? "ring-1 ring-danger" : ""
-      }`}
-    />
   );
 }
