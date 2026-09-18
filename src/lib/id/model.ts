@@ -28,7 +28,7 @@ async function googleModel(): Promise<LanguageModel> {
   // means "no override," not "fail the whole generation call."
   const workspaceOverride = await getWorkspaceModelOverride();
   return google(
-    workspaceOverride || process.env.GOOGLE_MODEL || "gemini-2.5-flash",
+    workspaceOverride || process.env.GOOGLE_MODEL || "gemini-3.6-flash",
   );
 }
 

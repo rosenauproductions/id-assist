@@ -374,7 +374,7 @@ function WorkspaceSection({
           <input
             name="modelOverride"
             defaultValue={workspace.modelOverride ?? ""}
-            placeholder="gemini-2.5-flash (default — leave blank to use it)"
+            placeholder="gemini-3.6-flash (default — leave blank to use it)"
             disabled={!isOwner}
             className="field w-full disabled:opacity-60"
           />
