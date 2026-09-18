@@ -47,6 +47,6 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@ai-sdk/provider": "4.0.15"
+    "@ai-sdk/provider": "4.0.17"
   }
 }
