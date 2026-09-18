@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import {
   ChatBubbleLeftRightIcon,
+  Squares2X2Icon,
   UsersIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
@@ -116,6 +117,13 @@ export default async function RootLayout({
                 >
                   <ChatBubbleLeftRightIcon className="h-4 w-4" />
                   Interview
+                </Link>
+                <Link
+                  href="/architecture"
+                  className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+                >
+                  <Squares2X2Icon className="h-4 w-4" />
+                  Architecture
                 </Link>
                 <Link
                   href="/team"
