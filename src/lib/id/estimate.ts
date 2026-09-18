@@ -1,10 +1,11 @@
-import type {
-  Bloom,
-  DeliveryTarget,
-  IdProject,
-  Lesson,
-  ProductionEstimate,
-  Resource,
+import {
+  BLOOM_LEVELS,
+  type Bloom,
+  type DeliveryTarget,
+  type IdProject,
+  type Lesson,
+  type ProductionEstimate,
+  type Resource,
 } from "./types";
 
 const BLOOM_WEIGHT: Record<Bloom, number> = {
@@ -26,9 +27,17 @@ const DELIVERY_HOURS: Record<DeliveryTarget, number> = {
 };
 
 function lessonBloom(project: IdProject, lesson: Lesson): Bloom {
-  return (
-    project.outline.outcomes.find((outcome) => outcome.id === lesson.objectiveId)
-      ?.bloom ?? "understand"
+  const blooms = lesson.objectiveIds
+    .map(
+      (id) =>
+        project.outline.outcomes.find((outcome) => outcome.id === id)?.bloom,
+    )
+    .filter((bloom): bloom is Bloom => Boolean(bloom));
+  if (blooms.length === 0) return "understand";
+  // Conservative: estimate against the hardest Bloom level among a
+  // multi-objective lesson's bound outcomes.
+  return blooms.reduce((hardest, bloom) =>
+    BLOOM_LEVELS.indexOf(bloom) > BLOOM_LEVELS.indexOf(hardest) ? bloom : hardest,
   );
 }
 

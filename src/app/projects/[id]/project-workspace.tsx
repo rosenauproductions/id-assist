@@ -826,9 +826,9 @@ function LessonEditor({
   lesson: Lesson;
   locked: boolean;
 }) {
-  const objective = project.outline.outcomes.find(
-    (outcome) => outcome.id === lesson.objectiveId,
-  );
+  const objectives = lesson.objectiveIds
+    .map((id) => project.outline.outcomes.find((outcome) => outcome.id === id))
+    .filter((outcome): outcome is NonNullable<typeof outcome> => Boolean(outcome));
   return (
     <li
       id={`lesson-${lesson.id}`}
@@ -886,7 +886,7 @@ function LessonEditor({
               </HintLabel>
             </div>
             <p className="text-xs text-muted">
-              {objective?.bloom ?? "?"} ·{" "}
+              {objectives.map((o) => o.bloom).join(", ") || "?"} ·{" "}
               {lesson.supplements.length
                 ? `+ ${lesson.supplements.join(", ")}`
                 : "no supplements"}

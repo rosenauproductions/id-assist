@@ -47,7 +47,7 @@ export async function refineOutlineWithModel(
     lessons: project.outline.lessons.map((lesson) => ({
       id: lesson.id,
       title: lesson.title,
-      objectiveId: lesson.objectiveId,
+      objectiveIds: lesson.objectiveIds,
       estimatedMinutes: lesson.estimatedMinutes,
       delivery: lesson.delivery,
       units: lesson.units,

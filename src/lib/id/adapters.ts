@@ -1,5 +1,11 @@
 import { nid } from "./ids";
-import type { AssessmentSpec, GeneratedArtifact, IdProject, Lesson } from "./types";
+import type {
+  AssessmentSpec,
+  GeneratedArtifact,
+  IdProject,
+  Lesson,
+  Outcome,
+} from "./types";
 
 function heading(project: IdProject): string {
   const { brief } = project.outline;
@@ -30,16 +36,26 @@ function assessmentEntries(assessments: AssessmentSpec[]): string[] {
 }
 
 function lessonBlock(project: IdProject, lesson: Lesson): string {
-  const objective = project.outline.outcomes.find(
-    (outcome) => outcome.id === lesson.objectiveId,
-  );
+  const objectives: Outcome[] = lesson.objectiveIds
+    .map((id) => project.outline.outcomes.find((outcome) => outcome.id === id))
+    .filter((outcome): outcome is Outcome => Boolean(outcome));
+  const primary = objectives[0];
   const lines = [
     `## ${lesson.title}`,
     "",
     `- Delivery: ${lesson.delivery}${lesson.supplements.length ? ` + ${lesson.supplements.join(", ")}` : ""}`,
     `- Minutes: ${lesson.estimatedMinutes}`,
-    `- Bloom: ${objective?.bloom ?? "?"}`,
-    `- Objective: ${objective ? `${objective.condition}, ${objective.behavior}. Criterion: ${objective.criterion}` : "missing"}`,
+    `- Bloom: ${primary?.bloom ?? "?"}`,
+    `- Objective${objectives.length > 1 ? "s" : ""}: ${
+      objectives.length
+        ? objectives
+            .map(
+              (objective) =>
+                `${objective.condition}, ${objective.behavior}. Criterion: ${objective.criterion}`,
+            )
+            .join(" | ")
+        : "missing"
+    }`,
     "",
   ];
   for (const unit of lesson.units) {

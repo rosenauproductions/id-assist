@@ -109,7 +109,7 @@ export type FilterHit = {
 export type Lesson = {
   id: string;
   title: string;
-  objectiveId: string;
+  objectiveIds: string[];
   estimatedMinutes: number;
   delivery: DeliveryTarget;
   supplements: DeliveryTarget[];

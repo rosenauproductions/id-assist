@@ -1,4 +1,4 @@
-import type { IdProject } from "./types";
+import type { IdProject, Outcome } from "./types";
 
 export function tutorSystemPrompt(project: IdProject): string {
   const { outline } = project;
@@ -9,16 +9,24 @@ export function tutorSystemPrompt(project: IdProject): string {
 
   const curriculum = lessons
     .map((lesson) => {
-      const objective = outline.outcomes.find(
-        (outcome) => outcome.id === lesson.objectiveId,
-      );
+      const objectives: Outcome[] = lesson.objectiveIds
+        .map((id) => outline.outcomes.find((outcome) => outcome.id === id))
+        .filter((outcome): outcome is Outcome => Boolean(outcome));
+      const primary = objectives[0];
       const assessment = outline.assessments.find(
         (item) => item.id === lesson.assessmentId,
       );
       return [
         `Lesson: ${lesson.title}`,
-        `Bloom: ${objective?.bloom}`,
-        `Objective: ${objective?.condition}; ${objective?.behavior}. Criterion: ${objective?.criterion}`,
+        `Bloom: ${primary?.bloom}`,
+        `Objective${objectives.length > 1 ? "s" : ""}: ${
+          objectives
+            .map(
+              (objective) =>
+                `${objective.condition}; ${objective.behavior}. Criterion: ${objective.criterion}`,
+            )
+            .join(" | ") || "none"
+        }`,
         `Evidence: ${assessment ? `${assessment.format} — ${assessment.correctPerformance}` : "none (enabling)"}`,
         `Beats: ${lesson.units.map((unit) => unit.purpose).join(" | ")}`,
       ].join("\n");

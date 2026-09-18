@@ -251,7 +251,7 @@ export function compileBrief(brief: CourseBrief): IdProject {
     return {
       id: nid("les"),
       title: titleFor(outcome),
-      objectiveId: outcome.id,
+      objectiveIds: [outcome.id],
       estimatedMinutes: minutesFor(chosen),
       delivery: chosen,
       supplements,

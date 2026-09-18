@@ -58,6 +58,21 @@ const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    version: 3,
+    description:
+      "Convert Lesson.objectiveId (singular) to Lesson.objectiveIds[] (a lesson can serve multiple objectives).",
+    up: (project) => {
+      const lessons = project.outline?.lessons;
+      if (!Array.isArray(lessons)) return;
+      for (const lesson of lessons) {
+        if (!Array.isArray(lesson.objectiveIds)) {
+          lesson.objectiveIds = lesson.objectiveId ? [lesson.objectiveId] : [];
+        }
+        delete lesson.objectiveId;
+      }
+    },
+  },
 ];
 
 export const CURRENT_SCHEMA_VERSION =

@@ -4,6 +4,7 @@ import type {
   DeliveryTarget,
   FilterHit,
   Lesson,
+  Outcome,
 } from "./types";
 import { nid } from "./ids";
 
@@ -36,8 +37,10 @@ function hit(
   };
 }
 
-function lessonObjective(outline: CourseOutline, lesson: Lesson) {
-  return outline.outcomes.find((outcome) => outcome.id === lesson.objectiveId);
+function lessonObjectives(outline: CourseOutline, lesson: Lesson): Outcome[] {
+  return lesson.objectiveIds
+    .map((id) => outline.outcomes.find((outcome) => outcome.id === id))
+    .filter((outcome): outcome is Outcome => Boolean(outcome));
 }
 
 export function runFilters(outline: CourseOutline): FilterHit[] {
@@ -110,8 +113,8 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
       );
     }
 
-    const boundLessons = outline.lessons.filter(
-      (lesson) => lesson.objectiveId === outcome.id,
+    const boundLessons = outline.lessons.filter((lesson) =>
+      lesson.objectiveIds.includes(outcome.id),
     );
     if (boundLessons.length === 0) {
       hits.push(
@@ -240,24 +243,32 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
   }
 
   for (const lesson of outline.lessons) {
-    const objective = lessonObjective(outline, lesson);
-    if (!objective) {
+    const objectives = lessonObjectives(outline, lesson);
+    if (objectives.length === 0) {
       hits.push(
         hit(
           "block",
           "lesson.orphan",
           lesson.id,
           "Lesson has no objective.",
-          "Bind exactly one objective.",
+          "Bind at least one objective.",
         ),
       );
       continue;
     }
+    // Bloom-based practice/delivery checks below key off the lesson's
+    // primary (first) objective. Generation still produces one objective
+    // per lesson today; true per-objective Bloom validation for
+    // multi-objective lessons is Alignment-view work (roadmap Phase 2),
+    // not part of this migration.
+    const objective = objectives[0];
 
-    const bound = outline.lessons.filter(
-      (other) => other.objectiveId === lesson.objectiveId,
+    const stacked = lesson.objectiveIds.some(
+      (id) =>
+        outline.lessons.filter((other) => other.objectiveIds.includes(id))
+          .length > 1,
     );
-    if (bound.length > 1) {
+    if (stacked) {
       hits.push(
         hit(
           "split",
@@ -334,7 +345,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
       courseModule.lessonIds.includes(lesson.id),
     );
     const coveredOutcomeIds = new Set(
-      moduleLessons.map((lesson) => lesson.objectiveId),
+      moduleLessons.flatMap((lesson) => lesson.objectiveIds),
     );
     const moduleOutcomeCount = outline.outcomes.filter((outcome) =>
       coveredOutcomeIds.has(outcome.id),

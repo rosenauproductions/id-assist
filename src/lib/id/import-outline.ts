@@ -212,7 +212,7 @@ export function buildProjectFromImportedOutline(parsed: ImportedOutline): IdProj
       lessons.push({
         id: lessonId,
         title: parsedLesson.title.trim() || "Untitled lesson",
-        objectiveId: outcome.id,
+        objectiveIds: [outcome.id],
         estimatedMinutes: parsedLesson.estimatedMinutes ?? minutesFor(chosen),
         delivery: chosen,
         supplements: [],
