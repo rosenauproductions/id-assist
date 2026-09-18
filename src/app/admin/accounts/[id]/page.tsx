@@ -2,16 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAccountDetail, requirePlatformAdmin } from "@/lib/admin/store";
 import { listPendingInvitations } from "@/lib/team/store";
+import { listPendingPasswordResets } from "@/lib/auth/password-reset";
 import { StatusPill } from "@/components/status";
 import {
   addAccountNoteAction,
   addUserToAccountAction,
+  createPasswordResetLinkAction,
   renameAccountAction,
   setAccountManagerAction,
   setAccountStatusAction,
   startImpersonationAction,
 } from "../../actions";
 import { InviteLinkRow } from "./invite-link-row";
+import { ResetLinkRow } from "./reset-link-row";
 
 const STATUS_ACTIONS: { status: string; label: string }[] = [
   { status: "active", label: "Activate" },
@@ -35,6 +38,7 @@ export default async function AdminAccountPage({
   if (!account) notFound();
 
   const pendingInvitations = await listPendingInvitations(id);
+  const pendingPasswordResets = await listPendingPasswordResets(id);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -144,20 +148,32 @@ export default async function AdminAccountPage({
               {member.id === admin.userId ? (
                 <span className="text-xs text-muted">You</span>
               ) : (
-                <form action={startImpersonationAction} className="flex items-center gap-2">
-                  <input type="hidden" name="targetUserId" value={member.id} />
-                  <input
-                    name="reason"
-                    placeholder="Reason (optional)"
-                    className="field w-40 text-xs"
-                  />
-                  <button
-                    type="submit"
-                    className="shrink-0 rounded-md border border-warn/40 px-3 py-1.5 text-xs font-medium text-warn hover:bg-warn/10"
-                  >
-                    Act as
-                  </button>
-                </form>
+                <div className="flex flex-wrap items-center gap-2">
+                  <form action={startImpersonationAction} className="flex items-center gap-2">
+                    <input type="hidden" name="targetUserId" value={member.id} />
+                    <input
+                      name="reason"
+                      placeholder="Reason (optional)"
+                      className="field w-40 text-xs"
+                    />
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-md border border-warn/40 px-3 py-1.5 text-xs font-medium text-warn hover:bg-warn/10"
+                    >
+                      Act as
+                    </button>
+                  </form>
+                  <form action={createPasswordResetLinkAction}>
+                    <input type="hidden" name="workspaceId" value={account.id} />
+                    <input type="hidden" name="targetUserId" value={member.id} />
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-md border border-line px-3 py-1.5 text-xs font-medium hover:border-accent/40"
+                    >
+                      Send password link
+                    </button>
+                  </form>
+                </div>
               )}
             </li>
           ))}
@@ -191,6 +207,14 @@ export default async function AdminAccountPage({
           <ul className="mt-3 grid gap-2">
             {pendingInvitations.map((invitation) => (
               <InviteLinkRow key={invitation.id} token={invitation.token} email={invitation.email} />
+            ))}
+          </ul>
+        ) : null}
+
+        {pendingPasswordResets.length > 0 ? (
+          <ul className="mt-3 grid gap-2">
+            {pendingPasswordResets.map((reset) => (
+              <ResetLinkRow key={reset.id} token={reset.token} email={reset.email} />
             ))}
           </ul>
         ) : null}

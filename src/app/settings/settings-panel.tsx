@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import {
+  changePasswordAction,
   openBillingPortalAction,
   removeAcceptableRuleAction,
   startCheckoutAction,
@@ -73,10 +74,89 @@ export function SettingsPanel({
     <div className="mt-8 grid gap-6">
       <BillingSection isOwner={isOwner} billing={billing} planOptions={planOptions} />
       <AppearanceSection appearance={appearance} />
+      <PasswordSection />
       <MapShapesSection mapShapes={mapShapes} />
       <WorkspaceSection isOwner={isOwner} workspace={workspace} />
       <AcceptableIssuesSection isOwner={isOwner} rules={acceptableRules} />
     </div>
+  );
+}
+
+function PasswordSection() {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  function handleSubmit(formData: FormData) {
+    setError(null);
+    setSaved(false);
+    startTransition(async () => {
+      try {
+        await changePasswordAction(formData);
+        setSaved(true);
+        (document.getElementById("password-form") as HTMLFormElement | null)?.reset();
+        window.setTimeout(() => setSaved(false), 3000);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not change password");
+      }
+    });
+  }
+
+  return (
+    <section className="rounded-xl border border-line bg-card p-5">
+      <h2 className="text-lg font-semibold">Password</h2>
+      <p className="mt-1 text-sm text-muted">
+        Change the password for your own account.
+      </p>
+
+      <form id="password-form" action={handleSubmit} className="mt-4 grid max-w-sm gap-3">
+        <label className="grid gap-1.5 text-sm font-medium">
+          Current password
+          <input
+            required
+            name="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            disabled={pending}
+            className="field"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm font-medium">
+          New password
+          <input
+            required
+            name="newPassword"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            disabled={pending}
+            className="field"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm font-medium">
+          Confirm new password
+          <input
+            required
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            disabled={pending}
+            className="field"
+          />
+        </label>
+
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="w-fit rounded-md border border-line px-3 py-1.5 text-xs font-medium hover:border-accent/40 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : saved ? "Password updated" : "Change password"}
+        </button>
+      </form>
+    </section>
   );
 }
 

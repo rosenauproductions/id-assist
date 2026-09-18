@@ -99,6 +99,34 @@ export const invitations = pgTable(
   ],
 );
 
+/**
+ * A one-time link letting someone set a new password without knowing the
+ * old one — created either by the person themselves (not built yet; today
+ * only a platform admin generates these, from /admin/accounts/[id>]) or,
+ * eventually, a self-serve "forgot password" flow. The token is the
+ * capability, same opaque-link pattern as invitations.token above.
+ */
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Opaque, unguessable — the reset link is /reset-password?token=<token>.
+    token: text("token").notNull().unique(),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (table) => [index("password_reset_tokens_user_id_idx").on(table.userId)],
+);
+
 export const projects = pgTable(
   "projects",
   {

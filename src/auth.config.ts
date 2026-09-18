@@ -16,6 +16,15 @@ export const authConfig = {
         return true;
       }
 
+      // The reset-password link itself is the credential (see
+      // lib/auth/password-reset.ts) — it has to work regardless of
+      // whether the browser opening it happens to have a session, so
+      // this is a plain allow rather than routed through isAuthPage's
+      // redirect-if-logged-in behavior below.
+      if (pathname.startsWith("/reset-password")) {
+        return true;
+      }
+
       const isAuthPage =
         pathname.startsWith("/login") || pathname.startsWith("/signup");
       if (isAuthPage) {

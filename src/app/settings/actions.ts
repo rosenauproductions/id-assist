@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { requireOwner, requireWorkspaceContext } from "@/lib/team/store";
+import { changeOwnPassword } from "@/lib/auth/password-reset";
 import { createCheckoutSession, createPortalSession } from "@/lib/billing/store";
 import {
   ACCENT_THEMES,
@@ -106,4 +107,21 @@ export async function removeAcceptableRuleAction(ruleId: string): Promise<void> 
   requireOwner(context);
   await removeAcceptableRule(context.workspaceId, ruleId);
   revalidatePath("/settings");
+}
+
+export async function changePasswordAction(formData: FormData): Promise<void> {
+  const context = await requireWorkspaceContext();
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (newPassword !== confirmPassword) {
+    throw new Error("New passwords don't match.");
+  }
+
+  await changeOwnPassword({
+    userId: context.userId,
+    currentPassword,
+    newPassword,
+  });
 }

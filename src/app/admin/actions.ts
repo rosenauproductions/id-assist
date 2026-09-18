@@ -16,6 +16,7 @@ import {
   setAccountStatus,
   startImpersonation,
 } from "@/lib/admin/store";
+import { createPasswordResetLink } from "@/lib/auth/password-reset";
 import type { MemberRole } from "@/lib/team/store";
 import {
   isFontFamilyId,
@@ -103,6 +104,15 @@ export async function addAccountNoteAction(formData: FormData) {
   const body = String(formData.get("body") ?? "");
 
   await addAccountNote({ workspaceId, actorUserId: admin.userId, body });
+  revalidatePath(`/admin/accounts/${workspaceId}`);
+}
+
+export async function createPasswordResetLinkAction(formData: FormData) {
+  const admin = await requirePlatformAdmin();
+  const workspaceId = String(formData.get("workspaceId") ?? "");
+  const targetUserId = String(formData.get("targetUserId") ?? "");
+
+  await createPasswordResetLink({ targetUserId, actorUserId: admin.userId });
   revalidatePath(`/admin/accounts/${workspaceId}`);
 }
 
