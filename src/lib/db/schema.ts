@@ -56,6 +56,11 @@ export const users = pgTable(
     // you across devices. "system" means "match the OS preference."
     themeMode: text("theme_mode").notNull().default("system"),
     accentTheme: text("accent_theme").notNull().default("teal"),
+    // Per-kind shape assignment for the Map tab's flowchart view (module/
+    // lesson/unit/assessment -> circle/square/rounded-rectangle/diamond/
+    // hexagon). Personal, same as themeMode/accentTheme above. Null means
+    // "use DEFAULT_MAP_SHAPES" — see lib/settings/store.ts.
+    mapShapes: jsonb("map_shapes"),
     // Platform-wide admin flag, separate from the per-workspace owner/member
     // role above — null for everyone except the handful of people who run
     // ID Assist itself. Always re-read from the DB (see requirePlatformAdmin

@@ -7,7 +7,49 @@ import type {
   RequirementItem,
 } from "./types";
 
-export type MapNodeKind = "module" | "lesson" | "unit" | "assessment";
+export const MAP_NODE_KINDS = ["module", "lesson", "unit", "assessment"] as const;
+
+export type MapNodeKind = (typeof MAP_NODE_KINDS)[number];
+
+export const MAP_NODE_KIND_LABELS: Record<MapNodeKind, string> = {
+  module: "Module",
+  lesson: "Lesson",
+  unit: "Unit",
+  assessment: "Assessment",
+};
+
+/** Visual shape assigned to each node kind on the flowchart-style Map view
+ * ("assign shapes to different tasks"). User-configurable, personal to the
+ * account (see lib/settings/store.ts's getMapShapes/updateMapShapes) — this
+ * is just the shared type plus the fallback used until it's customized.
+ * The course-level Start/Finish bookends on that view are always a fixed
+ * oval and aren't part of this map, since they aren't a MapNodeKind. */
+export const NODE_SHAPES = [
+  "circle",
+  "square",
+  "rounded-rectangle",
+  "diamond",
+  "hexagon",
+] as const;
+
+export type NodeShape = (typeof NODE_SHAPES)[number];
+
+export const NODE_SHAPE_LABELS: Record<NodeShape, string> = {
+  circle: "Circle",
+  square: "Square",
+  "rounded-rectangle": "Rounded rectangle",
+  diamond: "Diamond",
+  hexagon: "Hexagon",
+};
+
+export type MapShapeSettings = Record<MapNodeKind, NodeShape>;
+
+export const DEFAULT_MAP_SHAPES: MapShapeSettings = {
+  module: "circle",
+  lesson: "square",
+  unit: "rounded-rectangle",
+  assessment: "diamond",
+};
 
 export type MapNode = {
   id: string;

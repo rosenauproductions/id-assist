@@ -25,7 +25,7 @@ import {
 import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
 import { CourseMap } from "@/components/course-map";
-import { ConstructionMap } from "@/components/construction-map";
+import { FlowchartMap } from "@/components/flowchart-map";
 import { ModeIndicator, phasesFor } from "@/components/mode-indicator";
 import { ModeSelector } from "@/components/mode-selector";
 import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
@@ -46,6 +46,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
+import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
   | "outcomes"
@@ -94,7 +95,13 @@ function defaultMapViewFor(_methodology: Methodology): MapSubView {
   return "construction";
 }
 
-export function ProjectWorkspace({ project }: { project: IdProject }) {
+export function ProjectWorkspace({
+  project,
+  mapShapes,
+}: {
+  project: IdProject;
+  mapShapes?: MapShapeSettings;
+}) {
   const router = useRouter();
   const { outline, estimate } = project;
   const approvable = canApprove(outline.filters);
@@ -526,8 +533,9 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
                     still open.
                   </p>
                   <div className="mt-4">
-                    <ConstructionMap
+                    <FlowchartMap
                       data={courseMap}
+                      shapes={mapShapes}
                       activeId={activeMapNodeId}
                       onSelect={focusMapNode}
                     />

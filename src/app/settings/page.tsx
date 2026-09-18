@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireWorkspaceContext } from "@/lib/team/store";
-import { getAppearance, getWorkspaceSettings } from "@/lib/settings/store";
+import { getAppearance, getMapShapes, getWorkspaceSettings } from "@/lib/settings/store";
 import { getAvailablePlanOptions, getBillingSummary } from "@/lib/billing/store";
 import { listAcceptableRules } from "@/lib/id/acceptable-rules";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
@@ -8,9 +8,10 @@ import { SettingsPanel } from "./settings-panel";
 
 export default async function SettingsPage() {
   const context = await requireWorkspaceContext();
-  const [appearance, workspaceSettings, billing, planOptions, acceptableRules] =
+  const [appearance, mapShapes, workspaceSettings, billing, planOptions, acceptableRules] =
     await Promise.all([
       getAppearance(),
+      getMapShapes(),
       getWorkspaceSettings(),
       getBillingSummary(context.workspaceId),
       getAvailablePlanOptions(),
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
       </p>
       <SettingsPanel
         appearance={appearance}
+        mapShapes={mapShapes}
         isOwner={context.role === "owner"}
         workspace={workspace}
         billing={billing}

@@ -5,6 +5,12 @@ import { users, workspaces } from "@/lib/db/schema";
 import { requireOwner, requireWorkspaceContext } from "@/lib/team/store";
 import { DELIVERY_TARGETS, type DeliveryTarget } from "@/lib/id/types";
 import {
+  DEFAULT_MAP_SHAPES,
+  MAP_NODE_KINDS,
+  NODE_SHAPES,
+  type MapShapeSettings,
+} from "@/lib/id/course-map";
+import {
   ACCENT_THEMES,
   DEFAULT_APPEARANCE,
   type AccentTheme,
@@ -67,6 +73,64 @@ export async function updateAppearance(input: {
   await db
     .update(users)
     .set({ themeMode: input.themeMode, accentTheme: input.accentTheme })
+    .where(eq(users.id, userId));
+}
+
+// --- Map shapes (personal, saved to the account) ---------------------------
+
+function isNodeShape(value: unknown): value is MapShapeSettings[keyof MapShapeSettings] {
+  return typeof value === "string" && (NODE_SHAPES as readonly string[]).includes(value);
+}
+
+function parseMapShapes(value: unknown): MapShapeSettings {
+  const result: MapShapeSettings = { ...DEFAULT_MAP_SHAPES };
+  if (!value || typeof value !== "object") return result;
+  const record = value as Record<string, unknown>;
+  for (const kind of MAP_NODE_KINDS) {
+    const candidate = record[kind];
+    if (isNodeShape(candidate)) {
+      result[kind] = candidate;
+    }
+  }
+  return result;
+}
+
+/**
+ * Reads the signed-in user's Map-tab shape assignments (module/lesson/
+ * unit/assessment -> circle/square/etc, see course-map.ts's NodeShape).
+ * Personal, like getAppearance() above, and just as fail-soft — a broken
+ * read falls back to DEFAULT_MAP_SHAPES rather than break the Map tab.
+ */
+export async function getMapShapes(): Promise<MapShapeSettings> {
+  try {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return { ...DEFAULT_MAP_SHAPES };
+
+    const [row] = await db
+      .select({ mapShapes: users.mapShapes })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (!row) return { ...DEFAULT_MAP_SHAPES };
+
+    return parseMapShapes(row.mapShapes);
+  } catch {
+    return { ...DEFAULT_MAP_SHAPES };
+  }
+}
+
+/** Takes loosely-typed input (straight off a FormData read) and sanitizes
+ * it against NODE_SHAPES/MAP_NODE_KINDS itself, same as parseMapShapes
+ * above — callers don't need to validate before calling this. */
+export async function updateMapShapes(input: unknown): Promise<void> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Not signed in.");
+
+  await db
+    .update(users)
+    .set({ mapShapes: parseMapShapes(input) })
     .where(eq(users.id, userId));
 }
 

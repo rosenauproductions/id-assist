@@ -6,6 +6,7 @@ import {
   removeAcceptableRuleAction,
   startCheckoutAction,
   updateAppearanceAction,
+  updateMapShapesAction,
   updateWorkspaceSettingsAction,
 } from "./actions";
 import type { AcceptableRule } from "@/lib/id/acceptable-rules";
@@ -19,6 +20,14 @@ import {
   type WorkspaceSettings,
 } from "@/lib/settings/types";
 import { DELIVERY_TARGETS, type DeliveryTarget } from "@/lib/id/types";
+import {
+  MAP_NODE_KINDS,
+  MAP_NODE_KIND_LABELS,
+  NODE_SHAPES,
+  NODE_SHAPE_LABELS,
+  type MapShapeSettings,
+} from "@/lib/id/course-map";
+import { ShapeSwatch } from "@/components/node-shape";
 
 const THEME_MODES: { id: ThemeMode; label: string; hint: string }[] = [
   { id: "light", label: "Light", hint: "Always light, regardless of your OS." },
@@ -45,6 +54,7 @@ const DELIVERY_LABELS: Record<DeliveryTarget, string> = {
 
 export function SettingsPanel({
   appearance,
+  mapShapes,
   isOwner,
   workspace,
   billing,
@@ -52,6 +62,7 @@ export function SettingsPanel({
   acceptableRules,
 }: {
   appearance: Appearance;
+  mapShapes: MapShapeSettings;
   isOwner: boolean;
   workspace: WorkspaceSettings;
   billing: BillingSummary;
@@ -62,9 +73,75 @@ export function SettingsPanel({
     <div className="mt-8 grid gap-6">
       <BillingSection isOwner={isOwner} billing={billing} planOptions={planOptions} />
       <AppearanceSection appearance={appearance} />
+      <MapShapesSection mapShapes={mapShapes} />
       <WorkspaceSection isOwner={isOwner} workspace={workspace} />
       <AcceptableIssuesSection isOwner={isOwner} rules={acceptableRules} />
     </div>
+  );
+}
+
+function MapShapesSection({ mapShapes }: { mapShapes: MapShapeSettings }) {
+  const [shapes, setShapes] = useState(mapShapes);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function pick(kind: (typeof MAP_NODE_KINDS)[number], shape: (typeof NODE_SHAPES)[number]) {
+    setError(null);
+    const next = { ...shapes, [kind]: shape };
+    setShapes(next);
+    const formData = new FormData();
+    for (const k of MAP_NODE_KINDS) {
+      formData.set(`shape-${k}`, next[k]);
+    }
+    startTransition(async () => {
+      try {
+        await updateMapShapesAction(formData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not save shapes");
+      }
+    });
+  }
+
+  return (
+    <section className="rounded-xl border border-line bg-card p-5">
+      <h2 className="text-lg font-semibold">Map shapes</h2>
+      <p className="mt-1 text-sm text-muted">
+        Personal — controls how each piece of a course is drawn on the Map
+        tab&apos;s flowchart view (modules, lessons, units, assessments).
+        Changes apply immediately.
+      </p>
+
+      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+
+      <div className="mt-4 grid gap-4">
+        {MAP_NODE_KINDS.map((kind) => (
+          <div key={kind}>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+              {MAP_NODE_KIND_LABELS[kind]}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {NODE_SHAPES.map((shape) => (
+                <button
+                  key={shape}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => pick(kind, shape)}
+                  title={NODE_SHAPE_LABELS[shape]}
+                  className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                    shapes[kind] === shape
+                      ? "border-accent bg-accent/10 text-foreground"
+                      : "border-line bg-background text-muted hover:text-foreground"
+                  }`}
+                >
+                  <ShapeSwatch shape={shape} className="h-3.5 w-3.5" />
+                  {NODE_SHAPE_LABELS[shape]}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

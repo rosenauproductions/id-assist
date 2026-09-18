@@ -8,10 +8,12 @@ import { createCheckoutSession, createPortalSession } from "@/lib/billing/store"
 import {
   ACCENT_THEMES,
   updateAppearance,
+  updateMapShapes,
   updateWorkspaceSettings,
   type AccentTheme,
   type ThemeMode,
 } from "@/lib/settings/store";
+import { MAP_NODE_KINDS } from "@/lib/id/course-map";
 import { DELIVERY_TARGETS } from "@/lib/id/types";
 import { removeAcceptableRule } from "@/lib/id/acceptable-rules";
 
@@ -34,6 +36,15 @@ export async function updateAppearanceAction(formData: FormData) {
   // "layout" so the root layout (which sets data-theme/data-accent on
   // <html>) re-renders with the new value, not just the /settings page.
   revalidatePath("/", "layout");
+}
+
+export async function updateMapShapesAction(formData: FormData) {
+  const next: Record<string, string> = {};
+  for (const kind of MAP_NODE_KINDS) {
+    next[kind] = String(formData.get(`shape-${kind}`) ?? "");
+  }
+  await updateMapShapes(next);
+  revalidatePath("/settings");
 }
 
 export async function updateWorkspaceSettingsAction(formData: FormData) {
