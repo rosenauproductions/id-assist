@@ -1,4 +1,11 @@
-import type { CourseOutline, FilterHit, GagneEvent } from "./types";
+import { phaseCompletion } from "./requirements";
+import type {
+  CourseOutline,
+  CoursePhase,
+  FilterHit,
+  GagneEvent,
+  RequirementItem,
+} from "./types";
 
 export type MapNodeKind = "module" | "lesson" | "unit" | "assessment";
 
@@ -22,7 +29,45 @@ export type MapNode = {
   /** True for a skeleton node estimated before compile — no real outline
    * exists yet, so the node isn't clickable and renders muted. */
   placeholder?: boolean;
+  /** Construction/Completion view coloring. Derived, not stored: "issue"
+   * wins whenever hasOpenFlag is set (an unresolved FilterHit targets this
+   * node); otherwise it's bucketed from the RequirementItem done/total
+   * percent of whichever CoursePhase this node's kind maps to (see
+   * NODE_PHASE below) — no new per-node tracking field, per the roadmap
+   * decision. Undefined for skeleton/placeholder nodes, which have
+   * nothing to audit yet. */
+  completion?: MapCompletion;
 };
+
+export type MapCompletion = "empty" | "partial" | "complete" | "issue";
+
+/** Which CoursePhase's requirements-checklist percent drives a given node
+ * kind's Construction/Completion coloring. Coarse by design (see roadmap
+ * section 13, decision 6): every lesson node shares the content_development
+ * phase's percent rather than tracking its own, since RequirementItem is
+ * phase-scoped, not node-scoped, and this view intentionally reuses that
+ * data as-is instead of adding a new tracking mechanism. */
+const NODE_PHASE: Record<MapNodeKind, CoursePhase> = {
+  module: "design",
+  lesson: "content_development",
+  unit: "content_development",
+  assessment: "assessment",
+};
+
+function completionForPercent(percent: number): MapCompletion {
+  if (percent >= 100) return "complete";
+  if (percent <= 0) return "empty";
+  return "partial";
+}
+
+function nodeCompletion(
+  kind: MapNodeKind,
+  percents: Record<CoursePhase, number>,
+  hasOpenFlag: boolean,
+): MapCompletion {
+  if (hasOpenFlag) return "issue";
+  return completionForPercent(percents[NODE_PHASE[kind]] ?? 0);
+}
 
 export type MapEdge = { from: string; to: string };
 
@@ -47,34 +92,47 @@ function hasOpenHit(filters: FilterHit[], targetId: string): boolean {
  * compileBrief() has run; see estimateSkeletonMap() for the
  * before-compile placeholder shown during the wizard.
  */
-export function buildCourseMap(outline: CourseOutline): CourseMapData {
+export function buildCourseMap(
+  outline: CourseOutline,
+  requirements: RequirementItem[] = [],
+): CourseMapData {
   const nodes: MapNode[] = [];
   const edges: MapEdge[] = [];
   const lessonsById = new Map(outline.lessons.map((lesson) => [lesson.id, lesson]));
   const assessmentsById = new Map(
     outline.assessments.map((assessment) => [assessment.id, assessment]),
   );
+  const percents = Object.fromEntries(
+    Object.entries(phaseCompletion(requirements)).map(([phase, stats]) => [
+      phase,
+      stats.percent,
+    ]),
+  ) as Record<CoursePhase, number>;
 
   outline.modules.forEach((courseModule, moduleIndex) => {
+    const moduleFlag = hasOpenHit(outline.filters, courseModule.id);
     nodes.push({
       id: courseModule.id,
       kind: "module",
       label: courseModule.title,
       order: moduleIndex,
-      hasOpenFlag: hasOpenHit(outline.filters, courseModule.id),
+      hasOpenFlag: moduleFlag,
+      completion: nodeCompletion("module", percents, moduleFlag),
     });
 
     courseModule.lessonIds.forEach((lessonId, lessonIndex) => {
       const lesson = lessonsById.get(lessonId);
       if (!lesson) return;
 
+      const lessonFlag = hasOpenHit(outline.filters, lesson.id);
       nodes.push({
         id: lesson.id,
         kind: "lesson",
         label: lesson.title,
         order: lessonIndex,
         parentId: courseModule.id,
-        hasOpenFlag: hasOpenHit(outline.filters, lesson.id),
+        hasOpenFlag: lessonFlag,
+        completion: nodeCompletion("lesson", percents, lessonFlag),
       });
       edges.push({ from: courseModule.id, to: lesson.id });
 
@@ -86,6 +144,7 @@ export function buildCourseMap(outline: CourseOutline): CourseMapData {
           label: gagneLabel(unit.gagne),
           order: unitIndex,
           parentId: lesson.id,
+          completion: nodeCompletion("unit", percents, false),
         });
         edges.push({ from: previousStepId, to: unit.id });
         previousStepId = unit.id;
@@ -94,13 +153,15 @@ export function buildCourseMap(outline: CourseOutline): CourseMapData {
       if (lesson.assessmentId) {
         const assessment = assessmentsById.get(lesson.assessmentId);
         if (assessment) {
+          const assessmentFlag = hasOpenHit(outline.filters, assessment.id);
           nodes.push({
             id: assessment.id,
             kind: "assessment",
             label: assessmentLabel(assessment.format),
             order: lesson.units.length,
             parentId: lesson.id,
-            hasOpenFlag: hasOpenHit(outline.filters, assessment.id),
+            hasOpenFlag: assessmentFlag,
+            completion: nodeCompletion("assessment", percents, assessmentFlag),
           });
           edges.push({ from: previousStepId, to: assessment.id });
         }

@@ -66,8 +66,11 @@ export function ProjectWorkspace({ project }: { project: IdProject }) {
     0,
   );
   const phases = effectivePhaseProgress(project);
-  const requirements = project.requirements ?? [];
-  const courseMap = useMemo(() => buildCourseMap(outline), [outline]);
+  const requirements = useMemo(() => project.requirements ?? [], [project.requirements]);
+  const courseMap = useMemo(
+    () => buildCourseMap(outline, requirements),
+    [outline, requirements],
+  );
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
 
   // Clicking a course-map node jumps to that piece in the editor: switches
