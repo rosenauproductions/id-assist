@@ -927,7 +927,7 @@ function OutcomeEditor({
           <>
             <HintLabel
               label="Bloom"
-              hint="Ranges from just remembering it to actually creating something with it — the practice and the test need to match whatever level you pick."
+              hint="The level of thinking you want the learner to demonstrate — from remembering information to applying, analyzing, evaluating, or creating. The practice activity and assessment should match the level you choose."
             >
               <select
                 name="bloom"
@@ -944,7 +944,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Condition"
-              hint="What tools or situation will they have when they do this?"
+              hint="The tools, resources, or situation the learner will have when they perform the task."
             >
               <input
                 name="condition"
@@ -955,7 +955,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Behavior"
-              hint="Something you could watch them do — not “understand” or “know,” which you can't actually see."
+              hint="Something you can actually observe the learner doing. Avoid vague verbs like “understand” or “know” because they aren't directly observable."
             >
               <input
                 name="behavior"
@@ -966,7 +966,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Criterion"
-              hint="How you'd know they did it well enough."
+              hint="The standard the learner must meet to demonstrate that they performed the task successfully."
             >
               <input
                 name="criterion"
