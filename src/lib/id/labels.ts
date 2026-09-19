@@ -1,4 +1,4 @@
-import type { GagneEvent, TimePhase } from "./types";
+import type { GagneEvent, Outcome, TimePhase } from "./types";
 
 /**
  * Plain-English label for each step of Gagné's Nine Events, shown instead
@@ -17,6 +17,17 @@ export const GAGNE_LABELS: Record<GagneEvent, string> = {
   feedback: "Feedback",
   assess: "Check",
   retain: "Wrap-up",
+};
+
+/** Plain-English label for an objective's kind, shown on its card instead
+ * of the raw "terminal"/"enabling" instructional-design term. The
+ * professional term stays available as a hover title where this label is
+ * used, same pattern as the filter-code tooltip elsewhere in this file's
+ * screen — the underlying value (outcome.kind) is untouched everywhere
+ * else (compile, filters, requirements). */
+export const OUTCOME_KIND_LABELS: Record<Outcome["kind"], string> = {
+  terminal: "Main objective",
+  enabling: "Supporting objective",
 };
 
 /** Display label for a time-log phase — mostly just capitalized, except

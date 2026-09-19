@@ -46,7 +46,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
-import { GAGNE_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
+import { GAGNE_LABELS, OUTCOME_KIND_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
 import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
@@ -911,8 +911,11 @@ function OutcomeEditor({
       id={`outcome-${outcome.id}`}
       className="rounded-lg border border-line bg-background p-4 transition-shadow"
     >
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-        {outcome.kind}
+      <p
+        className="text-[11px] font-medium uppercase tracking-wide text-muted"
+        title={outcome.kind === "terminal" ? "Terminal objective" : "Enabling objective"}
+      >
+        {OUTCOME_KIND_LABELS[outcome.kind]}
         <FlagMarker projectId={projectId} filters={filters} />
       </p>
       <ActionForm
