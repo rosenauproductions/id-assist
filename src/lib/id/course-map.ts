@@ -1,5 +1,7 @@
+import { ASSESSMENT_FORMAT_LABELS, capitalizeFirst } from "./labels";
 import { phaseCompletion } from "./requirements";
 import type {
+  AssessmentSpec,
   CourseOutline,
   CoursePhase,
   FilterHit,
@@ -204,8 +206,8 @@ export function buildCourseMap(
   return { nodes, edges };
 }
 
-function assessmentLabel(format: string): string {
-  return `Check: ${format}`;
+function assessmentLabel(format: AssessmentSpec["format"]): string {
+  return ASSESSMENT_FORMAT_LABELS[format] ?? capitalizeFirst(format);
 }
 
 const MINUTES_PER_LESSON = 15;

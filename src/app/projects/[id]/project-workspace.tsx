@@ -24,11 +24,15 @@ import {
 } from "@/app/actions";
 import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
+import { AlignmentMap } from "@/components/alignment-map";
 import { CourseMap } from "@/components/course-map";
 import { FlowchartMap } from "@/components/flowchart-map";
+import { LearnerPath } from "@/components/learner-path";
 import { ModeIndicator, phasesFor } from "@/components/mode-indicator";
 import { ModeSelector } from "@/components/mode-selector";
+import { buildAlignmentMap } from "@/lib/id/alignment-map";
 import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
+import { buildLearnerPath } from "@/lib/id/learner-path";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
 import {
@@ -123,6 +127,8 @@ export function ProjectWorkspace({
     () => buildCourseMap(outline, requirements),
     [outline, requirements],
   );
+  const alignmentRows = useMemo(() => buildAlignmentMap(outline), [outline]);
+  const learnerPathLessons = useMemo(() => buildLearnerPath(outline), [outline]);
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
   const [mapSubView, setMapSubViewState] = useState<MapSubView>(() =>
     loadStoredMapView(project.id),
@@ -168,36 +174,49 @@ export function ProjectWorkspace({
   // so it's obvious what just got focused. A module has no editor of its
   // own — it's just a grouping of lessons — so it jumps to its first
   // lesson instead.
+  // Shared by every click-through in the Map tab (Construction,
+  // Alignment, Learner Path): switch to the tab that owns the piece,
+  // scroll its list item into view (see the id={`lesson-${lesson.id}`}
+  // -style ids below), and briefly ring it so it's obvious what just got
+  // focused.
+  function jumpToTab(tab: WorkspaceTabId, targetId: string | null) {
+    setActiveTab(tab);
+    if (!targetId) return;
+    window.setTimeout(() => {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-accent");
+      window.setTimeout(() => el.classList.remove("ring-2", "ring-accent"), 1500);
+    }, 50);
+  }
+
   function focusMapNode(node: MapNode) {
     setActiveMapNodeId(node.id);
-    let tab: WorkspaceTabId | null = null;
-    let targetId: string | null = null;
     if (node.kind === "module") {
-      tab = "lessons";
       const firstLesson = courseMap.nodes.find(
         (candidate) => candidate.parentId === node.id && candidate.kind === "lesson",
       );
-      targetId = firstLesson ? `lesson-${firstLesson.id}` : null;
+      jumpToTab("lessons", firstLesson ? `lesson-${firstLesson.id}` : null);
     } else if (node.kind === "lesson") {
-      tab = "lessons";
-      targetId = `lesson-${node.id}`;
+      jumpToTab("lessons", `lesson-${node.id}`);
     } else if (node.kind === "unit") {
-      tab = "lessons";
-      targetId = node.parentId ? `lesson-${node.parentId}` : null;
+      jumpToTab("lessons", node.parentId ? `lesson-${node.parentId}` : null);
     } else if (node.kind === "assessment") {
-      tab = "assessments";
-      targetId = `assessment-${node.id}`;
+      jumpToTab("assessments", `assessment-${node.id}`);
     }
-    if (tab) setActiveTab(tab);
-    if (targetId) {
-      window.setTimeout(() => {
-        const el = document.getElementById(targetId!);
-        if (!el) return;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.add("ring-2", "ring-accent");
-        window.setTimeout(() => el.classList.remove("ring-2", "ring-accent"), 1500);
-      }, 50);
-    }
+  }
+
+  function jumpToOutcome(outcomeId: string) {
+    jumpToTab("outcomes", `outcome-${outcomeId}`);
+  }
+
+  function jumpToLesson(lessonId: string) {
+    jumpToTab("lessons", `lesson-${lessonId}`);
+  }
+
+  function jumpToAssessment(assessmentId: string) {
+    jumpToTab("assessments", `assessment-${assessmentId}`);
   }
 
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
@@ -555,12 +574,36 @@ export function ProjectWorkspace({
                     />
                   </div>
                 </>
+              ) : mapSubView === "alignment" ? (
+                <>
+                  <p className="mt-1 text-sm text-muted">
+                    Does every objective have the instruction, practice, and
+                    assessment it needs? Dashed, colored links mean something
+                    is missing.
+                  </p>
+                  <div className="mt-4">
+                    <AlignmentMap
+                      rows={alignmentRows}
+                      onSelectOutcome={jumpToOutcome}
+                      onSelectLesson={jumpToLesson}
+                      onSelectAssessment={jumpToAssessment}
+                    />
+                  </div>
+                </>
               ) : (
-                <p className="mt-4 text-sm text-muted">
-                  {mapSubView === "alignment"
-                    ? "Alignment view (outcomes vs. lessons/assessments) is coming in a later phase."
-                    : "Learner Path view (full-course sequential flow) is coming in a later phase."}
-                </p>
+                <>
+                  <p className="mt-1 text-sm text-muted">
+                    What the learner actually experiences, lesson by lesson,
+                    in course order.
+                  </p>
+                  <div className="mt-4">
+                    <LearnerPath
+                      lessons={learnerPathLessons}
+                      onSelectLesson={jumpToLesson}
+                      onSelectAssessment={jumpToAssessment}
+                    />
+                  </div>
+                </>
               )}
             </section>
           ) : null}

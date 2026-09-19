@@ -1,4 +1,10 @@
-import type { FilterSeverity, GagneEvent, Outcome, TimePhase } from "./types";
+import type {
+  AssessmentSpec,
+  FilterSeverity,
+  GagneEvent,
+  Outcome,
+  TimePhase,
+} from "./types";
 
 /**
  * Plain-English label for each step of Gagné's Nine Events, shown instead
@@ -53,6 +59,19 @@ export const SEVERITY_LABELS: Record<FilterSeverity, string> = {
   rewrite: "Needs work",
   split: "Needs splitting",
   block: "Blocking",
+};
+
+/** Plain-English label for an assessment's format, shown wherever an
+ * assessment needs a short human-readable name (the Map tab's Alignment
+ * and Construction views, the Learner Path view) instead of the raw
+ * lowercase format value. The underlying value (AssessmentSpec.format)
+ * is untouched everywhere else. */
+export const ASSESSMENT_FORMAT_LABELS: Record<AssessmentSpec["format"], string> = {
+  performance: "Performance check",
+  scenario: "Scenario check",
+  quiz: "Quiz",
+  conversation: "Conversation check",
+  artifact: "Artifact review",
 };
 
 /** Capitalizes the first letter only — for plain-word enum values (Bloom
