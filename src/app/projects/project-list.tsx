@@ -34,7 +34,7 @@ function ProjectListItem({ project }: { project: IdProject }) {
 
   function remove() {
     const title = project.outline.brief.title;
-    if (!window.confirm(`Delete “${title}”? This removes the project and its artifacts.`)) {
+    if (!window.confirm(`Delete “${title}”? This removes the project and its delivery files.`)) {
       return;
     }
     setError(null);

@@ -64,7 +64,7 @@ export const DEFAULT_HERO_EYEBROW = "ADDIE + Bloom's, built into the tool";
 export const DEFAULT_HERO_HEADLINE =
   "Build a whole course, guardrailed by real instructional design";
 export const DEFAULT_HERO_SUBHEAD =
-  "ID Assist interviews your SME, drafts a Bloom's-gated outline, flags the pedagogy gaps other tools miss, and hands you ready-to-build artifacts — Rise, Canvas, Google Docs, and more.";
+  "ID Assist interviews your SME, drafts a Bloom's-gated outline, flags the pedagogy gaps other tools miss, and hands you ready-to-build delivery files — Rise, Canvas, Google Docs, and more.";
 export const DEFAULT_HERO_CTA_LABEL = "Start free";
 
 export const DEFAULT_FEATURE_CARDS_COPY: FeatureCardCopy[] = [
@@ -81,7 +81,7 @@ export const DEFAULT_FEATURE_CARDS_COPY: FeatureCardCopy[] = [
   {
     title: "Cost and time, estimated",
     description:
-      "Track hours by phase, see the estimate update live, and export delivery-ready artifacts once the outline clears review.",
+      "Track hours by phase, see the estimate update live, and export delivery files once the outline clears review.",
   },
   {
     title: "Built for a team",

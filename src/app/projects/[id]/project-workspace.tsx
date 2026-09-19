@@ -210,7 +210,7 @@ export function ProjectWorkspace({
     },
     {
       id: "filters",
-      label: "Filters",
+      label: "Quality checks",
       badge: openFilters > 0 ? String(openFilters) : undefined,
     },
     {
@@ -241,7 +241,7 @@ export function ProjectWorkspace({
   function removeProject() {
     if (
       !window.confirm(
-        `Delete “${outline.brief.title}”? This removes the project folder and its artifacts.`,
+        `Delete “${outline.brief.title}”? This removes the project folder and its delivery files.`,
       )
     ) {
       return;
@@ -455,7 +455,7 @@ export function ProjectWorkspace({
           {activeTab === "filters" ? (
             <section>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-lg font-semibold">Filter log</h2>
+                <h2 className="text-lg font-semibold">Quality checks</h2>
                 <span className="text-xs text-muted">{openFilters} open</span>
               </div>
               <ul className="mt-3 grid max-h-[28rem] gap-2 overflow-auto">
@@ -483,7 +483,7 @@ export function ProjectWorkspace({
               </div>
               <p className="mt-1 text-sm text-muted">
                 Required / Recommended / Optional. Auto items track the outline
-                live; add your own for anything the engine can&apos;t check.
+                live; add your own for anything the automatic checks can&apos;t catch.
               </p>
               <RequirementsChecklist
                 projectId={project.id}
@@ -530,7 +530,7 @@ export function ProjectWorkspace({
                 <>
                   <p className="mt-1 text-sm text-muted">
                     Coloring reflects the Requirements checklist for each
-                    piece&apos;s phase, overlaid red where a filter finding is
+                    piece&apos;s phase, overlaid red where a quality issue is
                     still open.
                   </p>
                   <div className="mt-4">
@@ -729,7 +729,7 @@ function Workflow({
     { id: "outline", label: "Outline", done: true },
     {
       id: "filters",
-      label: openFilters ? `Filters (${openFilters})` : "Filters clear",
+      label: openFilters ? `Quality issues (${openFilters})` : "No quality issues",
       done: openFilters === 0,
     },
     { id: "approve", label: "Approved", done: status === "approved" },
@@ -930,7 +930,7 @@ function OutcomeEditor({
           <>
             <HintLabel
               label="Bloom"
-              hint="The level of thinking you want the learner to demonstrate — from remembering information to applying, analyzing, evaluating, or creating. The practice activity and assessment should match the level you choose."
+              hint="The level of thinking the learner needs to demonstrate — from remembering information to applying, analyzing, evaluating, or creating."
             >
               <select
                 name="bloom"
@@ -947,7 +947,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Condition"
-              hint="The tools, resources, or situation the learner will have when they perform the task."
+              hint="The situation, information, tools, or resources the learner will have when performing the task."
             >
               <input
                 name="condition"
@@ -969,7 +969,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Criterion"
-              hint="The standard the learner must meet to demonstrate that they performed the task successfully."
+              hint="How well the learner must perform the task to be considered successful."
             >
               <input
                 name="criterion"

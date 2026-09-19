@@ -316,7 +316,7 @@ function ReviewStage({
       </div>
 
       <div>
-        <p className="text-sm font-medium">Build mix</p>
+        <p className="text-sm font-medium">Delivery</p>
         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
           {DELIVERY_TARGETS.map((target) => (
             <label

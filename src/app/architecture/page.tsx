@@ -37,9 +37,9 @@ export default function ArchitecturePage() {
         </h2>
         <ArchitectureFlow stages={PIPELINE_STAGES} />
         <p className="mt-1 text-center text-xs text-danger">
-          dashed line — approval is soft: any edit or AI refine after
-          approving resets status to needs_review and wipes the generated
-          artifacts
+          dashed line — approval is soft: editing the outline or running
+          AI refine after approval sends it back for review and clears out
+          any delivery files you’d already generated
         </p>
       </section>
 

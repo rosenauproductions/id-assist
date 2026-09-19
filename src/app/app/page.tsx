@@ -79,7 +79,7 @@ export default async function Home() {
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={BoltIcon} label="Projects in flight" value={String(activeProjects)} />
         <Stat icon={FolderIcon} label="Total projects" value={String(projects.length)} />
-        <Stat icon={FunnelIcon} label="Open filter findings" value={String(openFindings)} />
+        <Stat icon={FunnelIcon} label="Open quality issues" value={String(openFindings)} />
         <Stat icon={ClockIcon} label="Hours logged this week" value={hoursThisWeek.toFixed(1)} />
       </section>
 

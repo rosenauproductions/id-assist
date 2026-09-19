@@ -124,7 +124,7 @@ export default async function NewProjectPage() {
             </Field>
           </div>
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium">Build mix</legend>
+            <legend className="text-sm font-medium">Delivery</legend>
             <p className="text-xs font-normal leading-5 text-muted">
               Channels this course may ship in. One course can mix several; the
               outline assigns lessons to the best fit.

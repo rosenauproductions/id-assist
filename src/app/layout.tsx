@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ID Assist",
   description:
-    "Instructional-design compiler: outline gate, filters, cost, artifacts, live tutor.",
+    "Build complete courses with real instructional-design guardrails — outline gate, quality checks, cost tracking, and a live AI tutor.",
 };
 
 export default async function RootLayout({

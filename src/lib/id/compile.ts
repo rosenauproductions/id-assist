@@ -75,7 +75,7 @@ function unit(
 function riseUnits(jobTask: string): ContentUnit[] {
   return [
     unit("Why this job fails today", "attention", "rise", "statement"),
-    unit("Terminal objective in plain language", "objectives", "rise", "text"),
+    unit("Main objective in plain language", "objectives", "rise", "text"),
     unit("Activate a recent messy example", "recall", "rise", "text"),
     unit(`Worked example of: ${jobTask}`, "present", "rise", "process"),
     unit("Guided attempt with checklist", "elicit", "rise", "checklist"),

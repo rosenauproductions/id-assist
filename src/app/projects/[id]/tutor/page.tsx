@@ -15,7 +15,7 @@ export default async function TutorPage({
       <p className="text-xs uppercase tracking-wide text-muted">Live tutor</p>
       <h1 className="text-2xl tracking-tight">{project.outline.brief.title}</h1>
       <p className="mt-1 text-sm text-muted">
-        Teaches the approved outline. Apply and above still need an artifact.
+        Teaches the approved outline through chat, but higher-level objectives (apply and above) need more than conversation — the learner still has to turn in real work, like a written doc or assignment, to prove they can do it.
       </p>
       <TutorChat
         projectId={project.id}

@@ -57,14 +57,14 @@ export function deriveRequirements(project: IdProject): AutoRequirement[] {
     auto(
       "discovery",
       "brief.job_task",
-      "Job/task the course targets is defined",
+      "The job task this course targets is defined",
       "required",
       !!outline.brief.jobTask.trim(),
     ),
     auto(
       "discovery",
       "andragogy.why_now",
-      "Why-now (workplace relevance) is documented",
+      "Why this course matters right now is documented",
       "required",
       !open("andragogy.why_now"),
     ),
@@ -84,7 +84,7 @@ export function deriveRequirements(project: IdProject): AutoRequirement[] {
     auto(
       "design",
       "design.terminal_outcome",
-      "At least one terminal outcome is defined",
+      "A main objective is defined",
       "required",
       hasTerminal,
     ),
@@ -155,7 +155,7 @@ export function deriveRequirements(project: IdProject): AutoRequirement[] {
     auto(
       "assessment",
       "coverage.missing",
-      "Every terminal outcome has an assessment spec",
+      "Every main objective has an assessment",
       "required",
       !open("coverage.missing"),
     ),

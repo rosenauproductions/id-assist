@@ -114,7 +114,7 @@ export const GAPS: ArchGap[] = [
     id: "soft-approval",
     title: "Approval doesn't lock anything",
     detail:
-      "Approving just unlocks downloads. The next edit — even a Title/Minutes/Delivery tweak, or an AI refine — silently drops status back to needs_review and wipes the generated artifacts.",
+      "Approving just unlocks downloads. The next edit — even a small tweak to the title, minutes, or delivery mix, or running AI refine — silently sends the outline back to review and clears out any delivery files you'd already generated.",
     status: "not_started",
   },
   {

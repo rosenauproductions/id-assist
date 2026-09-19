@@ -10,7 +10,7 @@ import type { FilterHit } from "@/lib/id/types";
  * next to whatever outline text a FilterHit's targetId points at (an
  * objective, lesson, or assessment). Right-click (or click, for
  * discoverability without a mouse) offers "Dismiss" — this instance only,
- * reusing the same dismissFilterAction the Filter log tab already uses —
+ * reusing the same dismissFilterAction the Quality checks tab already uses —
  * or "Always allow this issue", which mutes the rule for the whole
  * workspace going forward (see lib/id/acceptable-rules.ts and Settings →
  * Acceptable issues). Renders nothing when there's nothing open to flag,
@@ -49,7 +49,7 @@ export function FlagMarker({
   if (open.length === 0) return null;
 
   // The menu acts on the single most severe open hit when there's more
-  // than one on the same target; the others surface via the Filter log
+  // than one on the same target; the others surface via the Quality checks
   // tab, which still lists everything regardless of what's inline here.
   const primary =
     open.find((f) => f.severity === "block") ??

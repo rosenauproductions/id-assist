@@ -13,7 +13,7 @@ import { startCheckoutAction } from "@/app/settings/actions";
 
 const VALUE_PROPS = [
   "Unlimited course outlines, gated by real Bloom's-alignment and quantity checks",
-  "AI-drafted lessons, assessments, and delivery-ready artifacts (Rise, Canvas, Docs, and more)",
+  "AI-drafted lessons, assessments, and ready-to-build delivery files (Rise, Canvas, Docs, and more)",
   "A shared workspace for your whole team, not just one seat",
 ];
 

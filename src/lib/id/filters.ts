@@ -94,7 +94,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
         "duration.over",
         "course",
         `Lessons sum to ${seat} min against a ${outline.brief.durationMinutes} min budget.`,
-        "Cut an enabling lesson or shorten video. Do not densify copy.",
+        "Cut a supporting lesson or shorten video. Do not densify copy.",
       ),
     );
   }

@@ -192,8 +192,8 @@ function tutorPack(project: IdProject): string {
     "",
     "- Teach only the assigned lessons.",
     "- Remember/Understand may be evidenced in conversation.",
-    "- Apply/Analyze/Evaluate/Create require an artifact (Doc or Canvas).",
-    "- Never invent a new terminal objective.",
+    "- For apply, analyze, evaluate, or create objectives, the learner must turn in real work (a Doc or Canvas assignment) — conversation alone doesn't count.",
+    "- Never invent a new main objective.",
     "",
     ...project.outline.lessons
       .filter((lesson) => lesson.delivery === "tutor")
