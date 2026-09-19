@@ -43,6 +43,16 @@ const COMPLETION_STYLES: Record<
   issue: { bg: "bg-danger/15", border: "border-danger", label: "Needs attention" },
 };
 
+// Small status mark shown on a lesson node only (see FlowNode) so its
+// progress is visible at a glance without opening the lesson — matches
+// the same completion buckets as COMPLETION_STYLES above.
+const LESSON_STATUS_MARKS: Record<MapCompletion, string> = {
+  empty: "\u25cb",
+  partial: "\u25cf",
+  complete: "\u2713",
+  issue: "\u26a0",
+};
+
 function byParent(nodes: MapNode[], parentId: string, kind: MapNodeKind) {
   return nodes
     .filter((node) => node.parentId === parentId && node.kind === kind)
@@ -299,24 +309,39 @@ function FlowNode({
   const style = COMPLETION_STYLES[node.completion ?? "empty"];
   const clickable = Boolean(onSelect) && !node.placeholder;
   const isActive = activeId === node.id;
+  // Only lesson nodes carry the small status mark (checkmark, dot, etc.)
+  // — modules and assessments are already colored by completion, and a
+  // module/assessment-level mark would just repeat that.
+  const statusMark =
+    node.kind === "lesson" && !node.placeholder
+      ? LESSON_STATUS_MARKS[node.completion ?? "empty"]
+      : null;
   return (
-    <button
-      type="button"
-      title={node.label}
-      disabled={!clickable}
-      onClick={() => clickable && onSelect?.(node)}
-      className={`absolute flex items-center justify-center border-2 px-3 text-center text-xs font-medium leading-tight transition-colors ${style.bg} ${style.border} ${
-        clickable ? "cursor-pointer hover:brightness-95" : "cursor-default opacity-70"
-      } ${isActive ? "ring-2 ring-accent ring-offset-2 ring-offset-card" : ""}`}
-      style={{
-        left: x - BOX_W / 2,
-        top: y - BOX_H / 2,
-        width: BOX_W,
-        height: BOX_H,
-        ...shapeClipStyle(shape),
-      }}
+    <div
+      className="absolute"
+      style={{ left: x - BOX_W / 2, top: y - BOX_H / 2, width: BOX_W, height: BOX_H }}
     >
-      <span className="line-clamp-2 break-words">{node.label}</span>
-    </button>
+      <button
+        type="button"
+        title={node.label}
+        disabled={!clickable}
+        onClick={() => clickable && onSelect?.(node)}
+        className={`flex h-full w-full items-center justify-center border-2 px-3 text-center text-xs font-medium leading-tight transition-colors ${style.bg} ${style.border} ${
+          clickable ? "cursor-pointer hover:brightness-95" : "cursor-default opacity-70"
+        } ${isActive ? "ring-2 ring-accent ring-offset-2 ring-offset-card" : ""}`}
+        style={shapeClipStyle(shape)}
+      >
+        <span className="line-clamp-2 break-words">{node.label}</span>
+      </button>
+      {statusMark ? (
+        <span
+          aria-hidden
+          title={style.label}
+          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-line bg-card text-[10px] leading-none"
+        >
+          {statusMark}
+        </span>
+      ) : null}
+    </div>
   );
 }

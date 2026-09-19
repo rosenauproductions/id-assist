@@ -3,7 +3,6 @@ import type {
   CourseOutline,
   CoursePhase,
   FilterHit,
-  GagneEvent,
   RequirementItem,
 } from "./types";
 
@@ -178,20 +177,11 @@ export function buildCourseMap(
       });
       edges.push({ from: courseModule.id, to: lesson.id });
 
-      let previousStepId: string = lesson.id;
-      lesson.units.forEach((unit, unitIndex) => {
-        nodes.push({
-          id: unit.id,
-          kind: "unit",
-          label: gagneLabel(unit.gagne),
-          order: unitIndex,
-          parentId: lesson.id,
-          completion: nodeCompletion("unit", percents, false),
-        });
-        edges.push({ from: previousStepId, to: unit.id });
-        previousStepId = unit.id;
-      });
-
+      // Only the lesson and its assessment show up as their own boxes in
+      // the default Construction map — the Gagné-event units inside a
+      // lesson live in the Lessons tab (reached via the existing
+      // click-through), not as separate nodes here. See the roadmap
+      // decision behind this in the Stage 1 map-redesign notes.
       if (lesson.assessmentId) {
         const assessment = assessmentsById.get(lesson.assessmentId);
         if (assessment) {
@@ -200,34 +190,18 @@ export function buildCourseMap(
             id: assessment.id,
             kind: "assessment",
             label: assessmentLabel(assessment.format),
-            order: lesson.units.length,
+            order: 0,
             parentId: lesson.id,
             hasOpenFlag: assessmentFlag,
             completion: nodeCompletion("assessment", percents, assessmentFlag),
           });
-          edges.push({ from: previousStepId, to: assessment.id });
+          edges.push({ from: lesson.id, to: assessment.id });
         }
       }
     });
   });
 
   return { nodes, edges };
-}
-
-const GAGNE_LABELS: Record<GagneEvent, string> = {
-  attention: "Gain attention",
-  objectives: "State objective",
-  recall: "Recall prior",
-  present: "Present content",
-  guide: "Guide practice",
-  elicit: "Elicit performance",
-  feedback: "Give feedback",
-  assess: "Assess",
-  retain: "Retention & transfer",
-};
-
-function gagneLabel(event: GagneEvent): string {
-  return GAGNE_LABELS[event] ?? event;
 }
 
 function assessmentLabel(format: string): string {

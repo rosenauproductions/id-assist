@@ -528,7 +528,20 @@ export function ProjectWorkspace({
 
               {mapSubView === "construction" ? (
                 <>
-                  <p className="mt-1 text-sm text-muted">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted">
+                    <span className="text-[11px] font-medium uppercase tracking-wide">
+                      Production progress
+                    </span>
+                    {phases.map((phase, index) => (
+                      <span key={phase.phase} className="flex items-center gap-1">
+                        {index > 0 ? <span className="text-line">→</span> : null}
+                        <StatusIcon status={phase.status} className="h-3 w-3" />
+                        <span>{COURSE_PHASE_LABELS[phase.phase]}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <hr className="mt-3 border-line" />
+                  <p className="mt-3 text-sm text-muted">
                     Coloring reflects the Requirements checklist for each
                     piece&apos;s phase, overlaid red where a quality issue is
                     still open.
@@ -1346,7 +1359,7 @@ function PhaseTimeline({
 }) {
   return (
     <section className="mt-6 rounded-xl border border-line bg-card p-5">
-      <h2 className="text-lg font-semibold">Phase timeline</h2>
+      <h2 className="text-lg font-semibold">Production progress</h2>
       <p className="mt-1 text-sm text-muted">
         Discovery → Publishing. Auto-calculated from the requirements
         checklist below — override a phase if reality doesn&apos;t match yet.
