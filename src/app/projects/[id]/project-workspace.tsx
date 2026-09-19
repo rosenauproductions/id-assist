@@ -927,7 +927,7 @@ function OutcomeEditor({
           <>
             <HintLabel
               label="Bloom"
-              hint="How hard a thinking skill this is. The practice and the test need to match it."
+              hint="Ranges from just remembering it to actually creating something with it — the practice and the test need to match whatever level you pick."
             >
               <select
                 name="bloom"
