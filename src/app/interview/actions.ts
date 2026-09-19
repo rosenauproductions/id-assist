@@ -42,7 +42,7 @@ export async function createProjectFromInterviewAction(
 ): Promise<string> {
   if (!briefReady(draft)) {
     throw new Error(
-      "Brief still has quality issues. Resolve them in the review step before creating the project.",
+      "This brief still needs some fixes — go back to the review step and clear them before creating the project.",
     );
   }
   const project = compileBrief({

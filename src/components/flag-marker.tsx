@@ -75,7 +75,7 @@ export function FlagMarker({
         className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-danger hover:bg-danger/10"
       >
         <ExclamationTriangleIcon className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
-        <span className="sr-only">{open.length} open pedagogy issue(s)</span>
+        <span className="sr-only">{open.length} open issue{open.length > 1 ? "s" : ""}</span>
       </button>
 
       {menuOpen && pos ? (

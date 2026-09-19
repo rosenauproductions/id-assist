@@ -107,8 +107,8 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           "rewrite",
           "objective.quality",
           outcome.id,
-          "Outcome is unmeasurable (hollow verb or missing criterion).",
-          "Rewrite as condition + observable verb + criterion.",
+          "This objective isn't measurable yet — it's missing an observable verb or a clear standard.",
+          "Rewrite it as: given [the situation], [an observable action], to [a clear standard].",
         ),
       );
     }
@@ -137,7 +137,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           "objective.no_activity",
           outcome.id,
           "This objective has a lesson but no guided-practice activity in it.",
-          "Add an elicit-type unit (guided attempt, practice prompt, try-it) before the assessment.",
+          "Add a practice step — a guided attempt or try-it — before the test.",
         ),
       );
     }
@@ -152,8 +152,8 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "block",
             "coverage.missing",
             outcome.id,
-            "Terminal outcome has no assessment spec.",
-            "Add evidence that can actually carry this Bloom level.",
+            "This is one of the course's final objectives, but it has no test attached yet.",
+            "Add a way to prove they've hit this Bloom level — not just a quick check.",
           ),
         );
       } else if (
@@ -164,8 +164,8 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "rewrite",
             "alignment.bloom",
             outcome.id,
-            `Outcome is ${outcome.bloom} but evidence is ${evidence.bloom}.`,
-            "Raise the assessment or lower the objective.",
+            `This objective is set at "${outcome.bloom}" but the test only proves "${evidence.bloom}."`,
+            "Either make the test harder to match the objective, or ease the objective to match the test.",
           ),
         );
       } else {
@@ -174,7 +174,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "pass",
             "coverage.ok",
             outcome.id,
-            "Terminal outcome has aligned evidence.",
+            "This final objective has a test that actually proves it.",
             "Keep practice at this level.",
           ),
         );
@@ -190,7 +190,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "block",
             "tutor.evidence",
             evidence.id,
-            "Apply and above cannot use in-chat conversation as the only evidence.",
+            "For an objective at this level, a chat conversation alone isn't enough proof.",
             "Keep the tutor for practice; attach a Doc, Canvas assignment, or performance artifact.",
           ),
         );
@@ -206,7 +206,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
             "block",
             "coverage.no_artifact_channel",
             evidence.id,
-            "Apply and above needs an artifact channel (Doc, Canvas, or Rise) in the build mix, but only Tutor is selected.",
+            "An objective at this level needs real proof — a Doc, Canvas page, or Rise module — not just the chat tutor by itself.",
             "Add at least one non-tutor delivery channel so this evidence has somewhere to live.",
           ),
         );
@@ -287,7 +287,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           "chunk.size",
           lesson.id,
           `Lesson is ${lesson.estimatedMinutes} min (target 5–9, hard cap 12).`,
-          "Re-chunk. Do not change Bloom to fit the UI.",
+          "Split this into smaller pieces instead of watering down the objective to make it fit.",
         ),
       );
     }
@@ -314,7 +314,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           "rewrite",
           "delivery.mismatch",
           lesson.id,
-          `${lesson.delivery} is a weak practice channel for ${objective.bloom}.`,
+          `"${lesson.delivery}" isn't a strong way to practice a "${objective.bloom}"-level objective.`,
           `Prefer: ${allowed.join(", ")}.`,
         ),
       );
@@ -329,7 +329,7 @@ export function runFilters(outline: CourseOutline): FilterHit[] {
           "rewrite",
           "bloom.flashcards",
           lesson.id,
-          "Flashcards cannot be the practice for this Bloom level.",
+          "Flashcards aren't enough practice for an objective at this level.",
           "Swap to contrast, scenario, process, or try-prompt.",
         ),
       );

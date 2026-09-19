@@ -69,7 +69,7 @@ export const WIZARD_STEPS: {
     id: "jobTask",
     title: "Job task",
     prompt: "What must they be able to do after the course?",
-    hint: "Observable on-the-job performance — a verb you could watch or grade. Not a topic list.",
+    hint: "Something you could actually watch them do — not a list of topics.",
     placeholder: "Write a facts-only PIR from a Sev-2 timeline and chat export",
     input: "textarea",
   },
@@ -77,15 +77,15 @@ export const WIZARD_STEPS: {
     id: "whyNow",
     title: "Why now",
     prompt: "Why does this matter right now?",
-    hint: "The workplace cost of not doing this. Adults need relevance up front.",
+    hint: "What it costs if people keep doing it the old way.",
     placeholder: "Blame language in PIRs is killing incident reporting",
     input: "textarea",
   },
   {
     id: "durationMinutes",
-    title: "Seat time",
-    prompt: "How many minutes should the learner spend in the course?",
-    hint: "Learner time only — not build time. This becomes a hard chunking budget.",
+    title: "Length",
+    prompt: "How long should this take the learner?",
+    hint: "The learner's time, not the time it takes you to build it. Everything else gets sized around this.",
     placeholder: "25",
     input: "number",
   },
@@ -99,8 +99,8 @@ export const WIZARD_STEPS: {
   },
   {
     id: "delivery",
-    title: "Build mix",
-    prompt: "Which channels can this course ship in?",
+    title: "Delivery",
+    prompt: "Where will people actually take this?",
     hint: "Pick one or more. Lessons will be assigned to the best fit later.",
     placeholder: "",
     input: "delivery",
@@ -170,7 +170,7 @@ function finalize(
     score: Math.min(result.score || 40, 65),
     summary:
       result.summary ||
-      "Needs clarity before we continue. Answer the questions below, then resubmit.",
+      "Needs a bit more clarity — answer the questions below, then try again.",
   };
 }
 
@@ -195,9 +195,9 @@ function evaluateTitle(raw: string): FieldEvaluation {
     );
   }
   if (TOPIC_ONLY.test(value) && !OBSERVABLE.test(value)) {
-    result.issues.push("Title reads like a topic tour, not a performance outcome.");
+    result.issues.push("This sounds like a class about a topic, not something they'll walk away able to do.");
     result.rewriteHints.push(
-      "Prefer a verb-led title, e.g. “Writing a blameless PIR” not “PIR awareness.”",
+      "Lead with an action, e.g. “Writing a blameless PIR” instead of “PIR awareness.”",
     );
   }
   return finalize(result, "Title is specific enough to carry the brief.");
@@ -214,9 +214,9 @@ function evaluateAudience(raw: string): FieldEvaluation {
     );
   }
   if (/^(everyone|all staff|employees|users|people|team)\b/i.test(value)) {
-    result.issues.push("Audience is too broad to design practice for.");
+    result.issues.push("That's too broad to build real practice around.");
     result.clarifyingQuestions.push(
-      "Who is the primary performer? Who is secondary?",
+      "Who's the main group taking this? Anyone secondary?",
     );
     result.rewriteHints.push(
       "Name a role + context, e.g. “new store managers in their first 90 days.”",
@@ -225,7 +225,7 @@ function evaluateAudience(raw: string): FieldEvaluation {
   if (!/\b(lead|manager|engineer|nurse|agent|analyst|coordinator|specialist|instructor|rep|operator|commander|director|associate|intern|new hire)\b/i.test(
     value,
   ) && value.split(/\s+/).length < 4) {
-    result.issues.push("Could not detect a clear role.");
+    result.issues.push("We couldn't tell what job or role this is for.");
     result.clarifyingQuestions.push("What job title or function is this for?");
   }
   return finalize(result, "Audience is specific enough to design for.");
@@ -242,40 +242,40 @@ function evaluateJobTask(raw: string): FieldEvaluation {
     );
   }
   if (HOLLOW.test(value)) {
-    result.issues.push("Uses a hollow verb (understand / know / learn / be aware).");
+    result.issues.push("That describes knowing something, not doing something.");
     result.clarifyingQuestions.push(
       "What would you watch them do to prove they “understand”?",
     );
     result.rewriteHints.push(
-      "Replace with an observable verb: write, configure, critique, select, draft…",
+      "Swap in something you could watch them do: write, configure, critique, select, draft…",
     );
   }
   if (TOPIC_ONLY.test(value) && !OBSERVABLE.test(value)) {
-    result.issues.push("Reads as content coverage, not a job task.");
+    result.issues.push("That sounds like a topic you'd cover, not something they'd actually do.");
     result.clarifyingQuestions.push(
       "If you shadowed them next week, what work product or action would prove success?",
     );
   }
   if (!OBSERVABLE.test(value)) {
-    result.issues.push("No clear observable action verb.");
+    result.issues.push("There's no clear action here — something you could watch them do.");
     result.clarifyingQuestions.push(
-      "Start with a verb a grader could check without reading minds.",
+      "Start with something you could watch and check — not something only they'd know they did.",
     );
   }
   if (!/\b(from|using|given|with|after|during|when)\b/i.test(value) && value.length > 20) {
     result.clarifyingQuestions.push(
-      "Under what conditions? (tools, inputs, situation)",
+      "What tools, inputs, or situation will they have when they do this?",
     );
     result.rewriteHints.push(
-      "Add a condition: “Given X, do Y to criterion Z.”",
+      "Add the setup: “Given [the situation], do [the task], well enough to [the standard].”",
     );
     // Soft issue — only fail if already weak
     if (result.issues.length > 0) {
-      result.issues.push("Missing condition (given / using / when…).");
+      result.issues.push("Missing the setup — what tools or situation they'll have.");
     } else {
       result.score = 72;
       result.rewriteHints.push(
-        "Optional strengthen: add the condition and criterion.",
+        "Optional: add the setup and the standard to sharpen it further.",
       );
     }
   }
@@ -285,7 +285,7 @@ function evaluateJobTask(raw: string): FieldEvaluation {
     OBSERVABLE.test(value) &&
     !HOLLOW.test(value)
   ) {
-    return finalize(result, "Job task is observable and designable.");
+    return finalize(result, "This is something you can watch and build practice around.");
   }
   if (
     result.issues.length === 1 &&
@@ -295,10 +295,10 @@ function evaluateJobTask(raw: string): FieldEvaluation {
     result.issues = [];
     return finalize(
       result,
-      "Job task works. Adding a condition later will sharpen assessments.",
+      "This works. Adding the setup later will make the practice sharper.",
     );
   }
-  return finalize(result, "Job task is observable and designable.");
+  return finalize(result, "This is something you can watch and build practice around.");
 }
 
 function evaluateWhyNow(raw: string): FieldEvaluation {
@@ -312,7 +312,7 @@ function evaluateWhyNow(raw: string): FieldEvaluation {
     );
   }
   if (/^(because|required|compliance|mandatory|leadership asked)\b/i.test(value) && value.length < 40) {
-    result.issues.push("Sounds like a mandate, not a workplace consequence.");
+    result.issues.push("That sounds like a rule from above — what actually breaks if we skip it?");
     result.clarifyingQuestions.push(
       "What broken result, risk, cost, or delay does this course prevent?",
     );
@@ -327,10 +327,10 @@ function evaluateWhyNow(raw: string): FieldEvaluation {
       "Example: “Blame in PIRs is suppressing incident reports.”",
     );
     if (value.length < 30) {
-      result.issues.push("Needs a clearer workplace consequence.");
+      result.issues.push("We need a clearer picture of what goes wrong without this.");
     }
   }
-  return finalize(result, "Why-now gives adults a reason to care.");
+  return finalize(result, "This gives people a real reason to care.");
 }
 
 function evaluateDuration(minutes: number): FieldEvaluation {
@@ -340,20 +340,20 @@ function evaluateDuration(minutes: number): FieldEvaluation {
     result.issues.push("Seat time must be a positive number of minutes.");
     result.clarifyingQuestions.push("How long should a typical learner spend?");
   } else if (minutes < 10) {
-    result.issues.push("Under 10 minutes is usually too tight for practice + evidence.");
+    result.issues.push("Under 10 minutes usually isn't enough time to practice and show they've got it.");
     result.clarifyingQuestions.push(
       "Is this a micro tip, or a real course with practice?",
     );
   } else if (minutes > 120) {
-    result.issues.push("Over 120 minutes should usually be split into a path of shorter courses.");
+    result.issues.push("Over 120 minutes usually works better split into a few shorter courses.");
     result.clarifyingQuestions.push(
-      "What is the single job task for this sitting? Split the rest.",
+      "What's the one thing they must be able to do in this sitting? Save the rest for another course.",
     );
     result.rewriteHints.push("Aim for 15–45 minutes for a focused async course.");
   }
   return finalize(
     result,
-    `${minutes} minutes is a workable learner budget for chunking.`,
+    `${minutes} minutes is a reasonable amount of time to plan around.`,
   );
 }
 
@@ -362,19 +362,19 @@ function evaluateConstraints(raw: string): FieldEvaluation {
   const result = base();
   result.score = 70;
   if (!value) {
-    result.issues.push("Say “none” if there are no constraints — blank is ambiguous.");
+    result.issues.push("Type “none” if there really aren't any — leaving it blank is unclear.");
     result.clarifyingQuestions.push(
       "Any limits on modality, tools, compliance, language, or devices?",
     );
   } else if (/^(n\/?a|na|-)\s*$/i.test(value)) {
-    result.rewriteHints.push("Prefer “None” so the compiler knows you checked.");
+    result.rewriteHints.push("Type “None” so we know you checked, not just skipped it.");
     // still pass
   }
   return finalize(
     result,
     value.toLowerCase() === "none" || /^none\b/i.test(value)
-      ? "No design constraints recorded."
-      : "Constraints will shape delivery and practice choices.",
+      ? "No limits on this one."
+      : "These limits will shape how the course gets built.",
   );
 }
 
@@ -389,7 +389,7 @@ function evaluateDelivery(delivery: DeliveryTarget[]): FieldEvaluation {
   }
   return finalize(
     result,
-    `Build mix set: ${delivery.join(", ")}.`,
+    `Set to: ${delivery.join(", ")}.`,
   );
 }
 

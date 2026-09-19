@@ -113,7 +113,7 @@ function velocityFactor(project: IdProject): {
   return {
     factor,
     basis: "velocity",
-    note: `Velocity from ${actualHours.toFixed(1)} logged h vs ${priorForLogged.toFixed(1)} prior h (×${factor.toFixed(2)}).`,
+    note: `Pace: ${actualHours.toFixed(1)}h logged vs ${priorForLogged.toFixed(1)}h planned (×${factor.toFixed(2)} adjustment).`,
   };
 }
 
@@ -158,7 +158,7 @@ export function estimateProject(project: IdProject): ProductionEstimate {
     const share = Math.min(p50Hours, resource.hoursPerWeek * 2);
     if (resource.sme?.kind === "w2") {
       notes.push(
-        `${resource.name} is W2: $0 invoice. Calendar still uses ${resource.hoursPerWeek} h/wk around other duties.`,
+        `${resource.name} is on staff — no separate invoice. Still budgeted at ${resource.hoursPerWeek}h/week around their other work.`,
       );
       if (resource.sme.loadedRateUsd) {
         labor += share * resource.sme.loadedRateUsd;
@@ -166,7 +166,7 @@ export function estimateProject(project: IdProject): ProductionEstimate {
     } else if (resource.sme?.kind === "per_project") {
       smeFee += resource.sme.feeUsd;
       notes.push(
-        `${resource.name} is per-project at $${resource.sme.feeUsd.toLocaleString()} (no ceiling; typical hint $1k–$5k).`,
+        `${resource.name} is paid per project: $${resource.sme.feeUsd.toLocaleString()}. (Typical range is $1k–$5k — no hard cap.)`,
       );
     } else if (resource.hourlyRateUsd) {
       labor += share * resource.hourlyRateUsd;
@@ -181,7 +181,7 @@ export function estimateProject(project: IdProject): ProductionEstimate {
       : Math.ceil((remainingHours / Math.max(neck.hoursPerWeek, 0.5)) * 5);
 
   if (humanHours(team) === 0) {
-    notes.push("Unknown team: using a default ID persona until you add people.");
+    notes.push("No team set up yet — using a placeholder instructional designer until you add real people.");
   }
   if (velocity.note) notes.unshift(velocity.note);
   if (actualHours > 0) {
@@ -202,16 +202,16 @@ export function estimateProject(project: IdProject): ProductionEstimate {
     p50CostUsd: Math.round(p50CostUsd),
     p90CostUsd: Math.round(p90CostUsd),
     buckets: [
-      { label: "Labor", amountUsd: Math.round(labor), note: "Non-SME hourly" },
+      { label: "Labor", amountUsd: Math.round(labor), note: "Hourly work (not the subject-matter expert)" },
       {
         label: "SME fee",
         amountUsd: Math.round(smeFee),
-        note: "W2 is $0 invoice",
+        note: "Staff — no separate invoice",
       },
       {
         label: "ID Assist / AI",
         amountUsd: Math.round(aiCost),
-        note: `${Math.max(idAssistRuns, 1)} compiler runs`,
+        note: `${Math.max(idAssistRuns, 1)} AI generation${Math.max(idAssistRuns, 1) === 1 ? "" : "s"}`,
       },
     ],
     notes,

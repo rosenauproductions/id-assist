@@ -611,9 +611,9 @@ function AcceptableIssuesSection({
         ) : null}
       </div>
       <p className="mt-1 text-sm text-muted">
-        Pedagogy flags marked &quot;Always allow this issue&quot; from any
-        outline in this workspace land here. They&apos;re muted everywhere,
-        on every project, until removed.
+        Issues you&apos;ve marked &quot;Always allow&quot; on any course in
+        this workspace show up here. They stay muted everywhere, on every
+        project, until you remove them.
       </p>
 
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}

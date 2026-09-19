@@ -181,7 +181,7 @@ export default async function RootLayout({
                 </form>
               </div>
             ) : (
-              <p className="text-sm text-muted">Human in the loop</p>
+              <p className="text-sm text-muted">You design it. We help you build it.</p>
             )}
           </div>
         </header>

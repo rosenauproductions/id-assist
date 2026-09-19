@@ -46,6 +46,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
+import { GAGNE_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
 import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
@@ -392,7 +393,7 @@ export function ProjectWorkspace({
             <section>
               <h2 className="text-lg font-semibold">Outcomes</h2>
               <p className="mt-1 text-sm text-muted">
-                Edit Bloom and Mager fields. Saving re-runs filters.
+                Edit the pieces of each objective below. Saving checks it against the rules again.
               </p>
               <ul className="mt-4 grid gap-4">
                 {outline.outcomes.map((outcome) => (
@@ -926,7 +927,7 @@ function OutcomeEditor({
           <>
             <HintLabel
               label="Bloom"
-              hint="Cognitive level of the verb. Practice and evidence must match."
+              hint="How hard a thinking skill this is. The practice and the test need to match it."
             >
               <select
                 name="bloom"
@@ -943,7 +944,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Condition"
-              hint="Given what situation or tools — the setup for performance."
+              hint="What tools or situation will they have when they do this?"
             >
               <input
                 name="condition"
@@ -954,7 +955,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Behavior"
-              hint="Observable action. Avoid hollow verbs like understand or know."
+              hint="Something you could watch them do — not “understand” or “know,” which you can't actually see."
             >
               <input
                 name="behavior"
@@ -965,7 +966,7 @@ function OutcomeEditor({
             </HintLabel>
             <HintLabel
               label="Criterion"
-              hint="How you know they did it well — the quality bar."
+              hint="How you'd know they did it well enough."
             >
               <input
                 name="criterion"
@@ -1080,7 +1081,7 @@ function LessonEditor({
                 >
                   <p className="text-xs text-muted">
                     <span className="font-medium text-foreground">
-                      {unit.gagne}
+                      {GAGNE_LABELS[unit.gagne]}
                       {unit.riseBlock ? ` / ${unit.riseBlock}` : ""}
                     </span>{" "}
                     — {unit.purpose}
@@ -1133,9 +1134,12 @@ function FilterRow({
         : "border-line";
   return (
     <li className={`rounded-md border bg-background px-3 py-2 text-sm ${tone}`}>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+      <p
+        className="text-[11px] font-medium uppercase tracking-wide text-muted"
+        title={filter.code}
+      >
         {filter.severity}
-        {filter.resolved ? " · resolved" : ""} · {filter.code}
+        {filter.resolved ? " · resolved" : ""}
       </p>
       <p className="mt-1">{filter.message}</p>
       <p className="text-muted">{filter.suggestion}</p>
@@ -1193,7 +1197,7 @@ function TimeLogForm({ project }: { project: IdProject }) {
             </HintLabel>
             <HintLabel
               label="Phase"
-              hint="Where the work sat in ADDIE / production."
+              hint="Which phase of building the course this was."
             >
               <select
                 name="phase"
@@ -1203,7 +1207,7 @@ function TimeLogForm({ project }: { project: IdProject }) {
               >
                 {TIME_PHASES.map((phase) => (
                   <option key={phase} value={phase}>
-                    {phase}
+                    {TIME_PHASE_LABELS[phase]}
                   </option>
                 ))}
               </select>
@@ -1211,7 +1215,7 @@ function TimeLogForm({ project }: { project: IdProject }) {
           </div>
           <HintLabel
             label="Lesson (optional)"
-            hint="Tie hours to a lesson for better velocity. Leave blank for whole-course work."
+            hint="Link hours to a specific lesson to track pace by lesson. Leave blank if this was work on the whole course."
           >
             <select
               name="lessonId"
@@ -1265,7 +1269,7 @@ function SmeForm({ project }: { project: IdProject }) {
     >
       {({ pending, saved }) => (
         <>
-          <HintLabel label="Name" hint="Who owns domain facts and approvals.">
+          <HintLabel label="Name" hint="Who signs off on accuracy — the expert you go to with questions.">
             <input
               name="smeName"
               defaultValue={sme.name}
@@ -1275,7 +1279,7 @@ function SmeForm({ project }: { project: IdProject }) {
           </HintLabel>
           <HintLabel
             label="Hours / week"
-            hint="Real availability. W2 SMEs are often the calendar bottleneck."
+            hint="Their real, available hours — staff experts are often the bottleneck on scheduling."
           >
             <input
               name="smeHours"
@@ -1288,7 +1292,7 @@ function SmeForm({ project }: { project: IdProject }) {
           </HintLabel>
           <HintLabel
             label="Engagement"
-            hint="W2 = $0 invoice. Per-project = fee you type (no ceiling)."
+            hint="Staff (W2): no separate invoice. Contractor: enter the fee you agreed on — there's no cap."
           >
             <select
               name="smeKind"
@@ -1302,7 +1306,7 @@ function SmeForm({ project }: { project: IdProject }) {
           </HintLabel>
           <HintLabel
             label="Fee USD"
-            hint="Typical $1k–$5k for guidance only — enter the real deal amount."
+            hint="Typically $1k–$5k as a reference — enter the actual amount you agreed on."
           >
             <input
               name="smeFee"
@@ -1622,7 +1626,7 @@ function AssessmentCountEditor({
       className="rounded-lg border border-line bg-background p-4 transition-shadow"
     >
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
-        {assessment.format} · {assessment.bloom}
+        {capitalizeFirst(assessment.format)} · {capitalizeFirst(assessment.bloom)}
         <FlagMarker projectId={projectId} filters={filters} />
       </p>
       <p className="mt-1 text-sm text-muted">
