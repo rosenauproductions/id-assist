@@ -74,55 +74,55 @@ function unit(
 
 function riseUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Why this job fails today", "attention", "rise", "statement"),
+    unit("Why this job matters, framed around what fails today", "attention", "rise", "statement"),
     unit("Main objective in plain language", "objectives", "rise", "text"),
-    unit("Activate a recent messy example", "recall", "rise", "text"),
-    unit(`Worked example of: ${jobTask}`, "present", "rise", "process"),
-    unit("Guided attempt with checklist", "elicit", "rise", "checklist"),
-    unit("Knowledge check at the lesson verb", "assess", "rise", "knowledge-check"),
+    unit("Bring up a real example the learner has run into", "recall", "rise", "text"),
+    unit(`Walk through an example of ${jobTask}`, "present", "rise", "process"),
+    unit("A guided practice attempt, checked against a checklist", "elicit", "rise", "checklist"),
+    unit("A quick check tied to this lesson's objective", "assess", "rise", "knowledge-check"),
   ];
 }
 
 function videoUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Cold open: the workplace cost", "attention", "video"),
-    unit("Two-case contrast (wrong vs right)", "present", "video"),
-    unit(`Name the job: ${jobTask}`, "objectives", "video"),
-    unit("What to do next in the following lesson", "retain", "video"),
+    unit("Open with the real workplace cost of getting this wrong", "attention", "video"),
+    unit("Show two examples side by side — one done wrong, one done right", "present", "video"),
+    unit(`State the job task plainly: ${jobTask}`, "objectives", "video"),
+    unit("Point the learner to what comes next", "retain", "video"),
   ];
 }
 
 function docUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Job aid purpose and when to use it", "objectives", "gdoc"),
-    unit(`Worked example of ${jobTask}`, "present", "gdoc"),
-    unit("Blank template the learner fills", "elicit", "gdoc"),
-    unit("Quality criterion checklist", "assess", "gdoc"),
+    unit("Explain what this job aid is for and when to use it", "objectives", "gdoc"),
+    unit(`Walk through an example of ${jobTask}`, "present", "gdoc"),
+    unit("A blank template for the learner to fill in", "elicit", "gdoc"),
+    unit("A checklist for what a strong result looks like", "assess", "gdoc"),
   ];
 }
 
 function slidesUnits(): ContentUnit[] {
   return [
-    unit("Title + why now", "attention", "gslides"),
-    unit("One idea per slide, contrast cases", "present", "gslides"),
-    unit("Practice prompt", "elicit", "gslides"),
+    unit("Title slide, with why this matters now", "attention", "gslides"),
+    unit("One idea per slide, contrasting a right way and a wrong way", "present", "gslides"),
+    unit("A prompt for the learner to practice with", "elicit", "gslides"),
   ];
 }
 
 function tutorUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Tutor states the job and constraints", "objectives", "tutor"),
-    unit("Learner pastes or describes a real artifact", "recall", "tutor"),
-    unit(`Guided critique against: ${jobTask}`, "elicit", "tutor"),
-    unit("Feedback mapped to the criterion", "feedback", "tutor"),
-    unit("Send learner to the required artifact if Bloom ≥ apply", "assess", "tutor"),
+    unit("The tutor states the job and any constraints", "objectives", "tutor"),
+    unit("The learner pastes in or describes their real work", "recall", "tutor"),
+    unit(`A guided critique, measured against ${jobTask}`, "elicit", "tutor"),
+    unit("Feedback tied directly to the criterion", "feedback", "tutor"),
+    unit("If the objective is at the apply level or higher, have the learner turn in real work to prove it", "assess", "tutor"),
   ];
 }
 
 function canvasUnits(): ContentUnit[] {
   return [
-    unit("Page: assignment brief", "objectives", "canvas"),
-    unit("Upload or quiz matching the verb", "assess", "canvas"),
+    unit("A page with the assignment brief", "objectives", "canvas"),
+    unit("An upload or quiz that matches the objective", "assess", "canvas"),
   ];
 }
 
