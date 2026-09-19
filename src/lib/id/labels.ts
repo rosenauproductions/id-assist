@@ -1,4 +1,4 @@
-import type { GagneEvent, Outcome, TimePhase } from "./types";
+import type { FilterSeverity, GagneEvent, Outcome, TimePhase } from "./types";
 
 /**
  * Plain-English label for each step of Gagné's Nine Events, shown instead
@@ -40,6 +40,19 @@ export const TIME_PHASE_LABELS: Record<TimePhase, string> = {
   review: "Review",
   build: "Build",
   qa: "QA",
+};
+
+/** Plain-English label for a Quality-check finding's severity, shown on
+ * its card instead of the raw internal tier name. "pass" hits are always
+ * marked resolved internally (so they don’t count toward the open-issue
+ * total) even though nothing was ever wrong — the Quality checks list
+ * hides the "resolved" suffix for "pass" rows for that reason; see
+ * FilterRow in project-workspace.tsx. */
+export const SEVERITY_LABELS: Record<FilterSeverity, string> = {
+  pass: "Looks good",
+  rewrite: "Needs work",
+  split: "Needs splitting",
+  block: "Blocking",
 };
 
 /** Capitalizes the first letter only — for plain-word enum values (Bloom

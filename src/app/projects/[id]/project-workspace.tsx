@@ -46,7 +46,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
-import { GAGNE_LABELS, OUTCOME_KIND_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
+import { GAGNE_LABELS, OUTCOME_KIND_LABELS, SEVERITY_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
 import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
@@ -1141,8 +1141,8 @@ function FilterRow({
         className="text-[11px] font-medium uppercase tracking-wide text-muted"
         title={filter.code}
       >
-        {filter.severity}
-        {filter.resolved ? " · resolved" : ""}
+        {SEVERITY_LABELS[filter.severity]}
+        {filter.resolved && filter.severity !== "pass" ? " · resolved" : ""}
       </p>
       <p className="mt-1">{filter.message}</p>
       <p className="text-muted">{filter.suggestion}</p>
