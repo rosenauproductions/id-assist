@@ -8,6 +8,7 @@ import { compileBrief, unitsFor } from "@/lib/id/compile";
 import { estimateProject } from "@/lib/id/estimate";
 import { canApprove, outlineStatus, runFilters } from "@/lib/id/filters";
 import { nid } from "@/lib/id/ids";
+import { capitalizeFirst } from "@/lib/id/labels";
 import { importOutlineFromText } from "@/lib/id/import-outline";
 import { refineOutlineWithModel } from "@/lib/id/refine";
 import { mergeRequirements } from "@/lib/id/requirements";
@@ -32,6 +33,8 @@ import {
   type RequirementPriority,
   type SmeEngagement,
   type TimePhase,
+  type TutorBot,
+  type TutorConcept,
 } from "@/lib/id/types";
 
 function parseDelivery(formData: FormData): DeliveryTarget[] {
@@ -584,6 +587,105 @@ export async function addAssessmentAction(formData: FormData) {
     project.artifacts = [];
   }
   refilter(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+// Tutor bot ("Knowledge Creator") actions — links a lesson to a
+// hand-authored interactive knowledge-tutor bot, saves edits made in the
+// embedded editor (tutor-bot-editor.tsx, via postMessage), and stores its
+// "Export Tutor" HTML so generateArtifacts() can surface it as a
+// downloadable artifact. These intentionally skip the approved -> needs_
+// review guard and refilter() that structural outline edits trigger: a
+// tutor bot is supplementary lesson content (same tier as hand-written
+// ContentUnit.content), not outline structure the quality filters check.
+
+export async function linkTutorBotAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const lesson = project.outline.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error("Lesson not found");
+  if (lesson.tutorBotId) throw new Error("This lesson already has a tutor bot.");
+
+  const objective = lesson.objectiveIds
+    .map((id) => project.outline.outcomes.find((item) => item.id === id))
+    .find((item): item is NonNullable<typeof item> => Boolean(item));
+
+  const starterConcept: TutorConcept = {
+    id: nid("concept"),
+    type: "concept",
+    title: objective ? capitalizeFirst(objective.behavior) : lesson.title,
+    bloom: objective ? capitalizeFirst(objective.bloom) : "Understand",
+    bloomApproved: false,
+    prerequisites: [],
+    content: "",
+    quiz: [],
+  };
+
+  const bot: TutorBot = {
+    id: nid("tb"),
+    lessonId: lesson.id,
+    version: "2.0",
+    title: lesson.title,
+    settings: {
+      preAssessment: true,
+      conversational: true,
+      showKnowledgeTree: false,
+      theme: "conversational",
+    },
+    concepts: [starterConcept],
+    diagnostic: [],
+    updatedAt: new Date().toISOString(),
+  };
+
+  project.outline.tutorBots.push(bot);
+  lesson.tutorBotId = bot.id;
+
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function saveTutorBotContentAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const tutorBotId = String(formData.get("tutorBotId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const bot = project.outline.tutorBots.find((item) => item.id === tutorBotId);
+  if (!bot) throw new Error("Tutor bot not found");
+
+  const raw = String(formData.get("data") ?? "");
+  let data: Partial<TutorBot>;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Invalid tutor bot data");
+  }
+
+  bot.title = typeof data.title === "string" && data.title.trim() ? data.title : bot.title;
+  if (data.settings) bot.settings = { ...bot.settings, ...data.settings };
+  if (Array.isArray(data.concepts)) bot.concepts = data.concepts;
+  if (Array.isArray(data.diagnostic)) bot.diagnostic = data.diagnostic;
+  bot.updatedAt = new Date().toISOString();
+
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function saveTutorBotExportAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const tutorBotId = String(formData.get("tutorBotId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const bot = project.outline.tutorBots.find((item) => item.id === tutorBotId);
+  if (!bot) throw new Error("Tutor bot not found");
+
+  const html = String(formData.get("html") ?? "");
+  if (!html.trim()) throw new Error("Missing exported HTML");
+  bot.exportedHtml = html;
+  bot.exportedAt = new Date().toISOString();
+
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }

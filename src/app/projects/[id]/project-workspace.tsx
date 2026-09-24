@@ -14,6 +14,7 @@ import {
   deleteRequirementAction,
   dismissFilterAction,
   generateArtifactsAction,
+  linkTutorBotAction,
   logTimeAction,
   refineOutlineAction,
   reopenOutlineAction,
@@ -38,6 +39,7 @@ import { buildCourseMap, type MapNode } from "@/lib/id/course-map";
 import { buildLearnerPath } from "@/lib/id/learner-path";
 import { effectivePhaseProgress } from "@/lib/id/requirements";
 import { StatusPill, StatusIcon } from "@/components/status";
+import { TutorBotEditor } from "@/components/tutor-bot-editor";
 import {
   BLOOM_LEVELS,
   COURSE_PHASE_LABELS,
@@ -141,6 +143,10 @@ export function ProjectWorkspace({
   const learnerPathLessons = useMemo(() => buildLearnerPath(outline), [outline]);
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
   const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null);
+  const [openTutorBotLessonId, setOpenTutorBotLessonId] = useState<
+    string | null
+  >(null);
+  const [tutorBotLinking, startTutorBotLinkTransition] = useTransition();
   const [mapSubView, setMapSubViewState] = useState<MapSubView>(() =>
     loadStoredMapView(project.id),
   );
@@ -230,11 +236,32 @@ export function ProjectWorkspace({
     jumpToTab("assessments", `assessment-${assessmentId}`);
   }
 
+  // Opens the tutor-bot editor for a lesson, linking a fresh (empty)
+  // bot first if this lesson doesn't have one yet. Shared by the
+  // Lessons tab's per-lesson button and the course-map right-click menu
+  // so both entry points stay in sync.
+  function openTutorBot(lessonId: string) {
+    const targetLesson = outline.lessons.find((item) => item.id === lessonId);
+    if (!targetLesson) return;
+    if (targetLesson.tutorBotId) {
+      setOpenTutorBotLessonId(lessonId);
+      return;
+    }
+    startTutorBotLinkTransition(async () => {
+      const formData = new FormData();
+      formData.set("projectId", project.id);
+      formData.set("lessonId", lessonId);
+      await linkTutorBotAction(formData);
+      setOpenTutorBotLessonId(lessonId);
+    });
+  }
+
   // Right-click "add" menu on the course-map sidebar (course-map.tsx).
   const mapAddHandlers: CourseMapAddHandlers = {
     onAddModule: () => setPendingAdd({ kind: "module" }),
     onAddLesson: (moduleId) => setPendingAdd({ kind: "lesson", moduleId }),
     onAddQuiz: (lessonId) => setPendingAdd({ kind: "quiz", lessonId }),
+    onOpenTutorBot: openTutorBot,
   };
 
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
@@ -458,6 +485,8 @@ export function ProjectWorkspace({
                     project={project}
                     lesson={lesson}
                     locked={outline.status === "approved"}
+                    onOpenTutorBot={openTutorBot}
+                    tutorBotBusy={tutorBotLinking}
                   />
                 ))}
               </ul>
@@ -734,6 +763,21 @@ export function ProjectWorkspace({
           onClose={() => setPendingAdd(null)}
         />
       ) : null}
+
+      {openTutorBotLessonId
+        ? (() => {
+            const openLesson = outline.lessons.find(
+              (item) => item.id === openTutorBotLessonId,
+            );
+            return openLesson ? (
+              <TutorBotEditor
+                project={project}
+                lesson={openLesson}
+                onClose={() => setOpenTutorBotLessonId(null)}
+              />
+            ) : null;
+          })()
+        : null}
 
       <style>{`
         .btn-primary {
@@ -1083,10 +1127,14 @@ function LessonEditor({
   project,
   lesson,
   locked,
+  onOpenTutorBot,
+  tutorBotBusy,
 }: {
   project: IdProject;
   lesson: Lesson;
   locked: boolean;
+  onOpenTutorBot: (lessonId: string) => void;
+  tutorBotBusy: boolean;
 }) {
   const objectives = lesson.objectiveIds
     .map((id) => project.outline.outcomes.find((outcome) => outcome.id === id))
@@ -1184,6 +1232,21 @@ function LessonEditor({
                 </li>
               ))}
             </ul>
+            <div className="flex items-center justify-between rounded-md border border-line/60 bg-card/40 p-2.5 text-xs">
+              <span className="text-muted">
+                {lesson.tutorBotId
+                  ? "Interactive tutor bot linked"
+                  : "No tutor bot yet"}
+              </span>
+              <button
+                type="button"
+                disabled={tutorBotBusy}
+                onClick={() => onOpenTutorBot(lesson.id)}
+                className="font-medium text-accent disabled:opacity-50"
+              >
+                {lesson.tutorBotId ? "Open tutor bot" : "Add tutor bot"}
+              </button>
+            </div>
             {!locked ? (
               <SaveButton
                 pending={pending}

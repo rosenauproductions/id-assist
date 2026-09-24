@@ -201,6 +201,16 @@ function tutorPack(project: IdProject): string {
   ].join("\n");
 }
 
+/** Filesystem/URL-safe slug for a tutor-bot artifact filename. */
+function slugify(value: string): string {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "lesson"
+  );
+}
+
 export function generateArtifacts(project: IdProject): GeneratedArtifact[] {
   const files: {
     delivery: GeneratedArtifact["delivery"];
@@ -240,7 +250,7 @@ export function generateArtifacts(project: IdProject): GeneratedArtifact[] {
   ];
 
   const selected = new Set(project.outline.brief.delivery);
-  return files
+  const artifacts = files
     .filter((file) => selected.has(file.delivery))
     .map((file) => ({
       id: nid("art"),
@@ -248,4 +258,24 @@ export function generateArtifacts(project: IdProject): GeneratedArtifact[] {
       filename: file.filename,
       body: file.body,
     }));
+
+  // Tutor bots are per-lesson assets built in the embedded Knowledge
+  // Creator editor (tutor-bot-editor.tsx) — included unconditionally,
+  // regardless of the course's selected delivery targets, since a bot
+  // can exist on a lesson whether or not "tutor" is one of them.
+  for (const lesson of project.outline.lessons) {
+    if (!lesson.tutorBotId) continue;
+    const bot = project.outline.tutorBots.find(
+      (item) => item.id === lesson.tutorBotId,
+    );
+    if (!bot?.exportedHtml) continue;
+    artifacts.push({
+      id: nid("art"),
+      delivery: "tutor",
+      filename: `tutor-bot-${slugify(lesson.title)}.html`,
+      body: bot.exportedHtml,
+    });
+  }
+
+  return artifacts;
 }

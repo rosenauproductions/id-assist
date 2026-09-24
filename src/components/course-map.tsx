@@ -23,6 +23,8 @@ export type CourseMapAddHandlers = {
   onAddModule: () => void;
   onAddLesson: (moduleId: string) => void;
   onAddQuiz: (lessonId: string) => void;
+  /** Opens the tutor-bot editor for a lesson, linking a fresh bot first if needed. */
+  onOpenTutorBot: (lessonId: string) => void;
 };
 
 type MenuItem = { label: string; onClick: () => void };
@@ -116,12 +118,20 @@ export function CourseMap({
                         <li key={lesson.id} className="min-w-0">
                           <div
                             onContextMenu={
-                              addHandlers && !hasAssessment
+                              addHandlers
                                 ? (event) =>
                                     openMenu(event, [
+                                      ...(hasAssessment
+                                        ? []
+                                        : [
+                                            {
+                                              label: "Add quiz",
+                                              onClick: () => addHandlers.onAddQuiz(lesson.id),
+                                            },
+                                          ]),
                                       {
-                                        label: "Add quiz",
-                                        onClick: () => addHandlers.onAddQuiz(lesson.id),
+                                        label: "Tutor bot",
+                                        onClick: () => addHandlers.onOpenTutorBot(lesson.id),
                                       },
                                     ])
                                 : undefined

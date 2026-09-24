@@ -124,6 +124,73 @@ export type FilterHit = {
   dismissReason?: string;
 };
 
+export type TutorQuizItem = {
+  type: "multiple" | "short";
+  question: string;
+  options?: string[];
+  answers?: string[];
+  correct?: number;
+  explanation: string;
+};
+
+export type TutorConcept = {
+  id: string;
+  type: "concept" | "plugin";
+  title: string;
+  /**
+   * The Knowledge Creator tool stores this as Title Case free text
+   * ("Remember" ... "Create"), not the lowercase Bloom union used
+   * elsewhere in the outline — kept as the tool's own shape rather than
+   * coerced, since a bot's concepts are hand-authored independently of
+   * the outline's Bloom-gated objectives.
+   */
+  bloom: string;
+  bloomApproved: boolean;
+  prerequisites: string[];
+  content: string;
+  quiz: TutorQuizItem[];
+  plugin?: string;
+  widget?: string;
+  config?: Record<string, unknown>;
+};
+
+export type TutorDiagnosticItem = {
+  id: string;
+  question: string;
+  type: "multiple" | "short";
+  options?: string[];
+  correct?: number;
+  answers?: string[];
+  linkedConcepts: string[];
+  explanation: string;
+};
+
+/**
+ * A hand-authored interactive "knowledge tutor" bot linked to one lesson
+ * (see Lesson.tutorBotId). Built and edited via the embedded Knowledge
+ * Creator tool (public/tutor-builder/), which owns the concepts/
+ * diagnostic/settings shape below — kept 1:1 with its own JSON export so
+ * the postMessage bridge in tutor-bot-editor.tsx never has to translate.
+ */
+export type TutorBot = {
+  id: string;
+  lessonId: string;
+  version: string;
+  title: string;
+  settings: {
+    preAssessment: boolean;
+    conversational: boolean;
+    showKnowledgeTree: boolean;
+    theme: string;
+  };
+  concepts: TutorConcept[];
+  diagnostic: TutorDiagnosticItem[];
+  /** Last "Export Tutor" output from the tool; feeds generateArtifacts(). */
+  exportedHtml?: string;
+  exportedAt?: string;
+  updatedAt: string;
+};
+
 export type Lesson = {
   id: string;
   title: string;
@@ -133,6 +200,8 @@ export type Lesson = {
   supplements: DeliveryTarget[];
   units: ContentUnit[];
   assessmentId?: string;
+  /** Links this lesson to a hand-authored TutorBot (see outline.tutorBots). */
+  tutorBotId?: string;
 };
 
 export type Module = {
@@ -227,6 +296,7 @@ export type CourseOutline = {
   modules: Module[];
   lessons: Lesson[];
   filters: FilterHit[];
+  tutorBots: TutorBot[];
 };
 
 /**

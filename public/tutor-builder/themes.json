@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "themes": [
+    {
+      "id": "conversational",
+      "name": "Conversational",
+      "description": "Default dark slate with sky-blue accents",
+      "isDefault": true,
+      "vars": {
+        "bg": "#0f172a",
+        "card": "#1e293b",
+        "border": "#334155",
+        "text": "#e2e8f0",
+        "muted": "#94a3b8",
+        "accent": "#38bdf8",
+        "success": "#4ade80",
+        "danger": "#f87171"
+      },
+      "btnText": "#0f172a"
+    },
+    {
+      "id": "academic",
+      "name": "Academic",
+      "description": "Clean light paper with blue links",
+      "vars": {
+        "bg": "#f8fafc",
+        "card": "#ffffff",
+        "border": "#e2e8f0",
+        "text": "#0f172a",
+        "muted": "#64748b",
+        "accent": "#2563eb",
+        "success": "#16a34a",
+        "danger": "#dc2626"
+      },
+      "btnText": "#ffffff"
+    },
+    {
+      "id": "minimal",
+      "name": "Minimal",
+      "description": "Near-white, near-black, high contrast",
+      "vars": {
+        "bg": "#ffffff",
+        "card": "#ffffff",
+        "border": "#e5e5e5",
+        "text": "#171717",
+        "muted": "#737373",
+        "accent": "#171717",
+        "success": "#15803d",
+        "danger": "#b91c1c"
+      },
+      "btnText": "#ffffff"
+    },
+    {
+      "id": "focus",
+      "name": "Focus",
+      "description": "Dark zinc with cyan accent (readable buttons)",
+      "vars": {
+        "bg": "#09090b",
+        "card": "#18181b",
+        "border": "#27272a",
+        "text": "#fafafa",
+        "muted": "#a1a1aa",
+        "accent": "#22d3ee",
+        "success": "#4ade80",
+        "danger": "#f87171"
+      },
+      "btnText": "#083344"
+    }
+  ]
+}

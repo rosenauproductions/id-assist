@@ -280,6 +280,7 @@ export function compileBrief(brief: CourseBrief): IdProject {
       ],
       lessons,
       filters: [],
+      tutorBots: [],
     },
     team: defaultTeam(),
     estimate: {

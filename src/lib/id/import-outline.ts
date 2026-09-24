@@ -258,6 +258,7 @@ export function buildProjectFromImportedOutline(parsed: ImportedOutline): IdProj
       modules,
       lessons,
       filters: [],
+      tutorBots: [],
     },
     team: defaultTeam(),
     estimate: {

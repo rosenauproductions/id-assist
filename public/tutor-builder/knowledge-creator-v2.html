@@ -1,0 +1,2651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Graph Lesson Creator v2</title>
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+      --success: #4ade80; --warning: #fbbf24; --danger: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.15rem; white-space: nowrap; }
+    .settings-bar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 0.85rem; }
+    .toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .toggle input { accent-color: var(--accent); }
+    select, input[type="text"], input[type="password"] {
+      background: #0f172a; border: 1px solid var(--border); color: var(--text);
+      border-radius: 6px; padding: 5px 8px; font-size: 0.85rem;
+    }
+    .main { flex: 1; display: grid; grid-template-columns: 240px 1fr 260px; overflow: hidden; }
+    @media (max-width: 1100px) { .main { grid-template-columns: 200px 1fr; } .tree-panel { display: none; } }
+    .panel { border-right: 1px solid var(--border); overflow-y: auto; padding: 12px; background: var(--bg); }
+    .panel:last-child { border-right: none; }
+    .panel h2 { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .concept-item {
+      padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 3px;
+      display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 0.9rem;
+    }
+    .concept-item:hover { background: #1e293b; }
+    .concept-item.active { background: #1e3a5f; border: 1px solid var(--accent); }
+    .concept-item .title { flex: 1; }
+    .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; white-space: nowrap; }
+    .badge.needs-review { background: #854d0e; color: #fef3c7; }
+    .badge.approved { background: #14532d; color: #bbf7d0; }
+    .badge.bloom { background: #1e3a5f; color: #7dd3fc; }
+    .detail-panel { padding: 16px; overflow-y: auto; }
+    .detail-panel label { display: block; font-size: 0.8rem; color: var(--muted); margin: 12px 0 4px; }
+    .detail-panel input[type="text"], .detail-panel textarea, .detail-panel select {
+      width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; color: var(--text); font-size: 0.9rem;
+    }
+    .detail-panel textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .prereq-chips, .diag-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+    .chip {
+      background: #334155; padding: 3px 8px; border-radius: 999px; font-size: 0.8rem;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .chip button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.95rem; line-height: 1; }
+    .quiz-item, .diag-item {
+      background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px; margin-bottom: 10px;
+    }
+    .quiz-item .q-header, .diag-item .q-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    button {
+      background: var(--accent); color: #0f172a; border: none; border-radius: 8px;
+      padding: 7px 12px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.secondary { background: #334155; color: var(--text); }
+    button.danger { background: #7f1d1d; color: #fecaca; }
+    button.warning { background: #854d0e; color: #fef3c7; }
+    button.small { padding: 4px 9px; font-size: 0.75rem; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .tree-panel { font-size: 0.85rem; }
+    .tree-node {
+      padding: 3px 0 3px 10px; border-left: 2px solid var(--border); margin-left: 6px; cursor: pointer;
+    }
+    .tree-node:hover { color: var(--accent); }
+    .tree-node.active { color: var(--accent); font-weight: 600; }
+    .tree-node.root { border-left: none; margin-left: 0; padding-left: 0; }
+    .review-bar {
+      background: #1e293b; border-top: 1px solid var(--border); padding: 8px 16px;
+      display: flex; align-items: center; gap: 10px; font-size: 0.85rem;
+    }
+    .review-bar .count { color: var(--warning); font-weight: 600; }
+    .empty { color: var(--muted); font-size: 0.85rem; padding: 16px 0; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+    }
+    .modal {
+      background: var(--card); border-radius: 12px; padding: 20px;
+      max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border);
+    }
+    .modal h2 { margin-bottom: 10px; font-size: 1.15rem; }
+    .modal .close { float: right; background: none; color: var(--muted); font-size: 1.3rem; }
+    .status-msg { margin-top: 8px; font-size: 0.85rem; }
+    .status-msg.error { color: var(--danger); }
+    .status-msg.ok { color: var(--success); }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+    .export-area {
+      background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; font-family: ui-monospace, monospace; font-size: 0.75rem;
+      white-space: pre-wrap; max-height: 360px; overflow: auto; margin-top: 10px;
+    }
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .tabs button { background: #334155; }
+    .tabs button.active { background: var(--accent); color: #0f172a; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Creator chrome themes */
+    body.ui-light {
+      --bg: #f1f5f9; --card: #ffffff; --border: #cbd5e1;
+      --text: #0f172a; --muted: #64748b; --accent: #0284c7;
+      --success: #15803d; --warning: #b45309; --danger: #b91c1c;
+    }
+    body.ui-light select, body.ui-light input[type="text"], body.ui-light input[type="password"],
+    body.ui-light .detail-panel input[type="text"], body.ui-light .detail-panel textarea,
+    body.ui-light .detail-panel select, body.ui-light .quiz-item, body.ui-light .diag-item,
+    body.ui-light .export-area {
+      background: #fff; color: #0f172a; border-color: #cbd5e1;
+    }
+    body.ui-light .concept-item:hover { background: #e2e8f0; }
+    body.ui-light .concept-item.active { background: #e0f2fe; border-color: var(--accent); }
+    body.ui-light header, body.ui-light .review-bar { background: #fff; }
+    body.ui-light button.secondary { background: #e2e8f0; color: #0f172a; }
+
+    body.ui-sepia {
+      --bg: #f4ecd8; --card: #faf6ea; --border: #d6c7a1;
+      --text: #3f2e1a; --muted: #7a6540; --accent: #b45309;
+    }
+
+    header { align-items: flex-start; }
+    header h1 { white-space: normal; overflow-wrap: anywhere; max-width: 220px; }
+    #lessonTitle { min-width: 160px; max-width: 280px; }
+
+    .opt-btn { margin-left: auto; }
+    .options-drawer {
+      display: none; background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 12px 16px 16px; flex-wrap: wrap; gap: 16px 24px;
+    }
+    .options-drawer.open { display: flex; }
+    .opt-group { min-width: 180px; }
+    .opt-group h3 { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+    .opt-group label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; margin-bottom: 6px; }
+
+    .collapse-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      cursor: pointer; user-select: none; margin-bottom: 8px;
+    }
+    .collapse-head h2 { margin: 0; }
+    .collapse-head .chev { color: var(--muted); font-size: 0.75rem; }
+    .collapsible.collapsed .collapse-body { display: none; }
+    .concept-item .title { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+    .pair-row { display: grid; grid-template-columns: 1fr 180px; gap: 10px; align-items: end; }
+    @media (max-width: 700px) { .pair-row { grid-template-columns: 1fr; } }
+    .pair-row label { margin-top: 0; }
+    .wysiwyg-toolbar .pair { display: inline-flex; gap: 3px; align-items: center; }
+    .wysiwyg-toolbar .icon-btn { min-width: 30px; font-size: 0.95rem; }
+    .badge.plugin { background: #4c1d95; color: #e9d5ff; }
+    .plugin-preview {
+      border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-height: 120px;
+      background: #0f172a;
+    }
+    body.ui-light .plugin-preview { background: #fff; }
+    .plugin-form textarea { min-height: 70px; }
+    .plugin-form .mini { font-size: 0.8rem; color: var(--muted); margin: 4px 0 8px; }
+    .wysiwyg img {
+      outline: 3px dashed var(--accent);
+      outline-offset: 3px;
+      background: repeating-conic-gradient(#334155 0% 25%, #1e293b 0% 50%) 0 0 / 16px 16px;
+      min-height: 40px;
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+    .plugin-preview {
+      margin-top: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .plugin-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: inline-block;
+      margin: 8px 0;
+    }
+    .plugin-preview .img-above { display: block; width: 100%; }
+    .plugin-preview .img-left { float: left; margin: 4px 16px 8px 0; max-width: 46%; }
+    .plugin-preview .img-right { float: right; margin: 4px 0 8px 16px; max-width: 46%; }
+    .plugin-preview::after { content: ""; display: table; clear: both; }
+    figure.kc-img {
+      margin: 10px 0; padding: 8px; border: 1px dashed var(--accent); border-radius: 8px;
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      position: relative; cursor: pointer;
+    }
+    figure.kc-img figcaption {
+      font-size: 0.75rem; color: var(--accent); margin-top: 4px;
+    }
+    figure.kc-img.kc-img-selected {
+      outline: 3px solid var(--danger);
+      outline-offset: 2px;
+      border-color: var(--danger);
+    }
+    figure.kc-img .kc-img-del {
+      position: absolute; top: 6px; right: 6px;
+      background: var(--danger); color: #fff; border: none; border-radius: 6px;
+      padding: 2px 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer;
+      display: none; z-index: 2;
+    }
+    figure.kc-img.kc-img-selected .kc-img-del { display: inline-block; }
+    .img-toast {
+      position: fixed; bottom: 18px; right: 18px; z-index: 200;
+      background: var(--accent); color: #0f172a; font-weight: 700;
+      padding: 10px 14px; border-radius: 8px; display: none;
+    }
+    .img-toast.show { display: block; }
+    .flow-list { display: flex; flex-direction: column; gap: 8px; }
+    .flow-item {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 8px 8px 6px; cursor: grab;
+    }
+    .flow-item.active { border-color: var(--accent); }
+    .flow-item.dragging { opacity: 0.45; }
+    .flow-item.drag-over { border-color: var(--success); }
+    .flow-top { display: flex; gap: 6px; align-items: flex-start; }
+    .flow-handle { color: var(--muted); cursor: grab; padding: 0 4px; user-select: none; }
+    .flow-title { font-size: 0.86rem; line-height: 1.25; flex: 1; }
+    .flow-kids { margin: 6px 0 0 22px; display: flex; flex-direction: column; gap: 4px; }
+    .flow-kid {
+      font-size: 0.75rem; color: var(--muted);
+      border-left: 2px solid var(--border); padding: 2px 0 2px 8px;
+    }
+    .flow-kid.quiz { color: #7dd3fc; }
+    .flow-kid.plugin { color: #e9d5ff; }
+
+
+
+    .content-tools { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+    .wysiwyg-toolbar {
+      display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+      background: var(--card); border: 1px solid var(--border); border-bottom: none;
+      border-radius: 8px 8px 0 0; padding: 6px;
+    }
+    .wysiwyg-toolbar button, .wysiwyg-toolbar select {
+      background: #334155; color: var(--text); border: 1px solid var(--border);
+      border-radius: 5px; padding: 4px 7px; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; min-width: 28px; line-height: 1.2;
+    }
+    body.ui-light .wysiwyg-toolbar button, body.ui-light .wysiwyg-toolbar select {
+      background: #e2e8f0; color: #0f172a;
+    }
+    .wysiwyg-toolbar button:hover { filter: brightness(1.12); }
+    .wysiwyg-toolbar button.active { outline: 2px solid var(--accent); }
+    .wysiwyg-toolbar .sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+    .wysiwyg-toolbar input[type="color"] {
+      width: 28px; height: 24px; padding: 0; border: 1px solid var(--border);
+      background: transparent; cursor: pointer;
+    }
+    .wysiwyg {
+      min-height: 160px; border: 1px solid var(--border); border-radius: 0 0 8px 8px;
+      padding: 10px; background: #0f172a; color: var(--text); outline: none;
+    }
+    .wysiwyg h2 { font-size: 1.25rem; margin: 0.4em 0; }
+    .wysiwyg h3 { font-size: 1.1rem; margin: 0.4em 0; }
+    .wysiwyg blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--muted); }
+    .wysiwyg pre, .wysiwyg code { font-family: ui-monospace, monospace; background: #020617; padding: 2px 5px; border-radius: 4px; }
+    .wysiwyg ul, .wysiwyg ol { padding-left: 1.4em; }
+    body.ui-light .wysiwyg { background: #fff; }
+    .wysiwyg img { max-width: 100%; border-radius: 8px; }
+    .img-above { display: block; width: 100%; margin: 0 0 12px; }
+    .img-below { display: block; width: 100%; margin: 12px 0 0; }
+    .img-left { float: left; margin: 4px 16px 8px 0; max-width: 46%; }
+    .img-right { float: right; margin: 4px 0 8px 16px; max-width: 46%; }
+    .img-clear { clear: both; }
+
+    .kp { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; margin: 12px 0; background: color-mix(in srgb, var(--card) 80%, transparent); }
+    .kp-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
+    .kp-toggle, .kp-choice, .kp-check {
+      display: inline-block; margin: 4px 4px 0 0; padding: 8px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: inherit; cursor: pointer; font: inherit;
+    }
+    .kp-toggle:hover, .kp-choice:hover { border-color: var(--accent); }
+    .kp-panel { margin-top: 10px; }
+    .kp-panel[hidden] { display: none !important; }
+    .kp-flip { perspective: 800px; min-height: 90px; cursor: pointer; }
+    .kp-flip-inner { position: relative; transition: transform .35s; transform-style: preserve-3d; min-height: 90px; }
+    .kp-flip.flipped .kp-flip-inner { transform: rotateY(180deg); }
+    .kp-face { backface-visibility: hidden; border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-height: 90px; }
+    .kp-back { position: absolute; inset: 0; transform: rotateY(180deg); }
+    .kp-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .kp-tab { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: inherit; cursor: pointer; }
+    .kp-tab.on { border-color: var(--accent); }
+    .kp-match { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kp-choice.picked { outline: 2px solid var(--accent); }
+    .kp-choice.good { outline: 2px solid var(--success); }
+    .kp-choice.bad { outline: 2px solid var(--danger); }
+    .kp-blank { display: inline-block; min-width: 90px; margin: 0 4px; padding: 2px 6px; border: none; border-bottom: 2px solid var(--accent); background: transparent; color: inherit; font: inherit; }
+    .kp-status { margin-top: 8px; font-size: 0.85rem; color: var(--muted); }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Knowledge Creator</h1>
+  <input type="text" id="lessonTitle" placeholder="Lesson Title" value="Untitled Lesson">
+  <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:auto;">
+    <button class="secondary small" id="btnOptions">Options</button>
+    <button class="secondary small" id="btnImport">Import</button>
+    <button class="secondary small" id="btnExport">Export JSON</button>
+    <button class="secondary small" id="btnExportTutor">Export Tutor</button>
+    <button class="secondary small" id="btnSaveToIdAssist" style="display:none;">Save to ID Assist</button>
+    <button class="secondary small" id="btnAITemplate" title="Download a prompt template for converting a Word lesson to importable JSON">AI → JSON template</button>
+    <button class="warning small" id="btnAI">Generate AI</button>
+  </div>
+</header>
+
+<div class="options-drawer" id="optionsDrawer">
+  <div class="opt-group">
+    <h3>Lesson behavior</h3>
+    <label class="toggle"><input type="checkbox" id="preAssessment" checked> Pre-Assessment</label>
+    <label class="toggle"><input type="checkbox" id="conversational" checked> Conversational</label>
+    <label class="toggle"><input type="checkbox" id="showTree"> Show tree to student</label>
+    <label class="toggle" title="Exported tutor starts with the tree closed"><input type="checkbox" id="exportCollapsed"> Export tree collapsed</label>
+  </div>
+  <div class="opt-group">
+    <h3>Lesson export theme</h3>
+    <label>Student theme
+      <select id="theme">
+        <option value="conversational">Conversational</option>
+        <option value="academic">Academic</option>
+        <option value="minimal">Minimal</option>
+        <option value="focus">Focus</option>
+      </select>
+    </label>
+    <p class="hint" style="margin-top:6px;"><a href="theme-editor.html" style="color:var(--accent);">Open theme editor</a> · themes.json</p>
+    <p class="hint" style="margin-top:4px;">Plugins runtime: <code>kp-plugins.js</code> (edit separately)</p>
+  </div>
+  <div class="opt-group">
+    <h3>Creator interface</h3>
+    <label>Creator theme
+      <select id="uiTheme">
+        <option value="dark">Dark (current)</option>
+        <option value="light">Light</option>
+        <option value="sepia">Sepia</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div class="main">
+  <div class="panel">
+    <div class="collapsible" id="conceptsSection">
+      <div class="collapse-head" data-collapse="conceptsSection">
+        <h2>Lesson items</h2><span class="chev">▾</span>
+      </div>
+      <div class="collapse-body">
+        <div id="conceptList"></div>
+        <button class="secondary" style="width:100%; margin-top:10px;" id="btnAddConcept">+ Add Concept</button>
+        <select id="addPluginKind" style="width:100%; margin-top:8px;">
+          <option value="">+ Add plugin…</option>
+          <optgroup label="Interactives">
+            <option value="int-reveal">Reveal / hint</option>
+            <option value="int-flip">Flip card</option>
+            <option value="int-tabs">Tabs</option>
+            <option value="int-acc">Accordion</option>
+          </optgroup>
+          <optgroup label="Learning games">
+            <option value="game-order">Click-in-order</option>
+            <option value="game-match">Match pairs</option>
+            <option value="game-blank">Fill in the blanks</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="collapsible" id="diagSection" style="margin-top:18px;">
+      <div class="collapse-head" data-collapse="diagSection">
+        <h2>Diagnostics</h2><span class="chev">▾</span>
+      </div>
+      <div class="collapse-body">
+        <div id="diagList"></div>
+        <button class="secondary" style="width:100%; margin-top:8px;" id="btnAddDiag">+ Add Diagnostic</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel">
+    <div class="empty" id="emptyDetail">Select a concept or diagnostic to edit</div>
+
+    <!-- Concept Detail -->
+    <div id="conceptDetail" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <h2 style="color:var(--text); text-transform:none; letter-spacing:0; font-size:1.1rem;" id="detailTitle">Concept</h2>
+        <div class="row">
+          <span id="bloomBadge" class="badge needs-review">Needs Review</span>
+          <button class="small" id="btnApproveBloom" style="display:none;">Approve</button>
+          <button class="small secondary" id="btnRegenConcept">Regenerate</button>
+          <button class="small secondary" id="btnSuggestPrereq">Suggest Prereqs</button>
+          <button class="small danger" id="btnDeleteConcept">Delete</button>
+        </div>
+      </div>
+      <div class="pair-row">
+        <div>
+          <label>Title</label>
+          <input type="text" id="cTitle">
+        </div>
+        <div>
+          <label>Bloom’s Level</label>
+          <select id="cBloom">
+            <option value="Remember">Remember</option>
+            <option value="Understand">Understand</option>
+            <option value="Apply">Apply</option>
+            <option value="Analyze">Analyze</option>
+            <option value="Evaluate">Evaluate</option>
+            <option value="Create">Create</option>
+          </select>
+        </div>
+      </div>
+      <label>Prerequisites</label>
+      <div class="row">
+        <select id="prereqSelect" style="flex:1;"><option value="">Add prerequisite…</option></select>
+        <button class="small secondary" id="btnAddPrereq">Add</button>
+      </div>
+      <div class="prereq-chips" id="prereqChips"></div>
+      <div class="hint" id="cycleWarning" style="color:var(--danger); display:none;">⚠ Circular dependency detected</div>
+      <label>Teaching Content</label>
+      <div class="hint">Edit visually or as HTML. Images can sit above, below, left, or right of text.</div>
+      <div class="content-tools">
+        <button class="small secondary" type="button" id="btnModeVisual">Visual</button>
+        <button class="small secondary" type="button" id="btnModeHtml">HTML</button>
+      </div>
+      <input type="hidden" id="imgPos" value="above">
+      <input type="hidden" id="imgSize" value="46%">
+      <div class="wysiwyg-toolbar" id="wysiwygBar">
+        <span class="pair">
+          <button type="button" data-cmd="undo" title="Undo">↶ Undo</button>
+          <button type="button" data-cmd="redo" title="Redo">↷ Redo</button>
+        </span>
+        <span class="sep"></span>
+        <span class="pair">
+        <select id="fmtBlock" title="Paragraph style">
+          <option value="P">Paragraph</option>
+          <option value="H2">Heading</option>
+          <option value="H3">Subheading</option>
+          <option value="H4">Small heading</option>
+          <option value="PRE">Code block</option>
+          <option value="BLOCKQUOTE">Quote</option>
+        </select>
+        <select id="fmtFontSize" title="Size">
+          <option value="">Size</option>
+          <option value="3">Normal</option>
+          <option value="4">Large</option>
+          <option value="5">Larger</option>
+          <option value="2">Small</option>
+        </select>
+        </span>
+        <span class="sep"></span>
+        <button type="button" id="btnUploadImg" class="icon-btn" title="Insert image">🖼 Image</button>
+        <button type="button" id="btnDeleteImg" class="icon-btn" title="Delete selected image">🗑</button>
+        <button type="button" class="icon-btn img-align" data-align="above" title="Image above">⬆</button>
+        <button type="button" class="icon-btn img-align" data-align="below" title="Image below">⬇</button>
+        <button type="button" class="icon-btn img-align" data-align="left" title="Image left">⬅</button>
+        <button type="button" class="icon-btn img-align" data-align="right" title="Image right">➡</button>
+        <span class="sep"></span>
+        <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+        <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+        <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+        <button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+        <button type="button" data-cmd="subscript" title="Subscript">X₂</button>
+        <button type="button" data-cmd="superscript" title="Superscript">X²</button>
+        <span class="sep"></span>
+        <label title="Text color" style="display:flex;align-items:center;gap:3px;font-size:0.72rem;color:var(--muted);">A
+          <input type="color" id="fmtColor" value="#38bdf8">
+        </label>
+        <label title="Highlight" style="display:flex;align-items:center;gap:3px;font-size:0.72rem;color:var(--muted);">H
+          <input type="color" id="fmtHilite" value="#854d0e">
+        </label>
+        <span class="sep"></span>
+        <button type="button" data-cmd="justifyLeft" title="Align left">☰</button>
+        <button type="button" data-cmd="justifyCenter" title="Align center">▣</button>
+        <button type="button" data-cmd="justifyRight" title="Align right">☰</button>
+        <button type="button" data-cmd="justifyFull" title="Justify">☰</button>
+        <span class="sep"></span>
+        <button type="button" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+        <button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+        <button type="button" data-cmd="indent" title="Indent">→</button>
+        <button type="button" data-cmd="outdent" title="Outdent">←</button>
+        <span class="sep"></span>
+        <button type="button" id="btnLink" title="Insert link">Link</button>
+        <button type="button" data-cmd="unlink" title="Remove link">Unlink</button>
+        <button type="button" data-cmd="insertHorizontalRule" title="Horizontal line">―</button>
+        <button type="button" id="btnInlineCode" title="Inline code">&lt;/&gt;</button>
+        <button type="button" data-cmd="removeFormat" title="Clear formatting">Clear</button>
+      </div>
+      <div class="wysiwyg" id="cVisual" contenteditable="true"></div>
+      <textarea id="cContent" placeholder="Teaching content…" style="display:none; min-height:140px;"></textarea>
+      <label style="margin-top:16px;">Quiz Questions</label>
+      <div id="quizList"></div>
+      <div class="actions">
+        <button class="small secondary" id="btnAddMultiple">+ Multiple Choice</button>
+        <button class="small secondary" id="btnAddShort">+ Short Answer</button>
+      </div>
+    </div>
+
+    <!-- Plugin configure -->
+    <div id="pluginDetail" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <h2 style="color:var(--text); text-transform:none; letter-spacing:0; font-size:1.1rem;" id="pluginHeading">Plugin</h2>
+        <button class="small danger" id="btnDeletePlugin">Delete</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;">
+        <div>
+          <label>Title</label>
+          <input type="text" id="pTitle">
+        </div>
+        <div id="pLayoutWrap" style="display:none;min-width:200px;">
+          <label>Layout</label>
+          <select id="pLayout" style="width:100%;">
+            <option value="1">1 — single card</option>
+            <option value="2">2 — side by side</option>
+            <option value="4">4 — 2×2 grid</option>
+            <option value="6">6 — 3 rows × 2 cols</option>
+          </select>
+        </div>
+      </div>
+      <label style="margin-top:12px;">Configure</label>
+      <div class="plugin-form" id="pluginForm"></div>
+      <label>Live preview</label>
+      <div class="hint">Edit fields above. Preview is interactive.</div>
+      <div class="plugin-preview content" id="pluginPreview"></div>
+    </div>
+
+    <!-- Diagnostic Detail -->
+    <div id="diagDetail" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+        <h2 style="color:var(--text); text-transform:none; letter-spacing:0; font-size:1.1rem;">Diagnostic Question</h2>
+        <button class="small danger" id="btnDeleteDiag">Delete</button>
+      </div>
+      <label>Question</label>
+      <input type="text" id="dQuestion">
+      <label>Type</label>
+      <select id="dType">
+        <option value="multiple">Multiple Choice</option>
+        <option value="short">Short Answer</option>
+      </select>
+      <div id="dMultipleFields">
+        <label>Options (select correct)</label>
+        <div id="dOptions"></div>
+      </div>
+      <div id="dShortFields" style="display:none;">
+        <label>Acceptable answers</label>
+        <div id="dAnswers"></div>
+        <button class="small secondary" id="btnAddDAnswer" style="margin-top:4px;">+ Answer</button>
+      </div>
+      <label>Linked Concepts (correct → mark these mastered)</label>
+      <div class="row">
+        <select id="dLinkSelect" style="flex:1;"><option value="">Add concept…</option></select>
+        <button class="small secondary" id="btnAddDLink">Add</button>
+      </div>
+      <div class="diag-chips" id="dLinkChips"></div>
+      <label>Explanation</label>
+      <input type="text" id="dExplanation">
+    </div>
+  </div>
+
+  <div class="panel tree-panel">
+    <h2>Lesson flow</h2>
+    <p class="hint">Titles only. Click to open. Drag to reorder.</p>
+    <div id="treeView" class="flow-list empty">No items yet</div>
+  </div>
+</div>
+
+<div class="review-bar" id="reviewBar" style="display:none;">
+  <span class="count" id="reviewCount">0</span> concepts need Bloom’s approval
+  <button class="small" id="btnApproveAll">Approve All</button>
+  <button class="small secondary" id="btnReviewNext">Review Next</button>
+</div>
+
+<!-- AI Modal -->
+<div class="modal-overlay" id="aiModal">
+  <div class="modal">
+    <button class="close" id="btnCloseAI">×</button>
+    <h2 id="aiModalTitle">Generate Knowledge Graph</h2>
+    <p class="hint">API key stays in your browser only.</p>
+    <label>API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-…" style="width:100%; margin-bottom:8px;">
+    <label>API Base URL</label>
+    <input type="text" id="apiBase" value="https://api.openai.com/v1" style="width:100%; margin-bottom:8px;">
+    <label>Model</label>
+    <input type="text" id="apiModel" value="gpt-4o-mini" style="width:100%; margin-bottom:8px;">
+    <div id="aiFullMaterial">
+      <label>Paste source material</label>
+      <textarea id="rawMaterial" rows="7" style="width:100%;"></textarea>
+    </div>
+    <div id="aiConceptContext" style="display:none;">
+      <p class="hint" id="aiContextHint"></p>
+    </div>
+    <div class="actions" style="margin-top:12px;">
+      <button id="btnGenerate">Generate</button>
+      <button class="secondary" id="btnCancelAI">Cancel</button>
+    </div>
+    <div class="status-msg" id="aiStatus"></div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <button class="close" id="btnCloseExport">×</button>
+    <h2 id="exportTitle">Export</h2>
+    <div class="export-area" id="exportOutput"></div>
+    <div class="actions">
+      <button id="btnCopyExport">Copy to Clipboard</button>
+      <button class="secondary" id="btnDownloadExport">Download</button>
+    </div>
+  </div>
+</div>
+
+<div class="img-toast" id="imgToast">Image added</div>
+<input type="file" id="fileInput" accept=".json" style="display:none">
+<input type="file" id="imgInput" accept="image/*" style="display:none">
+
+<script src="kp-plugins.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  let lesson = {
+    version: "2.0",
+    title: "Untitled Lesson",
+    settings: { preAssessment: true, conversational: true, showKnowledgeTree: false, theme: "conversational" },
+    concepts: [],
+    diagnostic: []
+  };
+
+  let selectedId = null;       // concept id
+  let selectedDiagId = null;   // diagnostic id
+  let mode = null;             // "concept" | "diag"
+  let imageTargetId = null;
+  let selectedFigure = null;   // currently selected <figure.kc-img> in visual editor
+  let aiMode = "full";         // "full" | "regen" | "suggest"
+
+  // Student themes — loaded from themes.json when available; baked into Export Tutor
+  const BUILTIN_THEMES = [
+    { id: "conversational", name: "Conversational", isDefault: true,
+      vars: { bg:"#0f172a", card:"#1e293b", border:"#334155", text:"#e2e8f0", muted:"#94a3b8", accent:"#38bdf8", success:"#4ade80", danger:"#f87171" },
+      btnText: "#0f172a" },
+    { id: "academic", name: "Academic",
+      vars: { bg:"#f8fafc", card:"#ffffff", border:"#e2e8f0", text:"#0f172a", muted:"#64748b", accent:"#2563eb", success:"#16a34a", danger:"#dc2626" },
+      btnText: "#ffffff" },
+    { id: "minimal", name: "Minimal",
+      vars: { bg:"#ffffff", card:"#ffffff", border:"#e5e5e5", text:"#171717", muted:"#737373", accent:"#171717", success:"#15803d", danger:"#b91c1c" },
+      btnText: "#ffffff" },
+    { id: "focus", name: "Focus",
+      vars: { bg:"#09090b", card:"#18181b", border:"#27272a", text:"#fafafa", muted:"#a1a1aa", accent:"#22d3ee", success:"#4ade80", danger:"#f87171" },
+      btnText: "#083344" }
+  ];
+  let THEMES = BUILTIN_THEMES.slice();
+
+  function buildThemeCssBlock() {
+    const def = THEMES.find(t => t.isDefault) || THEMES[0] || BUILTIN_THEMES[0];
+    const v = def.vars;
+    let css = `    :root {
+      --bg: ${v.bg}; --card: ${v.card}; --border: ${v.border};
+      --text: ${v.text}; --muted: ${v.muted}; --accent: ${v.accent};
+      --success: ${v.success || "#4ade80"}; --danger: ${v.danger || "#f87171"}; --sidebar-w: 280px;
+    }
+`;
+    THEMES.forEach(t => {
+      if (t.isDefault || t.id === def.id) return;
+      const x = t.vars;
+      css += `    body.theme-${t.id} { --bg:${x.bg}; --card:${x.card}; --border:${x.border}; --text:${x.text}; --muted:${x.muted}; --accent:${x.accent}; --success:${x.success || "#4ade80"}; --danger:${x.danger || "#f87171"}; }\n`;
+    });
+    // Per-theme primary button text color (fixes focus black-on-black / white-on-white)
+    css += `    .btn { color: ${def.btnText || "#0f172a"}; }\n`;
+    THEMES.forEach(t => {
+      if (t.isDefault || t.id === def.id) return;
+      css += `    body.theme-${t.id} .btn { color: ${t.btnText || "#ffffff"}; }\n`;
+    });
+    return css;
+  }
+
+  function populateThemeSelect() {
+    const sel = document.getElementById("theme");
+    if (!sel) return;
+    const cur = sel.value || lesson.settings.theme || "conversational";
+    sel.innerHTML = "";
+    THEMES.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.name;
+      sel.appendChild(opt);
+    });
+    if ([].some.call(sel.options, o => o.value === cur)) sel.value = cur;
+    else if (THEMES[0]) sel.value = THEMES[0].id;
+  }
+
+  async function loadThemes() {
+    try {
+      const res = await fetch("themes.json?_=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("missing");
+      const json = await res.json();
+      if (!json.themes || !json.themes.length) throw new Error("empty");
+      THEMES = json.themes.map(t => ({
+        id: t.id,
+        name: t.name || t.id,
+        isDefault: !!t.isDefault,
+        vars: Object.assign({ bg:"#111", card:"#222", border:"#333", text:"#eee", muted:"#999", accent:"#38bdf8", success:"#4ade80", danger:"#f87171" }, t.vars || {}),
+        btnText: t.btnText || "#ffffff"
+      }));
+      // Drop legacy playful if someone still has it
+      THEMES = THEMES.filter(t => t.id !== "playful");
+      if (!THEMES.length) THEMES = BUILTIN_THEMES.slice();
+      if (!THEMES.some(t => t.isDefault)) THEMES[0].isDefault = true;
+    } catch (e) {
+      THEMES = BUILTIN_THEMES.slice();
+    }
+    populateThemeSelect();
+  }
+
+  function uid(prefix) { return (prefix || "c") + "-" + Math.random().toString(36).slice(2, 9); }
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function getConcept(id) { return lesson.concepts.find(c => c.id === id); }
+  function getDiag(id) { return lesson.diagnostic.find(d => d.id === id); }
+
+  function hasCycle() {
+    const visited = new Set(), stack = new Set();
+    function dfs(id) {
+      if (stack.has(id)) return true;
+      if (visited.has(id)) return false;
+      visited.add(id); stack.add(id);
+      const c = getConcept(id);
+      if (c) for (const p of c.prerequisites) if (dfs(p)) return true;
+      stack.delete(id);
+      return false;
+    }
+    return lesson.concepts.some(c => dfs(c.id));
+  }
+
+  // ========== RENDER ==========
+  function renderConceptList() {
+    const list = document.getElementById("conceptList");
+    list.innerHTML = "";
+    if (!lesson.concepts.length) { list.innerHTML = '<div class="empty">No concepts</div>'; return; }
+    lesson.concepts.forEach(c => {
+      const el = document.createElement("div");
+      el.className = "concept-item" + (c.id === selectedId && mode === "concept" ? " active" : "");
+      const isPlug = c.type === "plugin";
+      const badge = isPlug
+        ? `<span class="badge plugin">${escapeHtml(c.widget || "plugin")}</span>`
+        : `<span class="badge ${c.bloomApproved ? "approved" : "needs-review"}">${c.bloomApproved ? "✓" : "!"} ${c.bloom}</span>`;
+      el.innerHTML = `<span class="title">${escapeHtml(c.title || "Untitled")}</span>${badge}`;
+      el.addEventListener("click", () => selectConcept(c.id));
+      list.appendChild(el);
+    });
+  }
+
+  function renderDiagList() {
+    const list = document.getElementById("diagList");
+    list.innerHTML = "";
+    if (!lesson.diagnostic.length) { list.innerHTML = '<div class="empty" style="padding:8px 0;">None</div>'; return; }
+    lesson.diagnostic.forEach((d, i) => {
+      const el = document.createElement("div");
+      el.className = "concept-item" + (d.id === selectedDiagId && mode === "diag" ? " active" : "");
+      el.innerHTML = `<span class="title">Diag ${i + 1}: ${escapeHtml((d.question || "").slice(0, 40))}${d.question?.length > 40 ? "…" : ""}</span>`;
+      el.addEventListener("click", () => selectDiag(d.id));
+      list.appendChild(el);
+    });
+  }
+
+  function renderTree() {
+    const container = document.getElementById("treeView");
+    if (!lesson.concepts.length) {
+      container.className = "flow-list empty";
+      container.innerHTML = "No items yet";
+      return;
+    }
+    container.className = "flow-list";
+    container.innerHTML = "";
+    lesson.concepts.forEach((c, idx) => {
+      const isPlug = c.type === "plugin";
+      const el = document.createElement("div");
+      el.className = "flow-item" + (c.id === selectedId && mode === "concept" ? " active" : "");
+      el.draggable = true;
+      el.dataset.id = c.id;
+      el.dataset.index = String(idx);
+      el.innerHTML = `<div class="flow-top">
+          <span class="flow-handle" title="Drag">⋮⋮</span>
+          <div class="flow-title">${escapeHtml(c.title || "Untitled")}</div>
+        </div>`;
+      el.addEventListener("click", () => selectConcept(c.id));
+      el.addEventListener("dragstart", ev => {
+        ev.dataTransfer.setData("text/plain", c.id);
+        ev.dataTransfer.effectAllowed = "move";
+        el.classList.add("dragging");
+        window._dragId = c.id;
+      });
+      el.addEventListener("dragend", () => {
+        el.classList.remove("dragging");
+        container.querySelectorAll(".drag-over").forEach(n => n.classList.remove("drag-over"));
+        window._dragId = null;
+      });
+      el.addEventListener("dragover", ev => {
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = "move";
+        el.classList.add("drag-over");
+      });
+      el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+      el.addEventListener("drop", ev => {
+        ev.preventDefault();
+        el.classList.remove("drag-over");
+        const fromId = ev.dataTransfer.getData("text/plain") || window._dragId;
+        if (!fromId || fromId === c.id) return;
+        const from = lesson.concepts.findIndex(x => x.id === fromId);
+        const to = lesson.concepts.findIndex(x => x.id === c.id);
+        if (from < 0 || to < 0) return;
+        const [moved] = lesson.concepts.splice(from, 1);
+        lesson.concepts.splice(to, 0, moved);
+        renderAll();
+      });
+      container.appendChild(el);
+    });
+  }
+
+  function renderConceptDetail() {
+    const c = getConcept(selectedId);
+    if (!c) return;
+
+    if (c.type === "plugin") {
+      document.getElementById("emptyDetail").style.display = "none";
+      document.getElementById("conceptDetail").style.display = "none";
+      document.getElementById("diagDetail").style.display = "none";
+      document.getElementById("pluginDetail").style.display = "block";
+      renderPluginDetail(c);
+      return;
+    }
+
+    document.getElementById("emptyDetail").style.display = "none";
+    document.getElementById("conceptDetail").style.display = "block";
+    document.getElementById("diagDetail").style.display = "none";
+    const pd = document.getElementById("pluginDetail");
+    if (pd) pd.style.display = "none";
+
+    document.getElementById("cTitle").value = c.title || "";
+    document.getElementById("cBloom").value = c.bloom || "Understand";
+    document.getElementById("cContent").value = c.content || "";
+    const vis = document.getElementById("cVisual");
+    if (vis && document.activeElement !== vis) {
+      vis.innerHTML = c.content || "";
+      clearFigureSelection();
+      wireFigureClicks(vis);
+    }
+    refreshStudentPreview(c.content || "");
+
+    const badge = document.getElementById("bloomBadge");
+    const approveBtn = document.getElementById("btnApproveBloom");
+    if (c.bloomApproved) {
+      badge.className = "badge approved"; badge.textContent = "Approved · " + c.bloom;
+      approveBtn.style.display = "none";
+    } else {
+      badge.className = "badge needs-review"; badge.textContent = "Needs Review · " + c.bloom;
+      approveBtn.style.display = "inline-block";
+    }
+
+    // Prereqs
+    const chips = document.getElementById("prereqChips");
+    chips.innerHTML = "";
+    (c.prerequisites || []).forEach(pid => {
+      const p = getConcept(pid);
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.innerHTML = `${escapeHtml(p ? p.title : pid)} <button data-remove="${pid}">×</button>`;
+      chip.querySelector("button").addEventListener("click", () => {
+        c.prerequisites = c.prerequisites.filter(id => id !== pid);
+        renderAll();
+      });
+      chips.appendChild(chip);
+    });
+
+    const sel = document.getElementById("prereqSelect");
+    sel.innerHTML = '<option value="">Add prerequisite…</option>';
+    lesson.concepts.forEach(o => {
+      if (o.id !== c.id && !(c.prerequisites || []).includes(o.id)) {
+        const opt = document.createElement("option");
+        opt.value = o.id; opt.textContent = o.title || o.id;
+        sel.appendChild(opt);
+      }
+    });
+
+    document.getElementById("cycleWarning").style.display = hasCycle() ? "block" : "none";
+    renderQuiz(c);
+  }
+
+  function renderQuiz(concept) {
+    const list = document.getElementById("quizList");
+    list.innerHTML = "";
+    (concept.quiz || []).forEach((q, idx) => {
+      const el = document.createElement("div");
+      el.className = "quiz-item";
+      if (q.type === "short") {
+        let answersHtml = (q.answers || [""]).map((a, aIdx) => `
+          <div style="display:flex;gap:5px;margin-bottom:3px;">
+            <input type="text" value="${escapeHtml(a)}" data-q="${idx}" data-field="answer${aIdx}" style="flex:1;">
+            <button class="small danger" data-action="removeAnswer" data-q="${idx}" data-a="${aIdx}">×</button>
+          </div>`).join("");
+        el.innerHTML = `
+          <div class="q-header"><strong>Q${idx+1} · Short</strong>
+            <button class="small danger" data-action="removeQuestion" data-q="${idx}">Remove</button></div>
+          <label>Question</label>
+          <input type="text" value="${escapeHtml(q.question)}" data-q="${idx}" data-field="question">
+          <label>Answers</label>${answersHtml}
+          <button class="small secondary" data-action="addAnswer" data-q="${idx}" style="margin-top:4px;">+ Answer</button>
+          <label>Explanation</label>
+          <input type="text" value="${escapeHtml(q.explanation||"")}" data-q="${idx}" data-field="explanation">`;
+      } else {
+        let optionsHtml = (q.options || ["","","",""]).map((opt, oIdx) => `
+          <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px;">
+            <input type="radio" name="correct-${idx}" value="${oIdx}" ${q.correct===oIdx?"checked":""} data-q="${idx}" data-field="correct">
+            <input type="text" value="${escapeHtml(opt)}" data-q="${idx}" data-field="option${oIdx}" style="flex:1;">
+          </div>`).join("");
+        el.innerHTML = `
+          <div class="q-header"><strong>Q${idx+1} · Multiple</strong>
+            <button class="small danger" data-action="removeQuestion" data-q="${idx}">Remove</button></div>
+          <label>Question</label>
+          <input type="text" value="${escapeHtml(q.question)}" data-q="${idx}" data-field="question">
+          <label>Options</label>${optionsHtml}
+          <label>Explanation</label>
+          <input type="text" value="${escapeHtml(q.explanation||"")}" data-q="${idx}" data-field="explanation">`;
+      }
+      list.appendChild(el);
+    });
+
+    list.querySelectorAll("input").forEach(inp => {
+      const h = () => {
+        const qIdx = parseInt(inp.dataset.q, 10);
+        const field = inp.dataset.field;
+        const q = concept.quiz[qIdx];
+        if (!q || !field) return;
+        if (field === "question" || field === "explanation") q[field] = inp.value;
+        else if (field === "correct") q.correct = parseInt(inp.value, 10);
+        else if (field.startsWith("option")) q.options[parseInt(field.replace("option",""),10)] = inp.value;
+        else if (field.startsWith("answer")) q.answers[parseInt(field.replace("answer",""),10)] = inp.value;
+      };
+      inp.addEventListener("input", h);
+      inp.addEventListener("change", h);
+    });
+    list.querySelectorAll("[data-action]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.action;
+        const qIdx = parseInt(btn.dataset.q, 10);
+        if (action === "removeQuestion") { concept.quiz.splice(qIdx, 1); renderConceptDetail(); }
+        else if (action === "addAnswer") { concept.quiz[qIdx].answers.push(""); renderConceptDetail(); }
+        else if (action === "removeAnswer") {
+          concept.quiz[qIdx].answers.splice(parseInt(btn.dataset.a,10), 1);
+          if (!concept.quiz[qIdx].answers.length) concept.quiz[qIdx].answers = [""];
+          renderConceptDetail();
+        }
+      });
+    });
+  }
+
+  function renderDiagDetail() {
+    const d = getDiag(selectedDiagId);
+    if (!d) return;
+
+    document.getElementById("emptyDetail").style.display = "none";
+    document.getElementById("conceptDetail").style.display = "none";
+    document.getElementById("diagDetail").style.display = "block";
+    const pd = document.getElementById("pluginDetail");
+    if (pd) pd.style.display = "none";
+
+    document.getElementById("dQuestion").value = d.question || "";
+    document.getElementById("dType").value = d.type || "multiple";
+    document.getElementById("dExplanation").value = d.explanation || "";
+
+    const isMultiple = d.type !== "short";
+    document.getElementById("dMultipleFields").style.display = isMultiple ? "block" : "none";
+    document.getElementById("dShortFields").style.display = isMultiple ? "none" : "block";
+
+    if (isMultiple) {
+      const opts = document.getElementById("dOptions");
+      opts.innerHTML = "";
+      (d.options || ["","","",""]).forEach((opt, i) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;gap:5px;align-items:center;margin-bottom:3px;";
+        row.innerHTML = `
+          <input type="radio" name="dcorrect" value="${i}" ${d.correct===i?"checked":""}>
+          <input type="text" value="${escapeHtml(opt)}" data-opt="${i}" style="flex:1;">`;
+        row.querySelector("input[type=radio]").addEventListener("change", () => { d.correct = i; });
+        row.querySelector("input[type=text]").addEventListener("input", e => { d.options[i] = e.target.value; });
+        opts.appendChild(row);
+      });
+    } else {
+      const ans = document.getElementById("dAnswers");
+      ans.innerHTML = "";
+      (d.answers || [""]).forEach((a, i) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;gap:5px;margin-bottom:3px;";
+        row.innerHTML = `<input type="text" value="${escapeHtml(a)}" style="flex:1;">
+          <button class="small danger">×</button>`;
+        row.querySelector("input").addEventListener("input", e => { d.answers[i] = e.target.value; });
+        row.querySelector("button").addEventListener("click", () => {
+          d.answers.splice(i, 1);
+          if (!d.answers.length) d.answers = [""];
+          renderDiagDetail();
+        });
+        ans.appendChild(row);
+      });
+    }
+
+    // Linked concepts
+    const chips = document.getElementById("dLinkChips");
+    chips.innerHTML = "";
+    (d.linkedConcepts || []).forEach(cid => {
+      const c = getConcept(cid);
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.innerHTML = `${escapeHtml(c ? c.title : cid)} <button>×</button>`;
+      chip.querySelector("button").addEventListener("click", () => {
+        d.linkedConcepts = d.linkedConcepts.filter(id => id !== cid);
+        renderDiagDetail();
+      });
+      chips.appendChild(chip);
+    });
+
+    const sel = document.getElementById("dLinkSelect");
+    sel.innerHTML = '<option value="">Add concept…</option>';
+    lesson.concepts.forEach(c => {
+      if (!(d.linkedConcepts || []).includes(c.id)) {
+        const opt = document.createElement("option");
+        opt.value = c.id; opt.textContent = c.title || c.id;
+        sel.appendChild(opt);
+      }
+    });
+  }
+
+  function renderReviewBar() {
+    const pending = lesson.concepts.filter(c => !c.bloomApproved);
+    const bar = document.getElementById("reviewBar");
+    if (!pending.length) { bar.style.display = "none"; return; }
+    bar.style.display = "flex";
+    document.getElementById("reviewCount").textContent = pending.length;
+  }
+
+  function renderAll() {
+    lesson.title = document.getElementById("lessonTitle").value || "Untitled Lesson";
+    lesson.settings.preAssessment = document.getElementById("preAssessment").checked;
+    lesson.settings.conversational = document.getElementById("conversational").checked;
+    lesson.settings.showKnowledgeTree = document.getElementById("showTree").checked;
+    lesson.settings.theme = document.getElementById("theme").value;
+    renderConceptList();
+    renderDiagList();
+    renderTree();
+    renderReviewBar();
+    if (mode === "concept" && selectedId) renderConceptDetail();
+    else if (mode === "diag" && selectedDiagId) renderDiagDetail();
+    else {
+      document.getElementById("emptyDetail").style.display = "block";
+      document.getElementById("conceptDetail").style.display = "none";
+      document.getElementById("diagDetail").style.display = "none";
+      const pd = document.getElementById("pluginDetail");
+      if (pd) pd.style.display = "none";
+    }
+  }
+
+  function applyUiTheme() {
+    const v = document.getElementById("uiTheme")?.value || "dark";
+    document.body.classList.remove("ui-light", "ui-sepia");
+    if (v === "light") document.body.classList.add("ui-light");
+    if (v === "sepia") document.body.classList.add("ui-sepia");
+    try { localStorage.setItem("kc-ui-theme", v); } catch (e) {}
+  }
+
+  function syncVisualFromTextarea() {
+    const ta = document.getElementById("cContent");
+    const vis = document.getElementById("cVisual");
+    if (vis && ta && document.activeElement !== vis) vis.innerHTML = ta.value || "";
+  }
+  function refreshStudentPreview() { /* concept student preview removed */ }
+  function syncTextareaFromVisual() {
+    const ta = document.getElementById("cContent");
+    const vis = document.getElementById("cVisual");
+    const c = getConcept(selectedId);
+    if (ta && vis) {
+      ta.value = vis.innerHTML;
+      if (c) c.content = vis.innerHTML;
+      refreshStudentPreview(vis.innerHTML);
+    }
+  }
+  function setContentMode(modeName) {
+    const ta = document.getElementById("cContent");
+    const vis = document.getElementById("cVisual");
+    if (modeName === "html") {
+      syncTextareaFromVisual();
+      vis.style.display = "none";
+      ta.style.display = "block";
+    } else {
+      ta.style.display = "none";
+      vis.style.display = "block";
+      vis.innerHTML = ta.value || "";
+    }
+  }
+
+  // ========== SELECT ==========
+  function selectConcept(id) {
+    selectedId = id; selectedDiagId = null; mode = "concept";
+    renderAll();
+  }
+  function selectDiag(id) {
+    selectedDiagId = id; selectedId = null; mode = "diag";
+    renderAll();
+  }
+
+  // ========== ACTIONS ==========
+
+  const PLUGIN_KINDS = {
+    "int-reveal": { plugin: "interactives", widget: "reveal", title: "Reveal / hint" },
+    "int-flip": { plugin: "interactives", widget: "flip", title: "Flip card" },
+    "int-tabs": { plugin: "interactives", widget: "tabs", title: "Tabs" },
+    "int-acc": { plugin: "interactives", widget: "accordion", title: "Accordion" },
+    "game-order": { plugin: "games", widget: "order", title: "Click in order" },
+    "game-match": { plugin: "games", widget: "match", title: "Match pairs" },
+    "game-blank": { plugin: "games", widget: "blank", title: "Fill in the blanks" }
+  };
+
+  function defaultPluginConfig(widget) {
+    if (widget === "reveal") return { show: "Show hint", hide: "Hide hint", body: "Hidden explanation…" };
+    if (widget === "flip") return {
+      layout: "1",
+      cards: [{ front: "Question", back: "Answer" }]
+    };
+    if (widget === "tabs") return { tabs: [{ label: "Tab 1", body: "Content 1" }, { label: "Tab 2", body: "Content 2" }] };
+    if (widget === "accordion") return { sections: [{ label: "Section A", body: "Details A" }, { label: "Section B", body: "Details B" }] };
+    if (widget === "order") return { prompt: "Click the steps in order.", items: ["First", "Second", "Third"] };
+    if (widget === "match") return { pairs: [{ left: "Term A", right: "Definition A" }, { left: "Term B", right: "Definition B" }] };
+    if (widget === "blank") return { html: "Plants make {{glucose|sugar}} using light." };
+    return {};
+  }
+
+  function pluginContentFromConfig(c) {
+    const w = c.widget, cfg = c.config || {};
+    if (w === "reveal") {
+      return `<div class="kp" data-kp="interactives" data-widget="reveal"><div class="kp-label">Interactive · Reveal</div><button type="button" class="kp-toggle" data-show="${escAttr(cfg.show||"Show")}" data-hide="${escAttr(cfg.hide||"Hide")}">${escHtmlLite(cfg.show||"Show")}</button><div class="kp-panel kp-reveal-text" hidden>${cfg.body||""}</div></div>`;
+    }
+    if (w === "flip") {
+      // Migrate legacy single front/back and old layout ids
+      let cards = cfg.cards;
+      if (!cards || !cards.length) {
+        cards = [{ front: cfg.front || "Front", back: cfg.back || "Back" }];
+      }
+      let layout = String(cfg.layout || "1");
+      const layoutMap = { "1x1": "1", "2x2": "4", "3": "2", "4x4": "4", "6x6": "6" };
+      if (layoutMap[layout]) layout = layoutMap[layout];
+      if (!["1", "2", "4", "6"].includes(layout)) layout = "1";
+      const need = ({ "1": 1, "2": 2, "4": 4, "6": 6 })[layout] || cards.length;
+      while (cards.length < need) cards.push({ front: "Front " + (cards.length + 1), back: "Back " + (cards.length + 1) });
+      const cardHtml = cards.slice(0, need).map((card, i) =>
+        `<div class="kp-flip-card" data-i="${i}"><div class="kp-flip-inner"><div class="kp-face kp-front">${card.front || ""}</div><div class="kp-face kp-back">${card.back || ""}</div></div></div>`
+      ).join("");
+      return `<div class="kp" data-kp="interactives" data-widget="flip"><div class="kp-label">Interactive · Flip · ${escHtmlLite(layout)}</div><div class="kp-flip-grid" data-layout="${escAttr(layout)}">${cardHtml}</div></div>`;
+    }
+    if (w === "tabs") {
+      const tabs = cfg.tabs || [];
+      const tabBtns = tabs.map((t,i)=>`<button type="button" class="kp-tab${i===0?" on":""}">${escHtmlLite(t.label||("Tab "+(i+1)))}</button>`).join("");
+      const panels = tabs.map((t,i)=>`<div class="kp-panel"${i? " hidden":""}>${t.body||""}</div>`).join("");
+      return `<div class="kp" data-kp="interactives" data-widget="tabs"><div class="kp-label">Interactive · Tabs</div><div class="kp-tabs-shell"><div class="kp-tabs">${tabBtns}</div><div class="kp-tabs-panels">${panels}</div></div></div>`;
+    }
+    if (w === "accordion") {
+      const secs = (cfg.sections||[]).map(sec =>
+        `<div class="kp-acc-item"><button type="button" class="kp-acc-head">${escHtmlLite(sec.label||"Section")}</button><div class="kp-acc-body"><div class="kp-acc-body-inner"><div>${sec.body||""}</div></div></div></div>`
+      ).join("");
+      return `<div class="kp" data-kp="interactives" data-widget="accordion"><div class="kp-label">Interactive · Accordion</div><div class="kp-acc">${secs}</div></div>`;
+    }
+    if (w === "order") {
+      const items = (cfg.items||[]).map((txt,i)=>`<button type="button" class="kp-choice" data-order="${i+1}">${escHtmlLite(txt)}</button>`).join("");
+      return `<div class="kp" data-kp="games" data-widget="order"><div class="kp-label">Game · Click in order</div><p>${escHtmlLite(cfg.prompt||"")}</p>${items}<div class="kp-status">Start with step 1</div></div>`;
+    }
+    if (w === "match") {
+      const pairs = cfg.pairs || [];
+      let cells = "";
+      pairs.forEach((p,i) => {
+        const key = String.fromCharCode(97+i);
+        cells += `<button type="button" class="kp-choice" data-side="l" data-pair="${key}">${escHtmlLite(p.left||"")}</button>`;
+        cells += `<button type="button" class="kp-choice" data-side="r" data-pair="${key}">${escHtmlLite(p.right||"")}</button>`;
+      });
+      return `<div class="kp" data-kp="games" data-widget="match"><div class="kp-label">Game · Match pairs</div><div class="kp-match">${cells}</div><div class="kp-status">Click a term, then its match</div></div>`;
+    }
+    if (w === "blank") {
+      const raw = cfg.html || "";
+      const html = raw.replace(/\{\{([^}]+)\}\}/g, (_, ans) => `<input class="kp-blank" data-answers="${escAttr(ans)}">`);
+      return `<div class="kp" data-kp="games" data-widget="blank"><div class="kp-label">Game · Fill in the blanks</div><p>${html}</p><button type="button" class="kp-check">Check</button><div class="kp-status"></div></div>`;
+    }
+    return "";
+  }
+  function escAttr(str){ return String(str||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+  function escHtmlLite(str){ return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function addPluginItem(kind) {
+    const meta = PLUGIN_KINDS[kind];
+    if (!meta) return;
+    const id = uid("plugin");
+    const item = {
+      id, type: "plugin", title: meta.title, bloom: "Apply", bloomApproved: true,
+      prerequisites: [], quiz: [],
+      plugin: meta.plugin, widget: meta.widget,
+      config: defaultPluginConfig(meta.widget), content: ""
+    };
+    item.content = pluginContentFromConfig(item);
+    lesson.concepts.push(item);
+    selectConcept(id);
+  }
+
+  function renderPluginDetail(c) {
+    document.getElementById("pluginHeading").textContent = (c.widget || "plugin") + " plugin";
+    document.getElementById("pTitle").value = c.title || "";
+    const layoutWrap = document.getElementById("pLayoutWrap");
+    const layoutSel = document.getElementById("pLayout");
+    if (c.widget === "flip") {
+      layoutWrap.style.display = "block";
+      const cfg = c.config || (c.config = defaultPluginConfig("flip"));
+      const layoutMap = { "1x1": "1", "2x2": "4", "3": "2", "4x4": "4", "6x6": "6" };
+      if (layoutMap[cfg.layout]) cfg.layout = layoutMap[cfg.layout];
+      if (!cfg.layout || !["1", "2", "4", "6"].includes(String(cfg.layout))) cfg.layout = "1";
+      layoutSel.value = String(cfg.layout);
+    } else {
+      layoutWrap.style.display = "none";
+    }
+    renderPluginForm(c);
+    refreshPluginPreview(c);
+  }
+
+  function renderPluginForm(c) {
+    const form = document.getElementById("pluginForm");
+    const cfg = c.config || (c.config = defaultPluginConfig(c.widget));
+    const w = c.widget;
+    if (w === "reveal") {
+      form.innerHTML = `<label>Text</label>
+        <textarea data-k="body" style="min-height:90px;" placeholder="Equation, hint, or explanation (HTML ok)…">${escapeHtml(cfg.body||"")}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+          <div><label>Show button</label><input type="text" data-k="show" value="${escapeHtml(cfg.show||"Show")}"></div>
+          <div><label>Hide button</label><input type="text" data-k="hide" value="${escapeHtml(cfg.hide||"Hide")}"></div>
+        </div>`;
+    } else if (w === "flip") {
+      // Normalize config (layout is controlled by #pLayout next to Title)
+      if (!cfg.cards || !cfg.cards.length) {
+        cfg.cards = [{ front: cfg.front || "Question", back: cfg.back || "Answer" }];
+        delete cfg.front; delete cfg.back;
+      }
+      const layoutMap = { "1x1": "1", "2x2": "4", "3": "2", "4x4": "4", "6x6": "6" };
+      if (layoutMap[cfg.layout]) cfg.layout = layoutMap[cfg.layout];
+      if (!cfg.layout || !["1", "2", "4", "6"].includes(String(cfg.layout))) cfg.layout = "1";
+      const layouts = (window.KP && KP.FLIP_LAYOUTS) ? KP.FLIP_LAYOUTS : {
+        "1": { count: 1, label: "1 — single card" },
+        "2": { count: 2, label: "2 — side by side" },
+        "4": { count: 4, label: "4 — 2×2 grid" },
+        "6": { count: 6, label: "6 — 3 rows × 2 cols" }
+      };
+      const need = layouts[cfg.layout] ? layouts[cfg.layout].count : cfg.cards.length;
+      while (cfg.cards.length < need) cfg.cards.push({ front: "Front " + (cfg.cards.length + 1), back: "Back " + (cfg.cards.length + 1) });
+      if (cfg.cards.length > need) cfg.cards = cfg.cards.slice(0, need);
+      const cardFields = cfg.cards.map((card, i) =>
+        `<div class="quiz-item" style="margin-bottom:8px;">
+          <strong style="font-size:0.8rem;">Card ${i + 1}</strong>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+            <div><label>Front</label><textarea data-arr="cards" data-i="${i}" data-f="front" style="min-height:52px;">${escapeHtml(card.front || "")}</textarea></div>
+            <div><label>Back</label><textarea data-arr="cards" data-i="${i}" data-f="back" style="min-height:52px;">${escapeHtml(card.back || "")}</textarea></div>
+          </div>
+        </div>`
+      ).join("");
+      form.innerHTML = cardFields || '<p class="mini">Add cards via layout.</p>';
+    } else if (w === "tabs" || w === "accordion") {
+      const key = w === "tabs" ? "tabs" : "sections";
+      if (!cfg[key]) cfg[key] = [];
+      form.innerHTML = cfg[key].map((row,i) => `<div class="quiz-item"><strong>Item ${i+1}</strong>
+        <label>Label</label><input type="text" data-arr="${key}" data-i="${i}" data-f="label" value="${escapeHtml(row.label||"")}">
+        <label>Body</label><textarea data-arr="${key}" data-i="${i}" data-f="body">${escapeHtml(row.body||"")}</textarea>
+        <button class="small danger" data-del="${key}" data-i="${i}">Remove</button></div>`).join("")
+        + `<button class="small secondary" data-add="${key}">+ Item</button>`;
+    } else if (w === "order") {
+      form.innerHTML = `<label>Prompt</label><input type="text" data-k="prompt" value="${escapeHtml(cfg.prompt||"")}">
+        <label>Steps (one per line, in correct order)</label>
+        <textarea data-k="itemsText">${escapeHtml((cfg.items||[]).join("\\n"))}</textarea>`;
+    } else if (w === "match") {
+      form.innerHTML = (cfg.pairs||[]).map((row,i) => `<div class="quiz-item pair-row">
+        <div><label>Left ${i+1}</label><input type="text" data-arr="pairs" data-i="${i}" data-f="left" value="${escapeHtml(row.left||"")}"></div>
+        <div><label>Right ${i+1}</label><input type="text" data-arr="pairs" data-i="${i}" data-f="right" value="${escapeHtml(row.right||"")}"></div>
+        <button class="small danger" data-del="pairs" data-i="${i}">×</button></div>`).join("")
+        + `<button class="small secondary" data-add="pairs">+ Pair</button>`;
+    } else if (w === "blank") {
+      form.innerHTML = `<p class="mini">Wrap answers in {{answer}} or {{ans1|ans2}}.</p>
+        <textarea data-k="html">${escapeHtml(cfg.html||"")}</textarea>`;
+    } else form.innerHTML = "<p class='mini'>Unknown widget</p>";
+
+    form.querySelectorAll("input,textarea,select").forEach(inp => {
+      const handler = () => {
+        if (inp.dataset.k === "itemsText") cfg.items = inp.value.split("\n").map(x=>x.trim()).filter(Boolean);
+        else if (inp.dataset.k === "layout") {
+          cfg.layout = inp.value;
+          const layouts = (window.KP && KP.FLIP_LAYOUTS) ? KP.FLIP_LAYOUTS : { "1":{count:1},"2":{count:2},"4":{count:4},"6":{count:6} };
+          const need = layouts[cfg.layout] ? layouts[cfg.layout].count : 1;
+          if (!cfg.cards) cfg.cards = [];
+          while (cfg.cards.length < need) cfg.cards.push({ front: "Front " + (cfg.cards.length + 1), back: "Back " + (cfg.cards.length + 1) });
+          cfg.cards = cfg.cards.slice(0, need);
+          c.content = pluginContentFromConfig(c);
+          renderPluginDetail(c);
+          return;
+        }
+        else if (inp.dataset.k) cfg[inp.dataset.k] = inp.value;
+        else if (inp.dataset.arr) {
+          cfg[inp.dataset.arr][parseInt(inp.dataset.i,10)][inp.dataset.f] = inp.value;
+        }
+        c.content = pluginContentFromConfig(c);
+        refreshPluginPreview(c);
+      };
+      inp.addEventListener("input", handler);
+      inp.addEventListener("change", handler);
+    });
+    form.querySelectorAll("[data-add]").forEach(btn => btn.addEventListener("click", () => {
+      const key = btn.dataset.add;
+      if (key === "pairs") cfg.pairs.push({ left: "Term", right: "Match" });
+      else cfg[key].push({ label: "New", body: "…" });
+      c.content = pluginContentFromConfig(c);
+      renderPluginDetail(c);
+    }));
+    form.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", () => {
+      cfg[btn.dataset.del].splice(parseInt(btn.dataset.i,10), 1);
+      c.content = pluginContentFromConfig(c);
+      renderPluginDetail(c);
+    }));
+  }
+
+  function refreshPluginPreview(c) {
+    const box = document.getElementById("pluginPreview");
+    box.innerHTML = pluginContentFromConfig(c);
+    if (window.KP) {
+      box.querySelectorAll("[data-kp]").forEach(el => { delete el.dataset.kpMounted; });
+      KP.mountAll(box);
+    }
+  }
+
+  function addConcept() {
+    const id = uid("concept");
+    lesson.concepts.push({
+      id, type: "concept", title: "New Concept", bloom: "Understand", bloomApproved: false,
+      prerequisites: [], content: "", quiz: []
+    });
+    selectConcept(id);
+  }
+  function deleteConcept() {
+    if (!selectedId || !confirm("Delete this concept?")) return;
+    lesson.concepts = lesson.concepts.filter(c => c.id !== selectedId);
+    lesson.concepts.forEach(c => { c.prerequisites = c.prerequisites.filter(p => p !== selectedId); });
+    lesson.diagnostic.forEach(d => { d.linkedConcepts = (d.linkedConcepts || []).filter(id => id !== selectedId); });
+    selectedId = null; mode = null; renderAll();
+  }
+  function addDiag() {
+    const id = uid("diag");
+    lesson.diagnostic.push({
+      id, question: "", type: "multiple", options: ["","","",""], correct: 0,
+      answers: [""], linkedConcepts: [], explanation: ""
+    });
+    selectDiag(id);
+  }
+  function deleteDiag() {
+    if (!selectedDiagId || !confirm("Delete this diagnostic?")) return;
+    lesson.diagnostic = lesson.diagnostic.filter(d => d.id !== selectedDiagId);
+    selectedDiagId = null; mode = null; renderAll();
+  }
+
+  // ========== AI ==========
+  function openAI(modeType) {
+    aiMode = modeType || "full";
+    const modal = document.getElementById("aiModal");
+    const title = document.getElementById("aiModalTitle");
+    const full = document.getElementById("aiFullMaterial");
+    const ctx = document.getElementById("aiConceptContext");
+    const hint = document.getElementById("aiContextHint");
+
+    if (aiMode === "full") {
+      title.textContent = "Generate Knowledge Graph";
+      full.style.display = "block"; ctx.style.display = "none";
+    } else if (aiMode === "regen") {
+      title.textContent = "Regenerate Concept";
+      full.style.display = "none"; ctx.style.display = "block";
+      const c = getConcept(selectedId);
+      hint.textContent = `Regenerating: "${c?.title}" (keeps id & prerequisites structure, improves content + quiz)`;
+    } else if (aiMode === "suggest") {
+      title.textContent = "Suggest Prerequisites";
+      full.style.display = "none"; ctx.style.display = "block";
+      const c = getConcept(selectedId);
+      hint.textContent = `Suggesting prerequisites for: "${c?.title}"`;
+    }
+    document.getElementById("aiStatus").textContent = "";
+    modal.style.display = "flex";
+  }
+
+  async function runAI() {
+    const key = document.getElementById("apiKey").value.trim();
+    const base = document.getElementById("apiBase").value.trim() || "https://api.openai.com/v1";
+    const model = document.getElementById("apiModel").value.trim() || "gpt-4o-mini";
+    const status = document.getElementById("aiStatus");
+    if (!key) { status.className = "status-msg error"; status.textContent = "Enter API key"; return; }
+
+    status.className = "status-msg"; status.textContent = "Working…";
+
+    let system = "", user = "";
+
+    if (aiMode === "full") {
+      const raw = document.getElementById("rawMaterial").value.trim();
+      if (!raw) { status.className = "status-msg error"; status.textContent = "Paste material"; return; }
+      system = `You are an expert instructional designer. Convert source material into a mastery-based knowledge graph.
+Return ONLY valid JSON. No markdown.
+Structure: {"title":"...","settings":{"preAssessment":true,"conversational":true,"showKnowledgeTree":false,"theme":"conversational"},"concepts":[{"id":"kebab-id","title":"...","bloom":"Remember|Understand|Apply|Analyze|Evaluate|Create","bloomApproved":false,"prerequisites":["id"],"content":"HTML","quiz":[{"type":"multiple","question":"...","options":["A","B","C","D"],"correct":0,"explanation":"..."},{"type":"short","question":"...","answers":["a1"],"explanation":"..."}]}],"diagnostic":[{"id":"diag-1","question":"...","type":"multiple","options":["A","B","C","D"],"correct":0,"linkedConcepts":["id"],"explanation":"..."}]}
+Rules: 5-10 concepts, valid DAG, bloomApproved:false, ≥2 quizzes per concept matching Bloom level, pure JSON only.`;
+      user = raw;
+    } else if (aiMode === "regen") {
+      const c = getConcept(selectedId);
+      system = `You improve a single concept for a mastery teaching system. Return ONLY valid JSON for one concept:
+{"id":"${c.id}","title":"...","bloom":"...","bloomApproved":false,"prerequisites":${JSON.stringify(c.prerequisites)},"content":"improved HTML","quiz":[...at least 2 questions matching bloom level...]}
+Keep the same id and prerequisites. Improve content and quiz quality. Pure JSON only.`;
+      user = `Current concept:\n${JSON.stringify(c, null, 2)}\n\nImprove it.`;
+    } else if (aiMode === "suggest") {
+      const c = getConcept(selectedId);
+      system = `You suggest prerequisites for a concept in a knowledge graph. Return ONLY a JSON array of concept ids that should be prerequisites, chosen from the provided list. Example: ["id1","id2"]
+Only suggest ids that exist. Prefer logical prerequisites. Pure JSON array only.`;
+      user = `Concept: ${c.title}\nContent: ${c.content?.slice(0,500)}\n\nAvailable concepts:\n${lesson.concepts.map(x => `- ${x.id}: ${x.title}`).join("\n")}\n\nSuggest prerequisite ids:`;
+    }
+
+    try {
+      const res = await fetch(base + "/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+        body: JSON.stringify({ model, messages: [{ role: "system", content: system }, { role: "user", content: user }], temperature: 0.3 })
+      });
+      if (!res.ok) throw new Error("API " + res.status + ": " + (await res.text()).slice(0, 180));
+      const json = await res.json();
+      let content = json.choices?.[0]?.message?.content || "";
+      content = content.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/, "").trim();
+      const data = JSON.parse(content);
+
+      if (aiMode === "full") {
+        lesson = {
+          version: "2.0",
+          title: data.title || "AI Lesson",
+          settings: {
+            preAssessment: data.settings?.preAssessment !== false,
+            conversational: data.settings?.conversational !== false,
+            showKnowledgeTree: !!data.settings?.showKnowledgeTree,
+            theme: data.settings?.theme || "conversational"
+          },
+          concepts: (data.concepts || []).map(c => ({
+            id: c.id || uid("concept"), title: c.title || "Untitled", bloom: c.bloom || "Understand",
+            bloomApproved: false, prerequisites: Array.isArray(c.prerequisites) ? c.prerequisites : [],
+            content: c.content || "", quiz: (c.quiz || []).map(normalizeQuiz)
+          })),
+          diagnostic: (data.diagnostic || []).map(d => ({
+            id: d.id || uid("diag"), question: d.question || "", type: d.type || "multiple",
+            options: d.options || ["","","",""], correct: d.correct || 0,
+            answers: d.answers || [""], linkedConcepts: d.linkedConcepts || [], explanation: d.explanation || ""
+          }))
+        };
+        document.getElementById("lessonTitle").value = lesson.title;
+        document.getElementById("preAssessment").checked = lesson.settings.preAssessment;
+        document.getElementById("conversational").checked = lesson.settings.conversational;
+        document.getElementById("showTree").checked = lesson.settings.showKnowledgeTree;
+        document.getElementById("theme").value = lesson.settings.theme;
+        selectedId = lesson.concepts[0]?.id || null; mode = selectedId ? "concept" : null;
+        closeAI(); renderAll();
+        alert("Generated! Review yellow Bloom’s badges.");
+      } else if (aiMode === "regen") {
+        const idx = lesson.concepts.findIndex(c => c.id === selectedId);
+        if (idx >= 0) {
+          lesson.concepts[idx] = {
+            id: selectedId,
+            title: data.title || lesson.concepts[idx].title,
+            bloom: data.bloom || lesson.concepts[idx].bloom,
+            bloomApproved: false,
+            prerequisites: lesson.concepts[idx].prerequisites,
+            content: data.content || "",
+            quiz: (data.quiz || []).map(normalizeQuiz)
+          };
+        }
+        closeAI(); renderAll();
+        alert("Concept regenerated.");
+      } else if (aiMode === "suggest") {
+        const c = getConcept(selectedId);
+        if (c && Array.isArray(data)) {
+          data.forEach(id => {
+            if (getConcept(id) && !c.prerequisites.includes(id) && id !== c.id) c.prerequisites.push(id);
+          });
+        }
+        closeAI(); renderAll();
+        alert("Prerequisites suggested.");
+      }
+    } catch (err) {
+      status.className = "status-msg error";
+      status.textContent = "Error: " + err.message;
+    }
+  }
+
+  function normalizeQuiz(q) {
+    if (q.type === "short" || q.answers) {
+      return { type: "short", question: q.question || "", answers: Array.isArray(q.answers) ? q.answers : [""], explanation: q.explanation || "" };
+    }
+    return { type: "multiple", question: q.question || "", options: q.options || ["","","",""], correct: typeof q.correct === "number" ? q.correct : 0, explanation: q.explanation || "" };
+  }
+
+  function closeAI() { document.getElementById("aiModal").style.display = "none"; }
+
+  // ========== EXPORT ==========
+  function syncSettings() {
+    lesson.title = document.getElementById("lessonTitle").value || "Untitled Lesson";
+    lesson.settings.preAssessment = document.getElementById("preAssessment").checked;
+    lesson.settings.conversational = document.getElementById("conversational").checked;
+    lesson.settings.showKnowledgeTree = document.getElementById("showTree").checked;
+    lesson.settings.theme = document.getElementById("theme").value;
+  }
+
+  function exportJSON() {
+    syncSettings();
+    const out = JSON.stringify(lesson, null, 2);
+    document.getElementById("exportTitle").textContent = "Export JSON";
+    document.getElementById("exportOutput").textContent = out;
+    document.getElementById("exportModal").style.display = "flex";
+    window._exportData = out;
+    window._exportName = (lesson.title || "lesson").replace(/\s+/g, "-") + ".json";
+  }
+
+  function downloadAIConversionTemplate() {
+    const text = `Knowledge Tutor — Word → JSON conversion template
+=====================================================
+Paste this entire prompt into ChatGPT, Claude, Gemini, or similar,
+then attach or paste your existing Word / Google Doc / lesson text.
+Ask the AI to return ONLY valid JSON (no markdown fences unless needed).
+
+You will Import the result in Knowledge Creator (Import button).
+
+
+SYSTEM / ROLE
+-------------
+You convert an existing teaching document into a Knowledge Tutor lesson
+JSON file (version "2.0"). Output must be a single JSON object that can
+be parsed by JSON.parse with no trailing commentary.
+
+
+OUTPUT SHAPE (required)
+-----------------------
+{
+  "version": "2.0",
+  "title": "string",
+  "description": "optional string",
+  "settings": {
+    "preAssessment": true,
+    "conversational": true,
+    "showKnowledgeTree": true,
+    "theme": "conversational"
+  },
+  "concepts": [ /* concept and plugin items in teaching order */ ],
+  "diagnostic": [ /* optional pre-assessment questions */ ]
+}
+
+settings.theme must be one of: conversational | academic | minimal | focus
+
+
+CONCEPT ITEM
+------------
+{
+  "id": "kebab-case-unique-id",
+  "type": "concept",
+  "title": "Human title",
+  "bloom": "Remember|Understand|Apply|Analyze|Evaluate|Create",
+  "bloomApproved": true,
+  "prerequisites": ["other-concept-id"],
+  "content": "<p>HTML teaching content…</p>",
+  "quiz": [ /* zero or more questions */ ]
+}
+
+Rules for concepts:
+- ids: unique, kebab-case, stable (derived from title).
+- prerequisites: only ids that exist; no cycles; earlier ideas unlock later ones.
+- content: HTML only (p, strong, em, ul, ol, li, h2, h3, blockquote, code, table if needed).
+- Do NOT use Markdown. Convert headings/lists from Word into HTML tags.
+- Images: omit unless you have a real data: URI; prefer describing figures in text.
+- Array order of concepts = preferred teaching flow.
+
+
+QUIZ ITEMS (inside concept.quiz)
+--------------------------------
+Multiple choice:
+{
+  "type": "multiple",
+  "question": "…",
+  "options": ["A", "B", "C", "D"],
+  "correct": 0,
+  "explanation": "Why the correct option is right"
+}
+correct = 0-based index into options.
+
+Short answer:
+{
+  "type": "short",
+  "question": "…",
+  "answers": ["accepted1", "accepted2"],
+  "explanation": "…"
+}
+answers are case-insensitive matches the tutor accepts.
+
+Aim for 1–3 quiz items per concept when the source has checks for understanding.
+
+
+PLUGIN ITEM (optional interactive; same concepts array)
+------------------------------------------------------
+Only add plugins when they clearly help (hint, flip cards, order steps, match terms).
+
+Reveal / hint:
+{
+  "id": "plugin-hint-equation",
+  "type": "plugin",
+  "title": "Hint: …",
+  "bloom": "Understand",
+  "bloomApproved": true,
+  "prerequisites": ["some-concept-id"],
+  "plugin": "interactives",
+  "widget": "reveal",
+  "config": {
+    "show": "Show hint",
+    "hide": "Hide hint",
+    "body": "<p>Hidden HTML…</p>"
+  },
+  "content": "",
+  "quiz": []
+}
+
+Flip cards (layouts: "1" | "2" | "4" | "6"):
+{
+  "id": "plugin-flip-terms",
+  "type": "plugin",
+  "title": "Flip: key terms",
+  "bloom": "Remember",
+  "bloomApproved": true,
+  "prerequisites": [],
+  "plugin": "interactives",
+  "widget": "flip",
+  "config": {
+    "layout": "4",
+    "cards": [
+      { "front": "Term", "back": "Definition" },
+      { "front": "Term 2", "back": "Definition 2" },
+      { "front": "Term 3", "back": "Definition 3" },
+      { "front": "Term 4", "back": "Definition 4" }
+    ]
+  },
+  "content": "",
+  "quiz": []
+}
+Match layout count: 1→1 card, 2→2 side by side, 4→2×2 grid, 6→3 rows × 2 cols.
+
+Other widgets (use only if natural): tabs, accordion (interactives);
+order, match, blank (games). Prefer concept + quiz over plugins when unsure.
+Leave "content" as "" for plugins — the Creator regenerates HTML from config on import/edit.
+
+
+DIAGNOSTIC (optional pre-assessment)
+------------------------------------
+{
+  "id": "diag-1",
+  "question": "…",
+  "type": "multiple",
+  "options": ["A", "B", "C", "D"],
+  "correct": 1,
+  "linkedConcepts": ["concept-id-to-skip-if-correct"],
+  "explanation": "…"
+}
+If the learner answers correctly, every id in linkedConcepts is marked mastered
+and can be skipped. Map diagnostics only to early foundation concepts.
+
+
+HOW TO MAP A WORD LESSON
+------------------------
+1. Title / main heading → lesson.title
+2. Introduction paragraph → description (short) and/or first concept content
+3. Each major section or learning objective → one concept
+4. Numbered/bulleted teaching text → HTML lists and paragraphs in content
+5. Review questions at end of a section → that concept's quiz
+6. Whole-lesson pretest → diagnostic[]
+7. Vocabulary tables → flip plugin or quiz
+8. "Try this" / ordered procedures → game widget "order" OR numbered list in content
+9. Keep reading level and examples from the source; do not invent unrelated topics
+10. If the doc is long, split into 5–12 concepts rather than one giant node
+
+
+QUALITY CHECKLIST (before you output)
+-------------------------------------
+[ ] version is exactly "2.0"
+[ ] every prerequisites[] id exists
+[ ] no circular prerequisites
+[ ] every concept has non-empty title and content HTML
+[ ] multiple.correct is a valid index
+[ ] short.answers is a non-empty array of strings
+[ ] ids are unique kebab-case
+[ ] JSON only — no commentary outside the object
+
+
+MINIMAL EXAMPLE
+---------------
+{
+  "version": "2.0",
+  "title": "Sample Lesson",
+  "description": "Converted from a Word outline.",
+  "settings": {
+    "preAssessment": true,
+    "conversational": true,
+    "showKnowledgeTree": true,
+    "theme": "conversational"
+  },
+  "concepts": [
+    {
+      "id": "intro-topic",
+      "type": "concept",
+      "title": "Introduction",
+      "bloom": "Remember",
+      "bloomApproved": true,
+      "prerequisites": [],
+      "content": "<p>Core idea in one or two paragraphs.</p><ul><li>Point A</li><li>Point B</li></ul>",
+      "quiz": [
+        {
+          "type": "multiple",
+          "question": "What is the main idea?",
+          "options": ["Wrong", "Correct idea", "Wrong", "Wrong"],
+          "correct": 1,
+          "explanation": "The introduction states the correct idea."
+        }
+      ]
+    },
+    {
+      "id": "next-idea",
+      "type": "concept",
+      "title": "Next idea",
+      "bloom": "Understand",
+      "bloomApproved": true,
+      "prerequisites": ["intro-topic"],
+      "content": "<p>Builds on the introduction.</p>",
+      "quiz": [
+        {
+          "type": "short",
+          "question": "Name one key term from this section.",
+          "answers": ["key term", "synonym"],
+          "explanation": "Accept common variants."
+        }
+      ]
+    }
+  ],
+  "diagnostic": [
+    {
+      "id": "diag-intro",
+      "question": "What does this lesson mainly cover?",
+      "type": "multiple",
+      "options": ["Unrelated", "The core topic", "Unrelated", "Unrelated"],
+      "correct": 1,
+      "linkedConcepts": ["intro-topic"],
+      "explanation": "Correct answers can skip the intro concept."
+    }
+  ]
+}
+
+
+USER LESSON SOURCE
+------------------
+(Attach the Word file or paste the full lesson text below this line.)
+
+`;
+
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "knowledge-tutor-word-to-json-AI-template.txt";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  async function exportTutor() {
+    syncSettings();
+    const jsonStr = JSON.stringify(lesson);
+    const forceCollapsed = document.getElementById("exportCollapsed").checked;
+    // Self-contained export: bake plugins into the HTML (never leave as external src)
+    let pluginsSrc = typeof EMBEDDED_KP_PLUGINS === "string" ? EMBEDDED_KP_PLUGINS : "";
+    try {
+      const res = await fetch("kp-plugins.js?_=" + Date.now(), { cache: "no-store" });
+      if (res.ok) {
+        const live = await res.text();
+        if (live && live.indexOf("KP.register") !== -1) pluginsSrc = live;
+      }
+    } catch (e) { /* file:// or offline — use embedded copy */ }
+    if (!pluginsSrc || pluginsSrc.indexOf("KP.register") === -1) {
+      alert("Plugin runtime missing from export. Keep kp-plugins.js next to the Creator, or re-download the Creator bundle.");
+      return;
+    }
+    const tutorHtml = buildEmbeddedTutor(jsonStr, forceCollapsed, pluginsSrc);
+    document.getElementById("exportTitle").textContent = "Export Ready Tutor (self-contained HTML)";
+    document.getElementById("exportOutput").textContent = tutorHtml;
+    document.getElementById("exportModal").style.display = "flex";
+    window._exportData = tutorHtml;
+    const slug = (lesson.title || "lesson").replace(/\s+/g, "-");
+    window._exportName = slug + (forceCollapsed ? "-tutor-collapsed.html" : "-tutor.html");
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "kt-exported", html: tutorHtml }, "*");
+    }
+  }
+
+  function buildEmbeddedTutor(jsonStr, forceCollapsed, pluginsSrc) {
+    const collapsedFlag = forceCollapsed ? "true" : "false";
+    const safeTitle = escapeHtml(lesson.title || "Lesson");
+    const themeCss = buildThemeCssBlock();
+    // Always inline — never script src= (avoids CORS / file:// issues)
+    const pluginsInline = pluginsSrc;
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${safeTitle}</title>
+  <!-- Self-contained Knowledge Tutor: lesson JSON, theme CSS, and plugins are all inlined. No external files. -->
+  <style>
+${themeCss}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    header {
+      padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; z-index: 20;
+    }
+    header h1 { font-size: 1.25rem; white-space: normal; overflow-wrap: anywhere; max-width: min(100%, 520px); }
+    .progress-wrap { background: var(--border); border-radius: 999px; height: 8px; width: 140px; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.4s ease; }
+    .status { font-size: 0.85rem; color: var(--muted); }
+    .layout { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .sidebar {
+      width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--border);
+      overflow-y: auto; transition: width 0.3s ease, opacity 0.25s ease; flex-shrink: 0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar.collapsed { width: 0; opacity: 0; border-right: none; overflow: hidden; }
+    .sidebar-header {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+    }
+    .sidebar-content { padding: 10px 12px; flex: 1; }
+    .tree-item {
+      padding: 6px 0 6px 10px; border-left: 2px solid var(--border); margin-left: 6px;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem; white-space: nowrap;
+    }
+    .tree-item.root { border-left: none; margin-left: 0; padding-left: 0; }
+    .tree-item .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+    .tree-item.mastered .dot { background: var(--success); }
+    .tree-item.available .dot { background: var(--accent); }
+    .tree-item.locked { opacity: 0.5; }
+    .tree-item.current { font-weight: 600; color: var(--accent); }
+    .main-area { flex: 1; overflow-y: auto; padding: 24px 20px 60px; max-width: 820px; margin: 0 auto; width: 100%; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .rise { animation: riseIn 0.35s ease-out forwards; }
+    .bot-msg {
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px;
+    }
+    .content img { max-width: 100%; border-radius: 8px; margin: 12px 0; }
+    .content .img-above { display:block; width:100%; margin:0 0 12px; }
+    .content .img-below { display:block; width:100%; margin:12px 0 0; }
+    .content .img-left { float:left; margin:4px 16px 8px 0; max-width:46%; }
+    .content .img-right { float:right; margin:4px 0 8px 16px; max-width:46%; }
+    .content .img-clear { clear:both; }
+
+    .kp { border: 1px dashed var(--border); border-radius: 10px; padding: 12px; margin: 12px 0; background: color-mix(in srgb, var(--card) 80%, transparent); }
+    .kp-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: 8px; }
+    .kp-toggle, .kp-choice, .kp-check {
+      display: inline-block; margin: 4px 4px 0 0; padding: 8px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: transparent; color: inherit; cursor: pointer; font: inherit;
+    }
+    .kp-toggle:hover, .kp-choice:hover { border-color: var(--accent); }
+    .kp-panel { margin-top: 10px; }
+    .kp-panel[hidden] { display: none !important; }
+    .kp-flip { perspective: 800px; min-height: 90px; cursor: pointer; }
+    .kp-flip-inner { position: relative; transition: transform .35s; transform-style: preserve-3d; min-height: 90px; }
+    .kp-flip.flipped .kp-flip-inner { transform: rotateY(180deg); }
+    .kp-face { backface-visibility: hidden; border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-height: 90px; }
+    .kp-back { position: absolute; inset: 0; transform: rotateY(180deg); }
+    .kp-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .kp-tab { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: inherit; cursor: pointer; }
+    .kp-tab.on { border-color: var(--accent); }
+    .kp-match { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kp-choice.picked { outline: 2px solid var(--accent); }
+    .kp-choice.good { outline: 2px solid var(--success); }
+    .kp-choice.bad { outline: 2px solid var(--danger); }
+    .kp-blank { display: inline-block; min-width: 90px; margin: 0 4px; padding: 2px 6px; border: none; border-bottom: 2px solid var(--accent); background: transparent; color: inherit; font: inherit; }
+    .kp-status { margin-top: 8px; font-size: 0.85rem; color: var(--muted); }
+
+    .content svg { max-width: 100%; display: block; margin: 12px 0; }
+    .question { font-size: 1.15rem; margin-bottom: 16px; font-weight: 500; }
+    .options button, .short-submit {
+      display: block; width: 100%; text-align: left; padding: 14px 16px; margin-bottom: 10px;
+      background: color-mix(in srgb, var(--border) 70%, transparent);
+      border: 2px solid transparent; border-radius: 8px; color: var(--text); font-size: 1rem; cursor: pointer;
+    }
+    .options button:hover { border-color: var(--accent); }
+    .options button.correct { border-color: var(--success); }
+    .options button.wrong { border-color: var(--danger); }
+    .options button:disabled { cursor: default; opacity: 0.9; }
+    .short-input {
+      width: 100%; padding: 12px 14px; border-radius: 8px; border: 2px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 1rem; margin-bottom: 12px;
+    }
+    .feedback { margin-top: 16px; padding: 12px 16px; border-radius: 8px; display: none; }
+    .feedback.show { display: block; }
+    .feedback.good { border-left: 4px solid var(--success); }
+    .feedback.bad { border-left: 4px solid var(--danger); }
+    .btn {
+      display: inline-block; padding: 12px 24px; background: var(--accent);
+      border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; margin-top: 12px;
+    }
+    .btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    #complete { text-align: center; padding: 48px 20px; display: none; }
+    #complete h2 { color: var(--success); margin-bottom: 12px; }
+    @media (max-width: 700px) {
+      :root { --sidebar-w: 240px; }
+      .sidebar:not(.collapsed) { position: absolute; height: 100%; z-index: 25; box-shadow: 4px 0 20px rgba(0,0,0,.3); }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="btn secondary" id="btnToggleSidebar" style="padding:6px 10px;margin:0;font-size:.85rem;">☰ Tree</button>
+    <h1 id="lessonTitle"></h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span class="status" id="statusText">0 / 0 mastered</span>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">Knowledge Map</div>
+    <div class="sidebar-content" id="treeContent"></div>
+  </aside>
+  <div class="main-area"><div id="stage"></div></div>
+</div>
+<div id="complete">
+  <h2 id="completeTitle">You did it!</h2>
+  <p id="completeMsg"></p>
+  <button class="btn" onclick="location.reload()">Restart</button>
+</div>
+<script>
+const LESSON = ${jsonStr};
+const FORCE_COLLAPSED = ${collapsedFlag};
+let mastered = new Set();
+let diagnosticIndex = 0;
+let currentConceptId = null;
+let quizIndex = 0;
+let quizScore = 0;
+let showingFeedback = false;
+let sidebarCollapsed = false;
+
+function shouldStartCollapsed() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("collapsed") === "1" || params.get("collapsed") === "true") return true;
+  const path = (location.pathname || "").toLowerCase();
+  if (path.includes("collapsed")) return true;
+  if (FORCE_COLLAPSED) return true;
+  return false;
+}
+function t(key) {
+  const conv = LESSON.settings?.conversational !== false;
+  const map = {
+    welcome: conv ? "Hey! Before we dive in, I’d like to see what you already know." : "Welcome. Beginning diagnostic.",
+    diagCorrect: conv ? "Nice! We’ll skip this." : "Correct. Skipping related concepts.",
+    diagWrong: conv ? "No worries — we’ll cover this." : "Incorrect. Including this material.",
+    ready: conv ? "I’m ready — Test me" : "Begin Quiz",
+    continue: conv ? "Continue" : "Next",
+    review: conv ? "Let’s go back over this together." : "Review required. Score 100% to proceed.",
+    nextConcept: conv ? "Let’s look at this next idea." : "Next concept:",
+    allDone: conv ? "You crushed it! Everything mastered." : "Mastery achieved."
+  };
+  return map[key] || key;
+}
+function getConcept(id) { return LESSON.concepts.find(c => c.id === id); }
+function isUnlocked(c) { return !c.prerequisites?.length || c.prerequisites.every(p => mastered.has(p)); }
+function getNextConcept() { return LESSON.concepts.find(c => !mastered.has(c.id) && isUnlocked(c)); }
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function applyTheme() {
+  document.body.className = sidebarCollapsed ? "sidebar-collapsed" : "";
+  const th = LESSON.settings?.theme || "conversational";
+  if (th !== "conversational") document.body.classList.add("theme-" + th);
+}
+function updateProgress() {
+  const total = LESSON.concepts.length, done = mastered.size;
+  document.getElementById("progressBar").style.width = (total ? (done/total)*100 : 0) + "%";
+  document.getElementById("statusText").textContent = done + " / " + total + " mastered";
+}
+function setSidebarCollapsed(collapsed) {
+  sidebarCollapsed = collapsed;
+  const sidebar = document.getElementById("sidebar");
+  if (collapsed) sidebar.classList.add("collapsed");
+  else sidebar.classList.remove("collapsed");
+}
+function renderTree() {
+  const container = document.getElementById("treeContent");
+  const ids = new Set(LESSON.concepts.map(c => c.id));
+  const roots = LESSON.concepts.filter(c => !c.prerequisites?.length || c.prerequisites.every(p => !ids.has(p)));
+  const rendered = new Set();
+  function rn(c, d) {
+    if (rendered.has(c.id)) return "";
+    rendered.add(c.id);
+    let cls = "tree-item" + (d===0?" root":"") + (mastered.has(c.id)?" mastered":isUnlocked(c)?" available":" locked") + (c.id===currentConceptId?" current":"");
+    let h = '<div class="'+cls+'" style="padding-left:'+(d*12)+'px"><span class="dot"></span><span>'+esc(c.title)+'</span></div>';
+    LESSON.concepts.filter(ch => (ch.prerequisites||[]).includes(c.id)).forEach(ch => { h += rn(ch, d+1); });
+    return h;
+  }
+  let html = "";
+  roots.forEach(r => html += rn(r, 0));
+  LESSON.concepts.forEach(c => { if (!rendered.has(c.id)) html += rn(c, 0); });
+  container.innerHTML = html || "<em>None</em>";
+}
+function setStage(html) {
+  document.getElementById("stage").innerHTML = '<div class="rise">'+html+'</div>';
+  if (window.KP) KP.mountAll(document.getElementById("stage"));
+}
+
+${pluginsInline}
+
+function start() {
+  document.getElementById("lessonTitle").textContent = LESSON.title;
+  applyTheme();
+  if (shouldStartCollapsed() || !LESSON.settings.showKnowledgeTree) setSidebarCollapsed(true);
+  else setSidebarCollapsed(false);
+  if (!LESSON.settings.showKnowledgeTree) {
+    document.getElementById("sidebar").style.display = "none";
+    document.getElementById("btnToggleSidebar").style.display = "none";
+  }
+  updateProgress(); renderTree();
+  if (LESSON.settings.preAssessment && LESSON.diagnostic?.length) {
+    diagnosticIndex = 0; showDiag();
+  } else startNext();
+}
+function showDiag() {
+  const d = LESSON.diagnostic[diagnosticIndex];
+  let body = d.type === "short"
+    ? '<input class="short-input" id="sa" placeholder="Answer..." onkeydown="if(event.key===\\'Enter\\')checkDiag()"><button class="btn short-submit" onclick="checkDiag()">Submit</button>'
+    : '<div class="options">'+(d.options||[]).map((o,i)=>'<button onclick="checkDiag('+i+')">'+esc(o)+'</button>').join("")+'</div>';
+  setStage('<div class="card"><div class="bot-msg">'+(diagnosticIndex===0?t("welcome"):"Next check…")+'</div><div class="status">Diagnostic '+(diagnosticIndex+1)+' of '+LESSON.diagnostic.length+'</div><div class="question">'+esc(d.question)+'</div>'+body+'<div class="feedback" id="fb"></div><button class="btn" id="nb" style="display:none" onclick="nextDiag()">'+t("continue")+'</button></div>');
+  if (d.type==="short") setTimeout(()=>document.getElementById("sa")?.focus(),40);
+}
+function norm(s){ return (s||"").toLowerCase().trim().replace(/\\s+/g," "); }
+function checkDiag(sel) {
+  if (showingFeedback) return; showingFeedback = true;
+  const d = LESSON.diagnostic[diagnosticIndex];
+  const fb = document.getElementById("fb"), nb = document.getElementById("nb");
+  let ok = false;
+  if (d.type==="short") {
+    const ua = norm(document.getElementById("sa").value);
+    ok = (d.answers||[]).map(norm).includes(ua) && ua!=="";
+    document.getElementById("sa").disabled = true;
+  } else {
+    ok = sel === d.correct;
+    document.querySelectorAll(".options button").forEach(b=>b.disabled=true);
+    if (ok) document.querySelectorAll(".options button")[sel]?.classList.add("correct");
+    else { document.querySelectorAll(".options button")[sel]?.classList.add("wrong"); document.querySelectorAll(".options button")[d.correct]?.classList.add("correct"); }
+  }
+  if (ok) { (d.linkedConcepts||[]).forEach(id=>mastered.add(id)); fb.className="feedback show good"; fb.innerHTML="<strong>"+t("diagCorrect")+"</strong> "+(d.explanation||""); }
+  else { fb.className="feedback show bad"; fb.innerHTML="<strong>"+t("diagWrong")+"</strong> "+(d.explanation||""); }
+  nb.style.display="inline-block"; updateProgress(); renderTree();
+}
+function nextDiag() {
+  showingFeedback=false; diagnosticIndex++;
+  if (diagnosticIndex < LESSON.diagnostic.length) showDiag(); else startNext();
+}
+function startNext() {
+  const n = getNextConcept();
+  if (!n) { finish(); return; }
+  currentConceptId = n.id; quizIndex=0; quizScore=0; showingFeedback=false; showContent();
+}
+function showContent() {
+  const c = getConcept(currentConceptId);
+  const intro = LESSON.settings.conversational ? '<div class="bot-msg">'+t("nextConcept")+'</div>' : "";
+  var quizLen=(c.quiz||[]).length; var go=quizLen?t("ready"):(LESSON.settings.conversational?"Continue when you are ready":"Continue"); setStage('<div class="card">'+intro+'<h2 style="margin-bottom:12px">'+esc(c.title)+'</h2><div class="content">'+(c.content||"<p><em>No content</em></p>")+'</div><button class="btn" onclick="startQuiz()">'+go+'</button></div>');
+  renderTree();
+}
+function startQuiz(){ quizIndex=0; quizScore=0; showingFeedback=false; showQ(); }
+function showQ() {
+  const c = getConcept(currentConceptId); const q = c.quiz[quizIndex];
+  if (!q) { mastered.add(currentConceptId); updateProgress(); startNext(); return; }
+  if (q.type==="short") {
+    setStage('<div class="card"><div class="status">Question '+(quizIndex+1)+' of '+c.quiz.length+'</div><div class="question">'+esc(q.question)+'</div><input class="short-input" id="sa" placeholder="Answer..." onkeydown="if(event.key===\\'Enter\\')checkShort()"><button class="btn short-submit" onclick="checkShort()">Submit</button><div class="feedback" id="fb"></div><button class="btn" id="nb" style="display:none" onclick="nextFB()">'+t("continue")+'</button></div>');
+    setTimeout(()=>document.getElementById("sa")?.focus(),40);
+  } else {
+    setStage('<div class="card"><div class="status">Question '+(quizIndex+1)+' of '+c.quiz.length+'</div><div class="question">'+esc(q.question)+'</div><div class="options">'+(q.options||[]).map((o,i)=>'<button onclick="checkAns('+i+')">'+esc(o)+'</button>').join("")+'</div><div class="feedback" id="fb"></div><button class="btn" id="nb" style="display:none" onclick="nextFB()">'+t("continue")+'</button></div>');
+  }
+}
+function checkShort() {
+  if (showingFeedback) return; showingFeedback=true;
+  const q = getConcept(currentConceptId).quiz[quizIndex];
+  const ua = norm(document.getElementById("sa").value);
+  const ok = (q.answers||[]).map(norm).includes(ua) && ua!=="";
+  document.getElementById("sa").disabled=true;
+  const fb=document.getElementById("fb");
+  if (ok) { quizScore++; fb.className="feedback show good"; fb.innerHTML="<strong>Correct!</strong> "+(q.explanation||""); }
+  else { fb.className="feedback show bad"; fb.innerHTML="<strong>Not quite.</strong> "+(q.answers||[]).join(", ")+" "+(q.explanation||""); }
+  document.getElementById("nb").style.display="inline-block";
+}
+function checkAns(sel) {
+  if (showingFeedback) return; showingFeedback=true;
+  const q = getConcept(currentConceptId).quiz[quizIndex];
+  document.querySelectorAll(".options button").forEach(b=>b.disabled=true);
+  const fb=document.getElementById("fb");
+  if (sel===q.correct) { quizScore++; document.querySelectorAll(".options button")[sel]?.classList.add("correct"); fb.className="feedback show good"; fb.innerHTML="<strong>Correct!</strong> "+(q.explanation||""); }
+  else { document.querySelectorAll(".options button")[sel]?.classList.add("wrong"); document.querySelectorAll(".options button")[q.correct]?.classList.add("correct"); fb.className="feedback show bad"; fb.innerHTML="<strong>Not quite.</strong> "+(q.explanation||""); }
+  document.getElementById("nb").style.display="inline-block";
+}
+function nextFB() {
+  showingFeedback=false; quizIndex++;
+  const c = getConcept(currentConceptId);
+  if (quizIndex < c.quiz.length) showQ();
+  else if (quizScore===c.quiz.length || !c.quiz.length) { mastered.add(currentConceptId); updateProgress(); startNext(); }
+  else setStage('<div class="card"><div class="bot-msg">'+t("review")+'</div><p>Score: '+quizScore+' / '+c.quiz.length+'. Need 100%.</p><button class="btn" onclick="showContent()">Review Content</button></div>');
+}
+function finish() {
+  document.querySelector("header").style.display="none";
+  document.querySelector(".layout").style.display="none";
+  document.getElementById("complete").style.display="block";
+  document.getElementById("completeTitle").textContent = LESSON.settings.conversational ? "You did it!" : "Mastery Achieved!";
+  document.getElementById("completeMsg").textContent = t("allDone");
+}
+function postEmbedHeight() {
+  const h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: "knowledge-tutor-resize", height: h, source: "knowledge-tutor" }, "*");
+  }
+}
+window.addEventListener("load", postEmbedHeight);
+window.addEventListener("resize", postEmbedHeight);
+["showContent","showQ","showDiag","finish","setStage"].forEach(()=>{});
+const _setStage = setStage;
+setStage = function(html) { _setStage(html); setTimeout(postEmbedHeight, 50); setTimeout(postEmbedHeight, 400); };
+document.getElementById("btnToggleSidebar").addEventListener("click", () => { setSidebarCollapsed(!sidebarCollapsed); setTimeout(postEmbedHeight, 320); });
+start();
+setTimeout(postEmbedHeight, 80);
+
+<\/script>
+</body></html>`;
+  }
+
+  // ========== EVENTS ==========
+  document.getElementById("btnAddConcept").addEventListener("click", addConcept);
+  document.getElementById("addPluginKind").addEventListener("change", e => {
+    const v = e.target.value; if (!v) return; addPluginItem(v); e.target.value = "";
+  });
+  document.getElementById("btnDeletePlugin").addEventListener("click", deleteConcept);
+  document.getElementById("pTitle").addEventListener("input", e => {
+    const c = getConcept(selectedId); if (c) { c.title = e.target.value; renderConceptList(); renderTree(); }
+  });
+  document.getElementById("pLayout").addEventListener("change", () => {
+    const c = getConcept(selectedId);
+    if (!c || c.widget !== "flip") return;
+    const cfg = c.config || (c.config = defaultPluginConfig("flip"));
+    cfg.layout = document.getElementById("pLayout").value;
+    const layouts = (window.KP && KP.FLIP_LAYOUTS) ? KP.FLIP_LAYOUTS : { "1":{count:1},"2":{count:2},"4":{count:4},"6":{count:6} };
+    const need = layouts[cfg.layout] ? layouts[cfg.layout].count : 1;
+    if (!cfg.cards) cfg.cards = [];
+    while (cfg.cards.length < need) cfg.cards.push({ front: "Front " + (cfg.cards.length + 1), back: "Back " + (cfg.cards.length + 1) });
+    cfg.cards = cfg.cards.slice(0, need);
+    c.content = pluginContentFromConfig(c);
+    renderPluginForm(c);
+    refreshPluginPreview(c);
+  });
+  document.querySelectorAll(".img-align").forEach(btn => {
+    btn.addEventListener("click", () => { document.getElementById("imgPos").value = btn.dataset.align; });
+  });
+  document.getElementById("btnDeleteConcept").addEventListener("click", deleteConcept);
+  document.getElementById("btnAddDiag").addEventListener("click", addDiag);
+  document.getElementById("btnDeleteDiag").addEventListener("click", deleteDiag);
+  document.getElementById("btnApproveBloom").addEventListener("click", () => {
+    const c = getConcept(selectedId); if (c) { c.bloomApproved = true; renderAll(); }
+  });
+  document.getElementById("btnApproveAll").addEventListener("click", () => {
+    lesson.concepts.forEach(c => c.bloomApproved = true); renderAll();
+  });
+  document.getElementById("btnReviewNext").addEventListener("click", () => {
+    const p = lesson.concepts.find(c => !c.bloomApproved); if (p) selectConcept(p.id);
+  });
+  document.getElementById("btnAI").addEventListener("click", () => openAI("full"));
+  document.getElementById("btnRegenConcept").addEventListener("click", () => { if (selectedId) openAI("regen"); });
+  document.getElementById("btnSuggestPrereq").addEventListener("click", () => { if (selectedId) openAI("suggest"); });
+  document.getElementById("btnCloseAI").addEventListener("click", closeAI);
+  document.getElementById("btnCancelAI").addEventListener("click", closeAI);
+  document.getElementById("btnGenerate").addEventListener("click", runAI);
+  document.getElementById("btnExport").addEventListener("click", exportJSON);
+  document.getElementById("btnExportTutor").addEventListener("click", exportTutor);
+  document.getElementById("btnAITemplate").addEventListener("click", downloadAIConversionTemplate);
+  document.getElementById("btnCloseExport").addEventListener("click", () => document.getElementById("exportModal").style.display = "none");
+  document.getElementById("btnCopyExport").addEventListener("click", () => {
+    navigator.clipboard.writeText(window._exportData || "").then(() => alert("Copied!"));
+  });
+  document.getElementById("btnDownloadExport").addEventListener("click", () => {
+    const blob = new Blob([window._exportData || ""], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = window._exportName || "export.txt";
+    a.click();
+  });
+  document.getElementById("btnImport").addEventListener("click", () => document.getElementById("fileInput").click());
+  document.getElementById("btnAddPrereq").addEventListener("click", () => {
+    const c = getConcept(selectedId); const v = document.getElementById("prereqSelect").value;
+    if (c && v && !c.prerequisites.includes(v)) { c.prerequisites.push(v); renderAll(); }
+  });
+  document.getElementById("btnAddMultiple").addEventListener("click", () => {
+    const c = getConcept(selectedId); if (!c) return;
+    c.quiz.push({ type: "multiple", question: "", options: ["","","",""], correct: 0, explanation: "" });
+    renderConceptDetail();
+  });
+  document.getElementById("btnAddShort").addEventListener("click", () => {
+    const c = getConcept(selectedId); if (!c) return;
+    c.quiz.push({ type: "short", question: "", answers: [""], explanation: "" });
+    renderConceptDetail();
+  });
+  document.getElementById("btnAddDAnswer").addEventListener("click", () => {
+    const d = getDiag(selectedDiagId); if (!d) return;
+    if (!d.answers) d.answers = [];
+    d.answers.push(""); renderDiagDetail();
+  });
+  document.getElementById("btnAddDLink").addEventListener("click", () => {
+    const d = getDiag(selectedDiagId); const v = document.getElementById("dLinkSelect").value;
+    if (d && v) { if (!d.linkedConcepts) d.linkedConcepts = []; if (!d.linkedConcepts.includes(v)) d.linkedConcepts.push(v); renderDiagDetail(); }
+  });
+  document.getElementById("dType").addEventListener("change", e => {
+    const d = getDiag(selectedDiagId); if (d) { d.type = e.target.value; renderDiagDetail(); }
+  });
+  document.getElementById("dQuestion").addEventListener("input", e => { const d = getDiag(selectedDiagId); if (d) d.question = e.target.value; });
+  document.getElementById("dExplanation").addEventListener("input", e => { const d = getDiag(selectedDiagId); if (d) d.explanation = e.target.value; });
+
+  document.getElementById("cTitle").addEventListener("input", e => {
+    const c = getConcept(selectedId); if (c) { c.title = e.target.value; renderConceptList(); renderTree(); }
+  });
+  document.getElementById("cBloom").addEventListener("change", e => {
+    const c = getConcept(selectedId); if (c) { c.bloom = e.target.value; c.bloomApproved = false; renderAll(); }
+  });
+  document.getElementById("cContent").addEventListener("input", e => {
+    const c = getConcept(selectedId); if (c) c.content = e.target.value;
+    refreshStudentPreview(e.target.value);
+  });
+  document.getElementById("cVisual").addEventListener("input", () => syncTextareaFromVisual());
+  document.getElementById("btnModeVisual").addEventListener("click", () => setContentMode("visual"));
+  document.getElementById("btnModeHtml").addEventListener("click", () => setContentMode("html"));
+
+  function focusVisual() {
+    const vis = document.getElementById("cVisual");
+    vis.focus();
+  }
+  function runCmd(cmd, val) {
+    focusVisual();
+    try { document.execCommand(cmd, false, val || null); } catch (e) {}
+    syncTextareaFromVisual();
+  }
+  document.getElementById("wysiwygBar").addEventListener("mousedown", e => {
+    if (e.target.closest("button")) e.preventDefault();
+  });
+  document.getElementById("wysiwygBar").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-cmd]");
+    if (!btn) return;
+    runCmd(btn.dataset.cmd);
+  });
+  document.getElementById("fmtBlock").addEventListener("change", e => {
+    const v = e.target.value;
+    if (!v) return;
+    focusVisual();
+    try { document.execCommand("formatBlock", false, "<" + v + ">"); } catch (err) {}
+    try { document.execCommand("formatBlock", false, v); } catch (err) {}
+    syncTextareaFromVisual();
+  });
+  document.getElementById("fmtFontSize").addEventListener("change", e => {
+    if (!e.target.value) return;
+    runCmd("fontSize", e.target.value);
+  });
+  document.getElementById("fmtColor").addEventListener("input", e => runCmd("foreColor", e.target.value));
+  document.getElementById("fmtHilite").addEventListener("input", e => {
+    try { document.execCommand("hiliteColor", false, e.target.value); }
+    catch (err) { runCmd("backColor", e.target.value); }
+    syncTextareaFromVisual();
+  });
+  document.getElementById("btnLink").addEventListener("click", () => {
+    const url = prompt("Link URL", "https://");
+    if (url) runCmd("createLink", url);
+  });
+  document.getElementById("btnInlineCode").addEventListener("click", () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) {
+      document.execCommand("insertHTML", false, "<code>code</code>");
+    } else {
+      const text = range.toString();
+      document.execCommand("insertHTML", false, "<code>" + text.replace(/</g,"&lt;") + "</code>");
+    }
+    syncTextareaFromVisual();
+  });
+  function setContentModePatched(modeName) {
+    const bar = document.getElementById("wysiwygBar");
+    if (modeName === "html") bar.style.display = "none";
+    else bar.style.display = "flex";
+  }
+  const _setContentMode = setContentMode;
+  setContentMode = function(modeName) {
+    _setContentMode(modeName);
+    setContentModePatched(modeName);
+  };
+  document.getElementById("lessonTitle").addEventListener("input", e => { lesson.title = e.target.value; });
+
+  document.getElementById("btnOptions").addEventListener("click", () => {
+    document.getElementById("optionsDrawer").classList.toggle("open");
+  });
+  document.getElementById("uiTheme").addEventListener("change", applyUiTheme);
+  document.querySelectorAll("[data-collapse]").forEach(el => {
+    el.addEventListener("click", () => {
+      const box = document.getElementById(el.dataset.collapse);
+      box.classList.toggle("collapsed");
+      const chev = el.querySelector(".chev");
+      if (chev) chev.textContent = box.classList.contains("collapsed") ? "▸" : "▾";
+    });
+  });
+
+
+  function insertAtVisual(html) {
+    focusVisual();
+    try { document.execCommand("insertHTML", false, html); } catch (e) {
+      document.getElementById("cVisual").insertAdjacentHTML("beforeend", html);
+    }
+    syncTextareaFromVisual();
+  }
+  function pluginHtml(kind) {
+    if (kind === "int-reveal") return '<div class="kp" data-kp="interactives" data-widget="reveal"><div class="kp-label">Interactive · Reveal</div><button type="button" class="kp-toggle" data-show="Show hint" data-hide="Hide hint">Show hint</button><div class="kp-panel" hidden>Type the hidden explanation here.</div></div><p></p>';
+    if (kind === "int-flip") return '<div class="kp kp-flip" data-kp="interactives" data-widget="flip"><div class="kp-label">Interactive · Flip card</div><div class="kp-flip-inner"><div class="kp-face kp-front">Front: question</div><div class="kp-face kp-back">Back: answer</div></div></div><p></p>';
+    if (kind === "int-tabs") return '<div class="kp" data-kp="interactives" data-widget="tabs"><div class="kp-label">Interactive · Tabs</div><div class="kp-tabs"><button type="button" class="kp-tab on">Tab 1</button><button type="button" class="kp-tab">Tab 2</button></div><div class="kp-panel">Content for tab 1</div><div class="kp-panel" hidden>Content for tab 2</div></div><p></p>';
+    if (kind === "int-acc") return '<div class="kp" data-kp="interactives" data-widget="accordion"><div class="kp-label">Interactive · Accordion</div><button type="button" class="kp-toggle">Section A</button><div class="kp-panel" hidden>Details A</div><button type="button" class="kp-toggle">Section B</button><div class="kp-panel" hidden>Details B</div></div><p></p>';
+    if (kind === "game-order") return '<div class="kp" data-kp="games" data-widget="order"><div class="kp-label">Game · Click in order</div><p>Click the steps in the correct sequence.</p><button type="button" class="kp-choice" data-order="1">First step</button><button type="button" class="kp-choice" data-order="2">Second step</button><button type="button" class="kp-choice" data-order="3">Third step</button><div class="kp-status">Start with step 1</div></div><p></p>';
+    if (kind === "game-match") return '<div class="kp" data-kp="games" data-widget="match"><div class="kp-label">Game · Match pairs</div><div class="kp-match"><button type="button" class="kp-choice" data-side="l" data-pair="a">Term A</button><button type="button" class="kp-choice" data-side="r" data-pair="a">Definition A</button><button type="button" class="kp-choice" data-side="l" data-pair="b">Term B</button><button type="button" class="kp-choice" data-side="r" data-pair="b">Definition B</button></div><div class="kp-status">Click a term, then its match</div></div><p></p>';
+    if (kind === "game-blank") return '<div class="kp" data-kp="games" data-widget="blank"><div class="kp-label">Game · Fill in the blanks</div><p>Plants make <input class="kp-blank" data-answers="glucose|sugar"> using light.</p><button type="button" class="kp-check">Check</button><div class="kp-status"></div></div><p></p>';
+    return "";
+  }
+
+  function clearFigureSelection() {
+    selectedFigure = null;
+    document.querySelectorAll("figure.kc-img.kc-img-selected").forEach(f => {
+      f.classList.remove("kc-img-selected");
+      const b = f.querySelector(".kc-img-del");
+      if (b) b.remove();
+    });
+  }
+  function selectFigure(fig) {
+    if (!fig || !fig.classList.contains("kc-img")) return;
+    clearFigureSelection();
+    selectedFigure = fig;
+    fig.classList.add("kc-img-selected");
+    if (!fig.querySelector(".kc-img-del")) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "kc-img-del";
+      btn.textContent = "Delete";
+      btn.title = "Remove this image";
+      btn.addEventListener("mousedown", e => { e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener("click", e => {
+        e.preventDefault(); e.stopPropagation();
+        deleteSelectedImage();
+      });
+      fig.appendChild(btn);
+    }
+  }
+  function deleteSelectedImage() {
+    const vis = document.getElementById("cVisual");
+    const fig = selectedFigure || vis?.querySelector("figure.kc-img.kc-img-selected");
+    if (!fig) {
+      const toast = document.getElementById("imgToast");
+      if (toast) {
+        toast.textContent = "Click an image first, then Delete";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+      }
+      return;
+    }
+    fig.remove();
+    selectedFigure = null;
+    syncTextareaFromVisual();
+    const toast = document.getElementById("imgToast");
+    if (toast) {
+      toast.textContent = "Image removed";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+  }
+  function wireFigureClicks(root) {
+    if (!root) return;
+    root.querySelectorAll("figure.kc-img").forEach(fig => {
+      if (fig.dataset.kcImgWired) return;
+      fig.dataset.kcImgWired = "1";
+      fig.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectFigure(fig);
+      });
+    });
+  }
+
+  document.getElementById("btnUploadImg").addEventListener("click", () => {
+    if (!selectedId) {
+      alert("Select a concept first, then insert an image.");
+      return;
+    }
+    // Switch to visual mode so the image lands in the editor
+    setContentMode("visual");
+    imageTargetId = selectedId;
+    document.getElementById("imgInput").click();
+  });
+  document.getElementById("btnDeleteImg").addEventListener("click", e => {
+    e.preventDefault();
+    deleteSelectedImage();
+  });
+  document.getElementById("imgInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const targetId = imageTargetId || selectedId;
+    if (!targetId) {
+      alert("Select a concept first.");
+      e.target.value = "";
+      return;
+    }
+    if (!file.type || !file.type.startsWith("image/")) {
+      alert("Please choose an image file.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const c = getConcept(targetId);
+      if (!c) return;
+      const pos = document.getElementById("imgPos").value || "above";
+      const size = document.getElementById("imgSize").value || "46%";
+      const cls = "img-" + pos;
+      const cap = pos === "left" ? "Image · left of text" : pos === "right" ? "Image · right of text" : pos === "below" ? "Image · below text" : "Image · above text";
+      const tag = `<figure class="kc-img ${cls}"><img src="${ev.target.result}" alt="Inserted image" class="${cls}" style="width:${size};max-width:100%;border-radius:8px;"><figcaption>${cap}</figcaption></figure>`;
+      const vis = document.getElementById("cVisual");
+      setContentMode("visual");
+      if (vis) {
+        vis.focus();
+        // Always append into the visual editor (more reliable than caret-only insert after file dialog)
+        if (pos === "above") {
+          vis.insertAdjacentHTML("afterbegin", tag);
+        } else {
+          vis.insertAdjacentHTML("beforeend", tag + (pos === "left" || pos === "right" ? '<div class="img-clear"></div>' : ""));
+        }
+        c.content = vis.innerHTML;
+      } else if (pos === "above") {
+        c.content = tag + "\n" + (c.content || "");
+      } else if (pos === "below") {
+        c.content = (c.content || "") + "\n" + tag;
+      } else {
+        c.content = (c.content || "") + "\n" + tag + '<div class="img-clear"></div>';
+      }
+      document.getElementById("cContent").value = c.content;
+      if (vis) {
+        vis.innerHTML = c.content;
+        wireFigureClicks(vis);
+      }
+      refreshStudentPreview(c.content);
+      const toast = document.getElementById("imgToast");
+      if (toast) {
+        toast.textContent = "Image added — " + cap + " (click image to select, then 🗑 to delete)";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2800);
+      }
+      const last = vis?.querySelector("figure.kc-img:last-of-type");
+      if (last) {
+        last.scrollIntoView({ block: "nearest" });
+        selectFigure(last);
+      }
+    };
+    reader.onerror = () => alert("Could not read that image file.");
+    reader.readAsDataURL(file);
+    e.target.value = "";
+    imageTargetId = null;
+  });
+
+  // Click figures in visual editor to select; Delete/Backspace removes selected
+  const visElImg = document.getElementById("cVisual");
+  if (visElImg) {
+    visElImg.addEventListener("click", e => {
+      const fig = e.target.closest("figure.kc-img");
+      if (fig && visElImg.contains(fig)) {
+        e.preventDefault();
+        selectFigure(fig);
+      } else if (!e.target.closest(".kc-img-del")) {
+        clearFigureSelection();
+      }
+    });
+    visElImg.addEventListener("keydown", e => {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedFigure) {
+        e.preventDefault();
+        deleteSelectedImage();
+      }
+    });
+    // Re-wire after content swaps
+    const _obs = new MutationObserver(() => wireFigureClicks(visElImg));
+    _obs.observe(visElImg, { childList: true, subtree: true });
+  }
+
+  // Normalizes an imported/loaded lesson JSON into the in-memory `lesson`
+  // shape and refreshes the UI. Shared by the file-based Import button and
+  // the postMessage bridge used when embedded in ID Assist (see the
+  // "message" listener below).
+  function applyImportedLesson(data, opts) {
+    opts = opts || {};
+    lesson = {
+      version: "2.0", title: data.title || "Imported",
+      settings: {
+        preAssessment: data.settings?.preAssessment !== false,
+        conversational: data.settings?.conversational !== false,
+        showKnowledgeTree: !!data.settings?.showKnowledgeTree,
+        theme: (data.settings?.theme === "playful" ? "conversational" : (data.settings?.theme || "conversational"))
+      },
+      concepts: (data.concepts || []).map(c => ({
+        id: c.id || uid("concept"), type: c.type || "concept", title: c.title || "", bloom: c.bloom || "Understand",
+        bloomApproved: !!c.bloomApproved, prerequisites: c.prerequisites || [], content: c.content || "", quiz: c.quiz || [],
+        plugin: c.plugin, widget: c.widget, config: c.config
+      })),
+      diagnostic: (data.diagnostic || []).map(d => ({
+        id: d.id || uid("diag"), question: d.question || "", type: d.type || "multiple",
+        options: d.options || ["","","",""], correct: d.correct || 0, answers: d.answers || [""],
+        linkedConcepts: d.linkedConcepts || [], explanation: d.explanation || ""
+      }))
+    };
+    document.getElementById("lessonTitle").value = lesson.title;
+    document.getElementById("preAssessment").checked = lesson.settings.preAssessment;
+    document.getElementById("conversational").checked = lesson.settings.conversational;
+    document.getElementById("showTree").checked = lesson.settings.showKnowledgeTree;
+    populateThemeSelect();
+    const th = lesson.settings.theme;
+    if ([].some.call(document.getElementById("theme").options, o => o.value === th)) {
+      document.getElementById("theme").value = th;
+    } else if (THEMES[0]) {
+      document.getElementById("theme").value = THEMES[0].id;
+      lesson.settings.theme = THEMES[0].id;
+    }
+    selectedId = lesson.concepts[0]?.id || null; mode = selectedId ? "concept" : null;
+    renderAll();
+    if (!opts.silent) alert("Imported");
+  }
+
+  document.getElementById("fileInput").addEventListener("change", e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        applyImportedLesson(JSON.parse(ev.target.result));
+      } catch (err) { alert("Invalid JSON"); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  });
+
+  // --- ID Assist embedding bridge -----------------------------------
+  // When hosted in an iframe inside ID Assist, the parent posts
+  // {type:"kt-load", data} once on mount with the linked lesson's saved
+  // knowledge-graph JSON (or a starter graph for a brand-new bot). This
+  // tool replies with {type:"kt-save", data} (the "Save to ID Assist"
+  // button) and {type:"kt-exported", html} (from Export Tutor) so ID
+  // Assist can persist both without a manual file round-trip.
+  const embeddedInIdAssist = window.parent && window.parent !== window;
+  if (embeddedInIdAssist) {
+    const saveBtn = document.getElementById("btnSaveToIdAssist");
+    if (saveBtn) {
+      saveBtn.style.display = "";
+      saveBtn.addEventListener("click", () => {
+        syncSettings();
+        window.parent.postMessage({ type: "kt-save", data: lesson }, "*");
+      });
+    }
+    window.addEventListener("message", (event) => {
+      const msg = event.data;
+      if (!msg || msg.type !== "kt-load") return;
+      applyImportedLesson(msg.data || {}, { silent: true });
+    });
+    window.parent.postMessage({ type: "kt-ready" }, "*");
+  }
+
+  try {
+    const saved = localStorage.getItem("kc-ui-theme");
+    if (saved) document.getElementById("uiTheme").value = saved;
+  } catch (e) {}
+
+  // Load external themes.json (falls back to built-ins). Call before first export.
+  loadThemes().then(() => {
+    // If lesson had a removed theme (e.g. playful), snap to first available
+    const sel = document.getElementById("theme");
+    if (sel && ![].some.call(sel.options, o => o.value === sel.value) && THEMES[0]) {
+      sel.value = THEMES[0].id;
+      lesson.settings.theme = THEMES[0].id;
+    }
+  });
+
+  // Plugins live in kp-plugins.js (loaded via <script src>). Keep source for Export Tutor.
+  // Full plugin runtime embedded so Export Tutor works offline / file://
+  // (fetch of sibling files often fails under file://; <script src> still works for Creator preview)
+  const EMBEDDED_KP_PLUGINS = "/**\n * Knowledge Tutor — Plugin runtime (CSS + mount)\n * Single source of truth for Creator preview and exported tutors.\n * Edit this file freely; keep it next to knowledge-creator-v2.html.\n */\n(function (global) {\n  \"use strict\";\n\n  var CSS_ID = \"kp-plugins-css\";\n  var CSS_TEXT = [\n    \".kp{border:1px dashed var(--border,#334155);border-radius:12px;padding:14px;margin:12px 0;background:color-mix(in srgb,var(--card,#1e293b) 85%,transparent)}\",\n    \".kp-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#94a3b8);margin-bottom:10px}\",\n    \".kp-toggle,.kp-choice,.kp-check{display:inline-block;margin:4px 4px 0 0;padding:8px 12px;border-radius:8px;border:1px solid var(--border,#334155);background:transparent;color:inherit;cursor:pointer;font:inherit}\",\n    \".kp-toggle:hover,.kp-choice:hover{border-color:var(--accent,#38bdf8)}\",\n    \".kp-panel{margin-top:10px}\",\n    \".kp-panel[hidden]{display:none!important}\",\n    /* Reveal equation / hint text */\n    \".kp-reveal-text{margin:8px 0 12px;padding:12px 14px;border-radius:10px;border:1px solid var(--border,#334155);background:color-mix(in srgb,var(--bg,#0f172a) 40%,var(--card,#1e293b));line-height:1.5}\",\n    /* Flip grids */\n    \".kp-flip-grid{display:grid;gap:16px;margin-top:4px}\",\n    \".kp-flip-grid[data-layout=\\\"1\\\"]{grid-template-columns:1fr;max-width:360px}\",\n    \".kp-flip-grid[data-layout=\\\"2\\\"]{grid-template-columns:1fr 1fr}\",\n    \".kp-flip-grid[data-layout=\\\"4\\\"]{grid-template-columns:1fr 1fr}\",\n    \".kp-flip-grid[data-layout=\\\"6\\\"]{grid-template-columns:1fr 1fr}\",\n    \".kp-flip-grid[data-layout=\\\"1x1\\\"]{grid-template-columns:1fr;max-width:360px}\",\n    \".kp-flip-grid[data-layout=\\\"2x2\\\"],.kp-flip-grid[data-layout=\\\"3\\\"],.kp-flip-grid[data-layout=\\\"4x4\\\"],.kp-flip-grid[data-layout=\\\"6x6\\\"]{grid-template-columns:1fr 1fr}\",\n    \"@media(max-width:520px){.kp-flip-grid[data-layout=\\\"2\\\"],.kp-flip-grid[data-layout=\\\"4\\\"],.kp-flip-grid[data-layout=\\\"6\\\"]{grid-template-columns:1fr}}\",\n    \".kp-flip-card{perspective:1200px;cursor:pointer;min-height:100px;outline:none}\",\n    \".kp-flip-card:focus-visible{outline:2px solid var(--accent,#38bdf8);outline-offset:3px;border-radius:14px}\",\n    \".kp-flip-inner{position:relative;transition:transform .45s cubic-bezier(.4,.2,.2,1),box-shadow .35s ease;transform-style:preserve-3d;min-height:110px;border-radius:14px;box-shadow:0 2px 4px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.16),0 0 0 1px color-mix(in srgb,var(--border,#334155) 80%,transparent)}\",\n    \".kp-flip-card:hover .kp-flip-inner{box-shadow:0 6px 12px rgba(0,0,0,.12),0 18px 40px rgba(0,0,0,.22),0 0 0 1px var(--accent,#38bdf8);transform:translateY(-3px)}\",\n    \".kp-flip-card.flipped .kp-flip-inner{transform:rotateY(180deg);box-shadow:0 8px 16px rgba(0,0,0,.14),0 22px 48px rgba(0,0,0,.28)}\",\n    \".kp-flip-card.flipped:hover .kp-flip-inner{transform:rotateY(180deg) translateY(-3px)}\",\n    \".kp-face{backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:16px 14px;min-height:110px;background:var(--card,#1e293b);color:var(--text,#e2e8f0);display:flex;align-items:center;justify-content:center;text-align:center;font-size:.95rem;line-height:1.35}\",\n    \".kp-face.kp-front{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#38bdf8) 25%,transparent)}\",\n    \".kp-face.kp-back{position:absolute;inset:0;transform:rotateY(180deg);background:color-mix(in srgb,var(--accent,#38bdf8) 12%,var(--card,#1e293b));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#38bdf8) 40%,transparent)}\",\n    \".kp-flip{perspective:1200px;min-height:110px;cursor:pointer}\",\n    \".kp-flip > .kp-flip-inner{position:relative;transition:transform .45s cubic-bezier(.4,.2,.2,1),box-shadow .35s ease;transform-style:preserve-3d;min-height:110px;border-radius:14px;box-shadow:0 2px 4px rgba(0,0,0,.08),0 8px 20px rgba(0,0,0,.16)}\",\n    \".kp-flip.flipped > .kp-flip-inner{transform:rotateY(180deg)}\",\n    /* Folder-style tabs */\n    \".kp-tabs-shell{margin-top:4px}\",\n    \".kp-tabs{display:flex;flex-wrap:wrap;gap:0;align-items:flex-end;border-bottom:2px solid var(--border,#334155);padding:0 4px 0 0;margin:0}\",\n    \".kp-tab{position:relative;bottom:-2px;margin:0 2px 0 0;padding:10px 16px 9px;border:2px solid var(--border,#334155);border-bottom:none;border-radius:10px 10px 0 0;background:color-mix(in srgb,var(--border,#334155) 35%,var(--card,#1e293b));color:var(--muted,#94a3b8);cursor:pointer;font:inherit;font-weight:600;font-size:.9rem;line-height:1.2;transition:background .15s,color .15s,box-shadow .15s}\",\n    \".kp-tab:hover{color:var(--text,#e2e8f0);background:color-mix(in srgb,var(--accent,#38bdf8) 12%,var(--card,#1e293b))}\",\n    \".kp-tab.on{background:var(--card,#1e293b);color:var(--text,#e2e8f0);border-color:var(--border,#334155);box-shadow:0 -2px 0 var(--accent,#38bdf8) inset;z-index:1}\",\n    \".kp-tabs-panels{border:2px solid var(--border,#334155);border-top:none;border-radius:0 0 12px 12px;background:var(--card,#1e293b);padding:16px 16px 18px;min-height:72px}\",\n    \".kp-tabs-panels > .kp-panel{margin:0}\",\n    \".kp-tabs-panels > .kp-panel[hidden]{display:none!important}\",\n    /* Stacked accordion with separators + open animation */\n    \".kp-acc{display:flex;flex-direction:column;gap:0;margin-top:4px;border:1px solid var(--border,#334155);border-radius:12px;overflow:hidden}\",\n    \".kp-acc-item{border-bottom:1px solid var(--border,#334155);background:var(--card,#1e293b)}\",\n    \".kp-acc-item:last-child{border-bottom:none}\",\n    \".kp-acc-head{display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;margin:0;border:none;background:transparent;color:var(--text,#e2e8f0);font:inherit;font-weight:600;text-align:left;cursor:pointer}\",\n    \".kp-acc-head:hover{background:color-mix(in srgb,var(--accent,#38bdf8) 10%,transparent)}\",\n    \".kp-acc-head::after{content:\\\"▸\\\";color:var(--muted,#94a3b8);transition:transform .25s ease;flex-shrink:0}\",\n    \".kp-acc-item.open .kp-acc-head::after{transform:rotate(90deg);color:var(--accent,#38bdf8)}\",\n    \".kp-acc-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}\",\n    \".kp-acc-item.open .kp-acc-body{grid-template-rows:1fr}\",\n    \".kp-acc-body-inner{overflow:hidden;min-height:0}\",\n    \".kp-acc-body-inner > *{padding:0 16px 14px;margin:0}\",\n    \".kp-match{display:grid;grid-template-columns:1fr 1fr;gap:8px}\",\n    \".kp-choice.picked{outline:2px solid var(--accent,#38bdf8)}\",\n    \".kp-choice.good{outline:2px solid var(--success,#4ade80)}\",\n    \".kp-choice.bad{outline:2px solid var(--danger,#f87171)}\",\n    \".kp-blank{display:inline-block;min-width:90px;margin:0 4px;padding:2px 6px;border:none;border-bottom:2px solid var(--accent,#38bdf8);background:transparent;color:inherit;font:inherit}\",\n    \".kp-status{margin-top:8px;font-size:.85rem;color:var(--muted,#94a3b8)}\"\n  ].join(\"\\n\");\n\n  function injectCss() {\n    if (typeof document === \"undefined\") return;\n    if (document.getElementById(CSS_ID)) return;\n    var style = document.createElement(\"style\");\n    style.id = CSS_ID;\n    style.textContent = CSS_TEXT;\n    (document.head || document.documentElement).appendChild(style);\n  }\n\n  var KP = global.KP || { registry: {}, register: function (p) { this.registry[p.id] = p; } };\n  global.KP = KP;\n\n  function mountFlip(el) {\n    // Grid of cards\n    var cards = el.querySelectorAll(\".kp-flip-card\");\n    if (cards.length) {\n      cards.forEach(function (card) {\n        if (card.dataset.kpFlipWired) return;\n        card.dataset.kpFlipWired = \"1\";\n        card.setAttribute(\"tabindex\", \"0\");\n        card.setAttribute(\"role\", \"button\");\n        card.setAttribute(\"aria-label\", \"Flip card\");\n        function toggle() {\n          card.classList.toggle(\"flipped\");\n        }\n        card.addEventListener(\"click\", function (e) {\n          e.preventDefault();\n          toggle();\n        });\n        card.addEventListener(\"keydown\", function (e) {\n          if (e.key === \"Enter\" || e.key === \" \") {\n            e.preventDefault();\n            toggle();\n          }\n        });\n      });\n      return;\n    }\n    // Legacy single .kp-flip root\n    if (el.classList.contains(\"kp-flip\") || el.querySelector(\".kp-flip-inner\")) {\n      el.addEventListener(\"click\", function () {\n        el.classList.toggle(\"flipped\");\n      });\n    }\n  }\n\n  KP.register({\n    id: \"interactives\",\n    name: \"Interactives\",\n    mount: function (el, widget) {\n      if (el.dataset.kpMounted) return;\n      el.dataset.kpMounted = \"1\";\n      widget = widget || el.getAttribute(\"data-widget\");\n      if (widget === \"reveal\") {\n        var btn = el.querySelector(\".kp-toggle\");\n        var panel = el.querySelector(\".kp-panel\");\n        if (btn && panel) {\n          btn.addEventListener(\"click\", function () {\n            var hide = !panel.hasAttribute(\"hidden\");\n            if (hide) panel.setAttribute(\"hidden\", \"\");\n            else panel.removeAttribute(\"hidden\");\n            btn.textContent = hide ? (btn.dataset.show || \"Show\") : (btn.dataset.hide || \"Hide\");\n          });\n        }\n      }\n      if (widget === \"flip\") {\n        mountFlip(el);\n      }\n      if (widget === \"tabs\") {\n        var tabs = [].slice.call(el.querySelectorAll(\".kp-tab\"));\n        var panelRoot = el.querySelector(\".kp-tabs-panels\") || el;\n        var panels = [].slice.call(panelRoot.querySelectorAll(\":scope > .kp-panel, .kp-panel\"));\n        // Prefer direct children of panels shell\n        var direct = el.querySelector(\".kp-tabs-panels\");\n        if (direct) panels = [].slice.call(direct.children).filter(function (n) { return n.classList && n.classList.contains(\"kp-panel\"); });\n        function show(i) {\n          tabs.forEach(function (t, n) { t.classList.toggle(\"on\", n === i); });\n          panels.forEach(function (p, n) {\n            if (n === i) p.removeAttribute(\"hidden\");\n            else p.setAttribute(\"hidden\", \"\");\n          });\n        }\n        tabs.forEach(function (t, i) {\n          t.addEventListener(\"click\", function () { show(i); });\n        });\n        show(0);\n      }\n      if (widget === \"accordion\") {\n        // New stacked items\n        var items = [].slice.call(el.querySelectorAll(\".kp-acc-item\"));\n        if (items.length) {\n          items.forEach(function (item) {\n            var head = item.querySelector(\".kp-acc-head\");\n            if (!head || head.dataset.kpAccWired) return;\n            head.dataset.kpAccWired = \"1\";\n            head.addEventListener(\"click\", function () {\n              var was = item.classList.contains(\"open\");\n              // optional: close others for cleaner single-open\n              items.forEach(function (x) { x.classList.remove(\"open\"); });\n              if (!was) item.classList.add(\"open\");\n            });\n          });\n        } else {\n          // Legacy toggle + panel\n          el.querySelectorAll(\".kp-toggle\").forEach(function (b) {\n            b.addEventListener(\"click\", function () {\n              var panel = b.nextElementSibling;\n              if (!panel) return;\n              var open = !panel.hasAttribute(\"hidden\");\n              if (open) panel.setAttribute(\"hidden\", \"\");\n              else panel.removeAttribute(\"hidden\");\n            });\n          });\n        }\n      }\n    }\n  });\n\n  KP.register({\n    id: \"games\",\n    name: \"Learning games\",\n    mount: function (el, widget) {\n      if (el.dataset.kpMounted) return;\n      el.dataset.kpMounted = \"1\";\n      widget = widget || el.getAttribute(\"data-widget\");\n      function status() { return el.querySelector(\".kp-status\"); }\n      if (widget === \"order\") {\n        var items = [].slice.call(el.querySelectorAll(\".kp-choice\"));\n        var next = 1;\n        items.forEach(function (b) {\n          b.addEventListener(\"click\", function () {\n            var n = parseInt(b.dataset.order, 10);\n            if (n === next) {\n              b.classList.add(\"good\");\n              b.disabled = true;\n              next++;\n              if (status()) status().textContent = next > items.length ? \"Correct order!\" : \"Next...\";\n            } else {\n              b.classList.add(\"bad\");\n              setTimeout(function () { b.classList.remove(\"bad\"); }, 400);\n              if (status()) status().textContent = \"Not that one yet.\";\n            }\n          });\n        });\n      }\n      if (widget === \"match\") {\n        var left = [].slice.call(el.querySelectorAll(\"[data-side=l]\"));\n        var right = [].slice.call(el.querySelectorAll(\"[data-side=r]\"));\n        var pick = null, found = 0, total = left.length;\n        function clearPicked() {\n          el.querySelectorAll(\".picked\").forEach(function (x) { x.classList.remove(\"picked\"); });\n        }\n        function onPick(b) {\n          if (b.classList.contains(\"good\")) return;\n          if (!pick) { clearPicked(); b.classList.add(\"picked\"); pick = b; return; }\n          if (pick === b) { pick = null; clearPicked(); return; }\n          if (pick.dataset.pair === b.dataset.pair && pick !== b) {\n            pick.classList.add(\"good\"); b.classList.add(\"good\"); found++;\n            pick = null; clearPicked();\n            if (status()) status().textContent = found >= total ? \"All matched!\" : (found + \" matched\");\n          } else {\n            b.classList.add(\"bad\"); pick.classList.add(\"bad\");\n            var a = pick, c = b; pick = null; clearPicked();\n            setTimeout(function () { a.classList.remove(\"bad\"); c.classList.remove(\"bad\"); }, 450);\n            if (status()) status().textContent = \"Not a pair.\";\n          }\n        }\n        left.concat(right).forEach(function (b) {\n          b.addEventListener(\"click\", function () { onPick(b); });\n        });\n      }\n      if (widget === \"blank\") {\n        var check = el.querySelector(\".kp-check\");\n        if (!check) return;\n        check.addEventListener(\"click\", function () {\n          var ok = 0, n = 0;\n          el.querySelectorAll(\".kp-blank\").forEach(function (inp) {\n            n++;\n            var answers = (inp.dataset.answers || \"\").split(\"|\").map(function (s) {\n              return s.trim().toLowerCase();\n            }).filter(Boolean);\n            var val = (inp.value || \"\").trim().toLowerCase();\n            var good = answers.indexOf(val) >= 0;\n            inp.style.borderBottomColor = good ? \"var(--success)\" : \"var(--danger)\";\n            if (good) ok++;\n          });\n          if (status()) status().textContent = ok + \" / \" + n + \" correct\";\n        });\n      }\n    }\n  });\n\n  KP.mountAll = function (root) {\n    if (!root) return;\n    root.querySelectorAll(\"[data-kp]\").forEach(function (el) {\n      var plug = KP.registry[el.getAttribute(\"data-kp\")];\n      if (plug && plug.mount) plug.mount(el, el.getAttribute(\"data-widget\"));\n    });\n  };\n\n  /** Card counts for flip layouts */\n  KP.FLIP_LAYOUTS = {\n    \"1\": { count: 1, label: \"1 — single card\" },\n    \"2\": { count: 2, label: \"2 — side by side\" },\n    \"4\": { count: 4, label: \"4 — 2×2 grid\" },\n    \"6\": { count: 6, label: \"6 — 3 rows × 2 cols\" }\n  };\n\n  injectCss();\n  global.KP_PLUGINS_LOADED = true;\n})(typeof window !== \"undefined\" ? window : this);\n";
+  let KP_PLUGINS_SOURCE = EMBEDDED_KP_PLUGINS;
+  async function ensurePluginsSource() {
+    // Try live file first so edits to kp-plugins.js are picked up without rebuilding Creator
+    try {
+      const res = await fetch("kp-plugins.js?_=" + Date.now(), { cache: "no-store" });
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.indexOf("KP.register") !== -1) {
+          KP_PLUGINS_SOURCE = text;
+          return KP_PLUGINS_SOURCE;
+        }
+      }
+    } catch (e) {}
+    KP_PLUGINS_SOURCE = EMBEDDED_KP_PLUGINS;
+    return KP_PLUGINS_SOURCE;
+  }
+
+  const visEl = document.getElementById("cVisual");
+  if (visEl) {
+    visEl.addEventListener("click", () => { if (window.KP) KP.mountAll(visEl); });
+    visEl.addEventListener("input", () => { if (window.KP) KP.mountAll(visEl); });
+  }
+  applyUiTheme();
+  renderAll();
+})();
+</script>
+</body>
+</html>

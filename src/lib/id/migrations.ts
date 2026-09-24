@@ -83,6 +83,16 @@ const MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    version: 5,
+    description:
+      "Add outline.tutorBots[] (per-lesson interactive knowledge-tutor bots built with the embedded Knowledge Creator tool).",
+    up: (project) => {
+      if (!Array.isArray(project.outline?.tutorBots)) {
+        project.outline.tutorBots = [];
+      }
+    },
+  },
 ];
 
 export const CURRENT_SCHEMA_VERSION =

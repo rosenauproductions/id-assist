@@ -15,9 +15,16 @@ export async function GET(
   const artifact = project.artifacts.find((item) => item.filename === filename);
   if (!artifact) return new Response("Artifact not found", { status: 404 });
 
+  // Tutor-bot exports (see generateArtifacts() in adapters.ts) are real
+  // self-contained HTML pages, not markdown — serve them with the right
+  // content type so they render as a page instead of downloading as text.
+  const contentType = filename.endsWith(".html")
+    ? "text/html; charset=utf-8"
+    : "text/markdown; charset=utf-8";
+
   return new Response(artifact.body, {
     headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
+      "Content-Type": contentType,
       "Content-Disposition": `inline; filename="${filename}"`,
     },
   });

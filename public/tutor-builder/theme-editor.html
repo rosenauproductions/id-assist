@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Tutor — Theme Editor</title>
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+      --success: #4ade80; --danger: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    header {
+      padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.15rem; }
+    header a { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
+    header .spacer { flex: 1; }
+    button {
+      background: var(--accent); color: #0f172a; border: none; border-radius: 8px;
+      padding: 7px 12px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.secondary { background: #334155; color: var(--text); }
+    button.danger { background: #7f1d1d; color: #fecaca; }
+    button.small { padding: 4px 9px; font-size: 0.75rem; }
+    .main { flex: 1; display: grid; grid-template-columns: 220px 1fr 340px; overflow: hidden; }
+    @media (max-width: 1000px) { .main { grid-template-columns: 180px 1fr; } .preview-col { display: none; } }
+    .panel { border-right: 1px solid var(--border); overflow-y: auto; padding: 14px; }
+    .panel:last-child { border-right: none; }
+    .panel h2 { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+    .theme-item {
+      padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .theme-item:hover { background: #1e293b; }
+    .theme-item.active { background: #1e3a5f; border: 1px solid var(--accent); }
+    .swatch {
+      width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .editor label { display: block; font-size: 0.8rem; color: var(--muted); margin: 12px 0 4px; }
+    .editor input[type="text"], .editor textarea {
+      width: 100%; background: #0f172a; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; color: var(--text); font-size: 0.9rem;
+    }
+    .color-row {
+      display: grid; grid-template-columns: 1fr auto 100px; gap: 8px; align-items: center; margin-bottom: 8px;
+    }
+    .color-row span { font-size: 0.85rem; }
+    .color-row input[type="color"] {
+      width: 40px; height: 32px; border: 1px solid var(--border); border-radius: 6px;
+      background: transparent; cursor: pointer; padding: 0;
+    }
+    .color-row input[type="text"] {
+      font-family: ui-monospace, monospace; font-size: 0.8rem; padding: 6px 8px;
+    }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+    .status { font-size: 0.85rem; margin-top: 10px; }
+    .status.ok { color: var(--success); }
+    .status.err { color: var(--danger); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    /* Live preview mirrors tutor chrome */
+    .preview-shell {
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      background: var(--p-bg, #0f172a); color: var(--p-text, #e2e8f0);
+      font-family: system-ui, sans-serif; min-height: 420px;
+    }
+    .preview-shell .ph {
+      padding: 10px 14px; background: var(--p-card); border-bottom: 1px solid var(--p-border);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .preview-shell .ph h3 { font-size: 0.95rem; }
+    .preview-shell .body { padding: 16px; }
+    .preview-shell .card {
+      background: var(--p-card); border: 1px solid var(--p-border); border-radius: 10px; padding: 14px;
+    }
+    .preview-shell .muted { color: var(--p-muted); font-size: 0.85rem; }
+    .preview-shell .pbtn {
+      display: inline-block; margin-top: 12px; padding: 10px 18px; border: none; border-radius: 8px;
+      background: var(--p-accent); color: var(--p-btnText); font-weight: 600; cursor: default;
+    }
+    .preview-shell .opt {
+      display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 6px 0;
+      background: color-mix(in srgb, var(--p-border) 70%, transparent);
+      border: 2px solid transparent; border-radius: 8px; color: var(--p-text); font-size: 0.9rem;
+    }
+    .preview-shell .opt.good { border-color: var(--p-success); }
+    .preview-shell .progress {
+      height: 8px; border-radius: 999px; background: var(--p-border); overflow: hidden; width: 100px;
+    }
+    .preview-shell .progress > i {
+      display: block; height: 100%; width: 55%; background: var(--p-accent);
+    }
+    .badge-default {
+      font-size: 0.65rem; background: #14532d; color: #bbf7d0; padding: 2px 6px; border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Theme Editor</h1>
+  <a href="knowledge-creator-v2.html">← Back to Creator</a>
+  <span class="spacer"></span>
+  <button class="secondary small" id="btnReload">Reload themes.json</button>
+  <button class="secondary small" id="btnImport">Import JSON</button>
+  <button class="small" id="btnDownload">Download themes.json</button>
+</header>
+
+<div class="main">
+  <div class="panel">
+    <h2>Themes</h2>
+    <div id="themeList"></div>
+    <button class="secondary" style="width:100%;margin-top:12px;" id="btnAdd">+ Add theme</button>
+    <p class="hint" style="margin-top:14px;">
+      File lives next to the Creator as <code>themes.json</code>.
+      Browser cannot write the disk file — download after edits and replace the file.
+      Creator loads it on open (falls back to built-in defaults if missing).
+    </p>
+  </div>
+
+  <div class="panel editor" id="editor">
+    <div class="empty" id="emptyMsg" style="color:var(--muted);padding:20px 0;">Select or add a theme</div>
+    <div id="form" style="display:none;">
+      <label>Id (kebab-case, used in CSS class theme-…)</label>
+      <input type="text" id="fId" placeholder="my-theme">
+      <label>Display name</label>
+      <input type="text" id="fName" placeholder="My Theme">
+      <label>Description</label>
+      <input type="text" id="fDesc" placeholder="Short note">
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+        <input type="checkbox" id="fDefault"> Default (applied via :root)
+      </label>
+
+      <h2 style="margin-top:20px;">Colors</h2>
+      <div id="colorFields"></div>
+
+      <label style="margin-top:16px;">Primary button text color</label>
+      <div class="color-row">
+        <span>btnText</span>
+        <input type="color" id="fBtnTextColor">
+        <input type="text" id="fBtnTextHex">
+      </div>
+      <p class="hint">Must contrast with the accent color (button background).</p>
+
+      <div class="actions">
+        <button id="btnApply">Apply to preview</button>
+        <button class="danger small" id="btnDelete">Delete theme</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </div>
+
+  <div class="panel preview-col">
+    <h2>Student preview</h2>
+    <div class="preview-shell" id="preview">
+      <div class="ph">
+        <h3>Sample lesson</h3>
+        <div class="progress"><i></i></div>
+      </div>
+      <div class="body">
+        <div class="card">
+          <p class="muted">Concept · Understand</p>
+          <h3 style="margin:6px 0 10px;font-size:1.1rem;">What is photosynthesis?</h3>
+          <p>Plants convert light into chemical energy stored in sugar.</p>
+          <button class="pbtn" type="button">Continue</button>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <p style="font-weight:600;margin-bottom:8px;">Quiz option</p>
+          <div class="opt">Produce oxygen for animals</div>
+          <div class="opt good">Convert light into chemical energy</div>
+          <div class="opt">Break down glucose</div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:12px;">
+      Exported tutors bake the selected theme’s variables into the HTML — no external file needed for students.
+    </p>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="application/json,.json" style="display:none">
+
+<script>
+const VAR_KEYS = ["bg", "card", "border", "text", "muted", "accent", "success", "danger"];
+const VAR_LABELS = {
+  bg: "Page background",
+  card: "Cards / header",
+  border: "Borders",
+  text: "Body text",
+  muted: "Muted text",
+  accent: "Accent / primary buttons",
+  success: "Success",
+  danger: "Danger / errors"
+};
+
+let data = { version: 1, themes: [] };
+let selectedId = null;
+
+const DEFAULT_THEMES = {
+  version: 1,
+  themes: [
+    {
+      id: "conversational", name: "Conversational", description: "Default dark slate with sky-blue accents", isDefault: true,
+      vars: { bg:"#0f172a", card:"#1e293b", border:"#334155", text:"#e2e8f0", muted:"#94a3b8", accent:"#38bdf8", success:"#4ade80", danger:"#f87171" },
+      btnText: "#0f172a"
+    },
+    {
+      id: "academic", name: "Academic", description: "Clean light paper with blue links",
+      vars: { bg:"#f8fafc", card:"#ffffff", border:"#e2e8f0", text:"#0f172a", muted:"#64748b", accent:"#2563eb", success:"#16a34a", danger:"#dc2626" },
+      btnText: "#ffffff"
+    },
+    {
+      id: "minimal", name: "Minimal", description: "Near-white, near-black, high contrast",
+      vars: { bg:"#ffffff", card:"#ffffff", border:"#e5e5e5", text:"#171717", muted:"#737373", accent:"#171717", success:"#15803d", danger:"#b91c1c" },
+      btnText: "#ffffff"
+    },
+    {
+      id: "focus", name: "Focus", description: "Dark zinc with cyan accent (readable buttons)",
+      vars: { bg:"#09090b", card:"#18181b", border:"#27272a", text:"#fafafa", muted:"#a1a1aa", accent:"#22d3ee", success:"#4ade80", danger:"#f87171" },
+      btnText: "#083344"
+    }
+  ]
+};
+
+function normalizeTheme(t) {
+  const vars = Object.assign({}, t.vars || {});
+  VAR_KEYS.forEach(k => { if (!vars[k]) vars[k] = "#888888"; });
+  return {
+    id: (t.id || "theme").toString().trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "") || "theme",
+    name: t.name || t.id || "Theme",
+    description: t.description || "",
+    isDefault: !!t.isDefault,
+    vars,
+    btnText: t.btnText || "#ffffff"
+  };
+}
+
+function loadBuiltin() {
+  data = JSON.parse(JSON.stringify(DEFAULT_THEMES));
+  data.themes = data.themes.map(normalizeTheme);
+}
+
+async function loadFromFile() {
+  try {
+    const res = await fetch("themes.json?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if (!json.themes || !Array.isArray(json.themes)) throw new Error("Invalid shape");
+    data = { version: json.version || 1, themes: json.themes.map(normalizeTheme) };
+    setStatus("Loaded themes.json (" + data.themes.length + " themes)", true);
+    return true;
+  } catch (e) {
+    loadBuiltin();
+    setStatus("Could not load themes.json — using built-in defaults. Place themes.json next to this page.", false);
+    return false;
+  }
+}
+
+function setStatus(msg, ok) {
+  const el = document.getElementById("status");
+  el.textContent = msg || "";
+  el.className = "status " + (ok ? "ok" : "err");
+}
+
+function getTheme(id) {
+  return data.themes.find(t => t.id === id);
+}
+
+function renderList() {
+  const box = document.getElementById("themeList");
+  box.innerHTML = "";
+  data.themes.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "theme-item" + (t.id === selectedId ? " active" : "");
+    row.innerHTML = '<span class="swatch" style="background:' + t.vars.accent + '"></span><span style="flex:1">' +
+      escapeHtml(t.name) + (t.isDefault ? ' <span class="badge-default">default</span>' : "") + "</span>";
+    row.addEventListener("click", () => selectTheme(t.id));
+    box.appendChild(row);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function selectTheme(id) {
+  selectedId = id;
+  const t = getTheme(id);
+  document.getElementById("emptyMsg").style.display = t ? "none" : "block";
+  document.getElementById("form").style.display = t ? "block" : "none";
+  if (!t) { renderList(); return; }
+  document.getElementById("fId").value = t.id;
+  document.getElementById("fName").value = t.name;
+  document.getElementById("fDesc").value = t.description || "";
+  document.getElementById("fDefault").checked = !!t.isDefault;
+  buildColorFields(t);
+  setColorPair("fBtnTextColor", "fBtnTextHex", t.btnText);
+  applyPreview(t);
+  renderList();
+  setStatus("");
+}
+
+function buildColorFields(t) {
+  const box = document.getElementById("colorFields");
+  box.innerHTML = "";
+  VAR_KEYS.forEach(k => {
+    const row = document.createElement("div");
+    row.className = "color-row";
+    row.innerHTML =
+      '<span title="' + VAR_LABELS[k] + '">' + k + '</span>' +
+      '<input type="color" data-var="' + k + '" id="c_' + k + '">' +
+      '<input type="text" data-var-hex="' + k + '" id="h_' + k + '">';
+    box.appendChild(row);
+    setColorPair("c_" + k, "h_" + k, t.vars[k]);
+    document.getElementById("c_" + k).addEventListener("input", e => {
+      document.getElementById("h_" + k).value = e.target.value;
+      livePreviewFromForm();
+    });
+    document.getElementById("h_" + k).addEventListener("change", e => {
+      const v = normalizeHex(e.target.value);
+      e.target.value = v;
+      document.getElementById("c_" + k).value = v;
+      livePreviewFromForm();
+    });
+  });
+}
+
+function setColorPair(colorId, hexId, value) {
+  const hex = normalizeHex(value);
+  document.getElementById(colorId).value = hex;
+  document.getElementById(hexId).value = hex;
+}
+
+function normalizeHex(v) {
+  v = String(v || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) return v.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(v)) {
+    return ("#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]).toLowerCase();
+  }
+  return "#888888";
+}
+
+function readFormTheme() {
+  const vars = {};
+  VAR_KEYS.forEach(k => {
+    vars[k] = normalizeHex(document.getElementById("h_" + k).value);
+  });
+  let id = document.getElementById("fId").value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+  if (!id) id = "theme";
+  return {
+    id,
+    name: document.getElementById("fName").value.trim() || id,
+    description: document.getElementById("fDesc").value.trim(),
+    isDefault: document.getElementById("fDefault").checked,
+    vars,
+    btnText: normalizeHex(document.getElementById("fBtnTextHex").value)
+  };
+}
+
+function livePreviewFromForm() {
+  try { applyPreview(readFormTheme()); } catch (e) {}
+}
+
+function applyPreview(t) {
+  const el = document.getElementById("preview");
+  el.style.setProperty("--p-bg", t.vars.bg);
+  el.style.setProperty("--p-card", t.vars.card);
+  el.style.setProperty("--p-border", t.vars.border);
+  el.style.setProperty("--p-text", t.vars.text);
+  el.style.setProperty("--p-muted", t.vars.muted);
+  el.style.setProperty("--p-accent", t.vars.accent);
+  el.style.setProperty("--p-success", t.vars.success);
+  el.style.setProperty("--p-danger", t.vars.danger);
+  el.style.setProperty("--p-btnText", t.btnText);
+  el.style.background = t.vars.bg;
+  el.style.color = t.vars.text;
+}
+
+function commitForm() {
+  if (!selectedId) return;
+  const next = readFormTheme();
+  const idx = data.themes.findIndex(t => t.id === selectedId);
+  if (idx < 0) return;
+
+  // Unique id
+  if (next.id !== selectedId && data.themes.some(t => t.id === next.id)) {
+    setStatus("Id already used: " + next.id, false);
+    return;
+  }
+
+  if (next.isDefault) {
+    data.themes.forEach(t => { t.isDefault = false; });
+  }
+
+  data.themes[idx] = next;
+  selectedId = next.id;
+  renderList();
+  selectTheme(selectedId);
+  setStatus("Updated in memory — download themes.json to persist.", true);
+}
+
+function addTheme() {
+  let n = 1;
+  while (data.themes.some(t => t.id === "custom-" + n)) n++;
+  const t = normalizeTheme({
+    id: "custom-" + n,
+    name: "Custom " + n,
+    description: "New theme",
+    vars: Object.assign({}, (data.themes[0] && data.themes[0].vars) || DEFAULT_THEMES.themes[0].vars),
+    btnText: "#0f172a"
+  });
+  data.themes.push(t);
+  selectTheme(t.id);
+  setStatus("Added — edit colors then download themes.json.", true);
+}
+
+function deleteTheme() {
+  if (!selectedId) return;
+  if (data.themes.length <= 1) {
+    setStatus("Keep at least one theme.", false);
+    return;
+  }
+  if (!confirm("Delete theme “" + selectedId + "”?")) return;
+  data.themes = data.themes.filter(t => t.id !== selectedId);
+  if (!data.themes.some(t => t.isDefault)) data.themes[0].isDefault = true;
+  selectedId = data.themes[0].id;
+  selectTheme(selectedId);
+  setStatus("Deleted from memory — download to persist.", true);
+}
+
+function downloadJson() {
+  // Ensure form committed
+  if (selectedId) {
+    const next = readFormTheme();
+    const idx = data.themes.findIndex(t => t.id === selectedId);
+    if (idx >= 0) {
+      if (next.isDefault) data.themes.forEach(t => { t.isDefault = false; });
+      if (next.id !== selectedId && data.themes.some(t => t.id === next.id)) {
+        setStatus("Id conflict — fix id before download.", false);
+        return;
+      }
+      data.themes[idx] = next;
+      selectedId = next.id;
+    }
+  }
+  const blob = new Blob([JSON.stringify({ version: data.version || 1, themes: data.themes }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "themes.json";
+  a.click();
+  setStatus("Downloaded themes.json — replace the file next to the Creator.", true);
+  renderList();
+}
+
+document.getElementById("btnApply").addEventListener("click", commitForm);
+document.getElementById("btnAdd").addEventListener("click", addTheme);
+document.getElementById("btnDelete").addEventListener("click", deleteTheme);
+document.getElementById("btnDownload").addEventListener("click", downloadJson);
+document.getElementById("btnReload").addEventListener("click", async () => {
+  await loadFromFile();
+  selectedId = data.themes[0]?.id || null;
+  selectTheme(selectedId);
+  renderList();
+});
+document.getElementById("btnImport").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const json = JSON.parse(ev.target.result);
+      if (!json.themes) throw new Error("missing themes");
+      data = { version: json.version || 1, themes: json.themes.map(normalizeTheme) };
+      selectedId = data.themes[0]?.id || null;
+      selectTheme(selectedId);
+      renderList();
+      setStatus("Imported " + data.themes.length + " themes.", true);
+    } catch (err) {
+      setStatus("Invalid JSON: " + err.message, false);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+document.getElementById("fBtnTextColor").addEventListener("input", e => {
+  document.getElementById("fBtnTextHex").value = e.target.value;
+  livePreviewFromForm();
+});
+document.getElementById("fBtnTextHex").addEventListener("change", e => {
+  const v = normalizeHex(e.target.value);
+  e.target.value = v;
+  document.getElementById("fBtnTextColor").value = v;
+  livePreviewFromForm();
+});
+["fId","fName","fDesc","fDefault"].forEach(id => {
+  document.getElementById(id).addEventListener("change", livePreviewFromForm);
+});
+
+(async function init() {
+  await loadFromFile();
+  selectedId = data.themes.find(t => t.isDefault)?.id || data.themes[0]?.id || null;
+  selectTheme(selectedId);
+  renderList();
+})();
+</script>
+</body>
+</html>
