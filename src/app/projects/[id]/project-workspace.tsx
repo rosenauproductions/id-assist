@@ -50,7 +50,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
-import { GAGNE_LABELS, OUTCOME_KIND_LABELS, SEVERITY_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
+import { DELIVERY_TARGET_LABELS, GAGNE_LABELS, OUTCOME_KIND_LABELS, SEVERITY_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
 import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
@@ -1080,7 +1080,7 @@ function LessonEditor({
         {({ pending, saved }) => (
           <>
             <div className="grid gap-2 sm:grid-cols-[1fr_7rem_9rem]">
-              <HintLabel label="Title" hint="Learner-facing lesson name.">
+              <HintLabel label="Title" hint="The name learners will see for this lesson.">
                 <input
                   name="title"
                   defaultValue={lesson.title}
@@ -1090,7 +1090,7 @@ function LessonEditor({
               </HintLabel>
               <HintLabel
                 label="Minutes"
-                hint="Learner seat time for this lesson (target 5–9)."
+                hint="Estimated time to complete this lesson (aim for 5–9 minutes)."
               >
                 <input
                   name="estimatedMinutes"
@@ -1102,10 +1102,7 @@ function LessonEditor({
                   className="field"
                 />
               </HintLabel>
-              <HintLabel
-                label="Delivery"
-                hint="Primary channel this lesson ships in."
-              >
+              <HintLabel label="Delivery" hint="How this lesson is delivered.">
                 <select
                   name="delivery"
                   defaultValue={lesson.delivery}
@@ -1114,17 +1111,21 @@ function LessonEditor({
                 >
                   {DELIVERY_TARGETS.map((target) => (
                     <option key={target} value={target}>
-                      {target}
+                      {DELIVERY_TARGET_LABELS[target]}
                     </option>
                   ))}
                 </select>
               </HintLabel>
             </div>
             <p className="text-xs text-muted">
-              {objectives.map((o) => o.bloom).join(", ") || "?"} ·{" "}
+              {objectives.length
+                ? objectives.map((o) => capitalizeFirst(o.behavior)).join("; ")
+                : "No objective bound yet"}
               {lesson.supplements.length
-                ? `+ ${lesson.supplements.join(", ")}`
-                : "no supplements"}
+                ? ` · Also delivered as ${lesson.supplements
+                    .map((target) => DELIVERY_TARGET_LABELS[target])
+                    .join(", ")}`
+                : ""}
               <FlagMarker
                 projectId={project.id}
                 filters={project.outline.filters.filter(
@@ -1150,7 +1151,7 @@ function LessonEditor({
                     defaultValue={unit.content ?? ""}
                     disabled={locked || pending}
                     rows={2}
-                    placeholder="Write the actual content for this beat — script, narration, bullet points…"
+                    placeholder="Enter the content for this section — such as narration, on-screen text, or talking points."
                     className="field"
                   />
                 </li>

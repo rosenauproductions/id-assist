@@ -1,5 +1,6 @@
 import type {
   AssessmentSpec,
+  DeliveryTarget,
   FilterSeverity,
   GagneEvent,
   Outcome,
@@ -59,6 +60,18 @@ export const SEVERITY_LABELS: Record<FilterSeverity, string> = {
   rewrite: "Needs work",
   split: "Needs splitting",
   block: "Blocking",
+};
+
+/** Plain-English label for a delivery channel, shown in the Lessons
+ * tab's Delivery picker and wherever a lesson's supplemental channels are
+ * listed, instead of the raw lowercase DeliveryTarget value. */
+export const DELIVERY_TARGET_LABELS: Record<DeliveryTarget, string> = {
+  rise: "Rise build sheet",
+  canvas: "Canvas pages",
+  gdoc: "Google Doc",
+  gslides: "Google Slides",
+  video: "Video script",
+  tutor: "Live tutor",
 };
 
 /** Plain-English label for an assessment's format, shown wherever an

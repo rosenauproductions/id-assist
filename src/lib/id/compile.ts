@@ -74,7 +74,7 @@ function unit(
 
 function riseUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Why this job matters, framed around what fails today", "attention", "rise", "statement"),
+    unit("A short example of what goes wrong when this isn't done well", "attention", "rise", "statement"),
     unit("Main objective in plain language", "objectives", "rise", "text"),
     unit("Bring up a real example the learner has run into", "recall", "rise", "text"),
     unit(`Walk through an example of ${jobTask}`, "present", "rise", "process"),
@@ -85,10 +85,10 @@ function riseUnits(jobTask: string): ContentUnit[] {
 
 function videoUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("Open with the real workplace cost of getting this wrong", "attention", "video"),
+    unit("A short example of what goes wrong when this isn't done well", "attention", "video"),
     unit("Show two examples side by side — one done wrong, one done right", "present", "video"),
-    unit(`State the job task plainly: ${jobTask}`, "objectives", "video"),
-    unit("Point the learner to what comes next", "retain", "video"),
+    unit(`By the end of this lesson, the learner will be able to ${jobTask}.`, "objectives", "video"),
+    unit("Recap the main point and tell the learner what's next in the course", "retain", "video"),
   ];
 }
 
@@ -111,7 +111,7 @@ function slidesUnits(): ContentUnit[] {
 
 function tutorUnits(jobTask: string): ContentUnit[] {
   return [
-    unit("The tutor states the job and any constraints", "objectives", "tutor"),
+    unit("The tutor explains the task and any constraints the learner is working within", "objectives", "tutor"),
     unit("The learner pastes in or describes their real work", "recall", "tutor"),
     unit(`A guided critique, measured against ${jobTask}`, "elicit", "tutor"),
     unit("Feedback tied directly to the criterion", "feedback", "tutor"),
