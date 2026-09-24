@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateArtifacts } from "@/lib/id/adapters";
 import { briefReady, type BriefDraft } from "@/lib/id/brief-validate";
-import { compileBrief } from "@/lib/id/compile";
+import { compileBrief, unitsFor } from "@/lib/id/compile";
 import { estimateProject } from "@/lib/id/estimate";
 import { canApprove, outlineStatus, runFilters } from "@/lib/id/filters";
 import { nid } from "@/lib/id/ids";
@@ -21,10 +21,12 @@ import {
   DELIVERY_TARGETS,
   SAM_PHASES,
   TIME_PHASES,
+  type AssessmentSpec,
   type Bloom,
   type CourseMode,
   type CoursePhase,
   type DeliveryTarget,
+  type Lesson,
   type MethodologyPhase,
   type PhaseStatus,
   type RequirementPriority,
@@ -459,6 +461,129 @@ export async function updateSmeAction(formData: FormData) {
   }
 
   project.estimate = estimateProject(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+// Manual add actions for the course-map sidebar's right-click menu
+// (project-workspace.tsx). Each mirrors the shape compileBrief()/
+// unitsFor() already produce, so a manually added lesson gets the same
+// Gagne-event beat skeleton as a compiled one instead of a bare shell.
+
+export async function addModuleAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const title = String(formData.get("title") ?? "").trim() || "New module";
+  project.outline.modules.push({
+    id: nid("mod"),
+    title,
+    lessonIds: [],
+  });
+
+  if (project.outline.status === "approved") {
+    project.outline.status = "needs_review";
+    project.artifacts = [];
+  }
+  refilter(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function addLessonAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const moduleId = String(formData.get("moduleId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const courseModule = project.outline.modules.find(
+    (item) => item.id === moduleId,
+  );
+  if (!courseModule) throw new Error("Module not found");
+
+  const title = String(formData.get("title") ?? "").trim() || "New lesson";
+  const objectiveId = String(formData.get("objectiveId") ?? "").trim();
+  const objective = objectiveId
+    ? project.outline.outcomes.find((item) => item.id === objectiveId)
+    : undefined;
+  if (objectiveId && !objective) throw new Error("Objective not found");
+
+  const delivery: DeliveryTarget = "rise";
+  const jobTask = objective ? objective.behavior : title;
+
+  const lesson: Lesson = {
+    id: nid("les"),
+    title,
+    objectiveIds: objective ? [objective.id] : [],
+    estimatedMinutes: 6,
+    delivery,
+    supplements: [],
+    units: unitsFor(delivery, jobTask),
+  };
+  project.outline.lessons.push(lesson);
+  courseModule.lessonIds.push(lesson.id);
+
+  if (project.outline.status === "approved") {
+    project.outline.status = "needs_review";
+    project.artifacts = [];
+  }
+  refilter(project);
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+const ASSESSMENT_FORMATS: AssessmentSpec["format"][] = [
+  "performance",
+  "scenario",
+  "quiz",
+  "conversation",
+  "artifact",
+];
+
+export async function addAssessmentAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const lesson = project.outline.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error("Lesson not found");
+  if (lesson.assessmentId) throw new Error("This lesson already has a quiz.");
+
+  let objectiveId = lesson.objectiveIds[0];
+  if (!objectiveId) {
+    objectiveId = String(formData.get("objectiveId") ?? "").trim();
+    if (!objectiveId) {
+      throw new Error("This lesson needs an objective before it can have a quiz.");
+    }
+    lesson.objectiveIds = [objectiveId];
+  }
+  const objective = project.outline.outcomes.find(
+    (item) => item.id === objectiveId,
+  );
+  if (!objective) throw new Error("Objective not found");
+
+  const formatRaw = String(formData.get("format") ?? "quiz");
+  const format = (ASSESSMENT_FORMATS as string[]).includes(formatRaw)
+    ? (formatRaw as AssessmentSpec["format"])
+    : "quiz";
+
+  const assessment: AssessmentSpec = {
+    id: nid("as"),
+    outcomeId: objective.id,
+    bloom: objective.bloom,
+    format,
+    correctPerformance: "",
+    exemplarStem: "",
+    delivery: lesson.delivery,
+  };
+  project.outline.assessments.push(assessment);
+  lesson.assessmentId = assessment.id;
+
+  if (project.outline.status === "approved") {
+    project.outline.status = "needs_review";
+    project.artifacts = [];
+  }
+  refilter(project);
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
 }

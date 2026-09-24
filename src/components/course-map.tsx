@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { CourseMapData, MapNode } from "@/lib/id/course-map";
 
 // Renders the course-structure map as a traditional nested tree: modules
@@ -14,25 +15,59 @@ function byParent(nodes: MapNode[], parentId: string, kind: MapNode["kind"]) {
     .sort((a, b) => a.order - b.order);
 }
 
+// Right-click "add" menu, wired up only from the project workspace (the
+// wizard's skeleton preview passes no addHandlers, so it renders exactly
+// as before). Adding is the only structural edit this tree offers today
+// — no delete/reorder yet.
+export type CourseMapAddHandlers = {
+  onAddModule: () => void;
+  onAddLesson: (moduleId: string) => void;
+  onAddQuiz: (lessonId: string) => void;
+};
+
+type MenuItem = { label: string; onClick: () => void };
+type MenuState = { x: number; y: number; items: MenuItem[] };
+
 export function CourseMap({
   data,
   title = "Course map",
   emptyHint = "Nothing to map yet.",
   activeId,
   onSelect,
+  addHandlers,
 }: {
   data: CourseMapData;
   title?: string;
   emptyHint?: string;
   activeId?: string;
   onSelect?: (node: MapNode) => void;
+  addHandlers?: CourseMapAddHandlers;
 }) {
+  const [menu, setMenu] = useState<MenuState | null>(null);
+
+  function openMenu(event: React.MouseEvent, items: MenuItem[]) {
+    if (items.length === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setMenu({ x: event.clientX, y: event.clientY, items });
+  }
+
   const modules = data.nodes
     .filter((node) => node.kind === "module")
     .sort((a, b) => a.order - b.order);
 
   return (
-    <div className="rounded-xl border border-line bg-card p-4">
+    <div
+      className="relative rounded-xl border border-line bg-card p-4"
+      onContextMenu={
+        addHandlers
+          ? (event) =>
+              openMenu(event, [
+                { label: "Add module", onClick: addHandlers.onAddModule },
+              ])
+          : undefined
+      }
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-muted">
         {title}
       </p>
@@ -45,12 +80,26 @@ export function CourseMap({
             const lessons = byParent(data.nodes, courseModule.id, "lesson");
             return (
               <li key={courseModule.id} className="min-w-0">
-                <MapRow
-                  node={courseModule}
-                  activeId={activeId}
-                  onSelect={onSelect}
-                  emphasize
-                />
+                <div
+                  onContextMenu={
+                    addHandlers
+                      ? (event) =>
+                          openMenu(event, [
+                            {
+                              label: "Add lesson",
+                              onClick: () => addHandlers.onAddLesson(courseModule.id),
+                            },
+                          ])
+                      : undefined
+                  }
+                >
+                  <MapRow
+                    node={courseModule}
+                    activeId={activeId}
+                    onSelect={onSelect}
+                    emphasize
+                  />
+                </div>
                 {lessons.length > 0 ? (
                   <ol className="mt-1.5 ml-1.5 grid gap-2 border-l border-line pl-3">
                     {lessons.map((lesson) => {
@@ -58,13 +107,32 @@ export function CourseMap({
                         ...byParent(data.nodes, lesson.id, "unit"),
                         ...byParent(data.nodes, lesson.id, "assessment"),
                       ];
+                      const hasAssessment = byParent(
+                        data.nodes,
+                        lesson.id,
+                        "assessment",
+                      ).length > 0;
                       return (
                         <li key={lesson.id} className="min-w-0">
-                          <MapRow
-                            node={lesson}
-                            activeId={activeId}
-                            onSelect={onSelect}
-                          />
+                          <div
+                            onContextMenu={
+                              addHandlers && !hasAssessment
+                                ? (event) =>
+                                    openMenu(event, [
+                                      {
+                                        label: "Add quiz",
+                                        onClick: () => addHandlers.onAddQuiz(lesson.id),
+                                      },
+                                    ])
+                                : undefined
+                            }
+                          >
+                            <MapRow
+                              node={lesson}
+                              activeId={activeId}
+                              onSelect={onSelect}
+                            />
+                          </div>
                           {chain.length > 0 ? (
                             <ol className="mt-1 ml-1.5 grid gap-0.5 border-l border-line pl-3">
                               {chain.map((step, index) => (
@@ -91,6 +159,38 @@ export function CourseMap({
           })}
         </ol>
       )}
+
+      {menu ? (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenu(null)}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setMenu(null);
+            }}
+          />
+          <ul
+            className="fixed z-50 min-w-[9rem] overflow-hidden rounded-md border border-line bg-card py-1 text-sm shadow-lg"
+            style={{ left: menu.x, top: menu.y }}
+          >
+            {menu.items.map((item) => (
+              <li key={item.label}>
+                <button
+                  type="button"
+                  className="block w-full px-3 py-1.5 text-left hover:bg-line/40"
+                  onClick={() => {
+                    item.onClick();
+                    setMenu(null);
+                  }}
+                >
+                  {item.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </div>
   );
 }

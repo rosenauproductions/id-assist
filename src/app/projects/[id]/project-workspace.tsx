@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import {
+  addAssessmentAction,
+  addLessonAction,
+  addModuleAction,
   addRequirementAction,
   approveProjectAction,
   deleteProjectAction,
@@ -25,7 +28,7 @@ import {
 import { canApprove } from "@/lib/id/filters";
 import { FlagMarker } from "@/components/flag-marker";
 import { AlignmentMap } from "@/components/alignment-map";
-import { CourseMap } from "@/components/course-map";
+import { CourseMap, type CourseMapAddHandlers } from "@/components/course-map";
 import { FlowchartMap } from "@/components/flowchart-map";
 import { LearnerPath } from "@/components/learner-path";
 import { ModeIndicator, phasesFor } from "@/components/mode-indicator";
@@ -50,7 +53,7 @@ import {
   type Outcome,
   type RequirementItem,
 } from "@/lib/id/types";
-import { DELIVERY_TARGET_LABELS, GAGNE_LABELS, OUTCOME_KIND_LABELS, SEVERITY_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
+import { ASSESSMENT_FORMAT_LABELS, DELIVERY_TARGET_LABELS, GAGNE_LABELS, OUTCOME_KIND_LABELS, SEVERITY_LABELS, TIME_PHASE_LABELS, capitalizeFirst } from "@/lib/id/labels";
 import type { MapShapeSettings } from "@/lib/id/course-map";
 
 type WorkspaceTabId =
@@ -64,6 +67,13 @@ type WorkspaceTabId =
   | "delivery";
 
 type MapSubView = "construction" | "alignment" | "learner-path";
+
+// Backs the "add" dialog opened from the course-map sidebar's right-click
+// menu (see mapAddHandlers below and course-map.tsx's CourseMapAddHandlers).
+type PendingAdd =
+  | { kind: "module" }
+  | { kind: "lesson"; moduleId: string }
+  | { kind: "quiz"; lessonId: string };
 
 const MAP_VIEW_STORAGE_PREFIX = "id-assist:map-view:";
 const MAP_SUB_VIEWS: MapSubView[] = ["construction", "alignment", "learner-path"];
@@ -130,6 +140,7 @@ export function ProjectWorkspace({
   const alignmentRows = useMemo(() => buildAlignmentMap(outline), [outline]);
   const learnerPathLessons = useMemo(() => buildLearnerPath(outline), [outline]);
   const [activeMapNodeId, setActiveMapNodeId] = useState<string | undefined>();
+  const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null);
   const [mapSubView, setMapSubViewState] = useState<MapSubView>(() =>
     loadStoredMapView(project.id),
   );
@@ -218,6 +229,13 @@ export function ProjectWorkspace({
   function jumpToAssessment(assessmentId: string) {
     jumpToTab("assessments", `assessment-${assessmentId}`);
   }
+
+  // Right-click "add" menu on the course-map sidebar (course-map.tsx).
+  const mapAddHandlers: CourseMapAddHandlers = {
+    onAddModule: () => setPendingAdd({ kind: "module" }),
+    onAddLesson: (moduleId) => setPendingAdd({ kind: "lesson", moduleId }),
+    onAddQuiz: (lessonId) => setPendingAdd({ kind: "quiz", lessonId }),
+  };
 
   const tabs: { id: WorkspaceTabId; label: string; badge?: string }[] = [
     { id: "outcomes", label: "Outcomes", badge: String(outline.outcomes.length) },
@@ -703,10 +721,19 @@ export function ProjectWorkspace({
             activeId={activeMapNodeId}
             onSelect={focusMapNode}
             emptyHint="Nothing compiled yet."
+            addHandlers={mapAddHandlers}
           />
         </aside>
       )}
       </div>
+
+      {pendingAdd ? (
+        <AddItemDialog
+          project={project}
+          pendingAdd={pendingAdd}
+          onClose={() => setPendingAdd(null)}
+        />
+      ) : null}
 
       <style>{`
         .btn-primary {
@@ -1391,6 +1418,182 @@ function SmeForm({ project }: { project: IdProject }) {
         </>
       )}
     </ActionForm>
+  );
+}
+
+// Small "add" dialog opened by the course-map sidebar's right-click menu
+// (mapAddHandlers above). Adding is the only structural edit the sidebar
+// offers today, so this covers all three kinds rather than three
+// separate dialogs.
+function AddItemDialog({
+  project,
+  pendingAdd,
+  onClose,
+}: {
+  project: IdProject;
+  pendingAdd: PendingAdd;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  const outcomes = project.outline.outcomes;
+  const lesson =
+    pendingAdd.kind === "quiz"
+      ? project.outline.lessons.find((item) => item.id === pendingAdd.lessonId)
+      : undefined;
+  const needsObjective =
+    pendingAdd.kind === "quiz" && (lesson?.objectiveIds.length ?? 0) === 0;
+  const blockedOnNoOutcomes = needsObjective && outcomes.length === 0;
+
+  const heading =
+    pendingAdd.kind === "module"
+      ? "Add module"
+      : pendingAdd.kind === "lesson"
+        ? "Add lesson"
+        : "Add quiz";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border border-line bg-card p-5 shadow-lg"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold">{heading}</h2>
+        {blockedOnNoOutcomes ? (
+          <>
+            <p className="mt-2 text-sm text-muted">
+              A quiz has to prove an objective, and this course doesn&apos;t
+              have one yet. Add an objective in the Outcomes tab first.
+            </p>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-sm text-muted hover:text-foreground"
+              >
+                Close
+              </button>
+            </div>
+          </>
+        ) : (
+          <ActionForm
+            className="mt-3 grid gap-3 text-sm"
+            action={async (formData) => {
+              if (pendingAdd.kind === "module") {
+                await addModuleAction(formData);
+              } else if (pendingAdd.kind === "lesson") {
+                await addLessonAction(formData);
+              } else {
+                await addAssessmentAction(formData);
+              }
+              onClose();
+            }}
+          >
+            {({ pending }) => (
+              <>
+                <input type="hidden" name="projectId" value={project.id} />
+                {pendingAdd.kind === "lesson" ? (
+                  <input type="hidden" name="moduleId" value={pendingAdd.moduleId} />
+                ) : null}
+                {pendingAdd.kind === "quiz" ? (
+                  <input type="hidden" name="lessonId" value={pendingAdd.lessonId} />
+                ) : null}
+
+                {pendingAdd.kind !== "quiz" ? (
+                  <label className="grid gap-1">
+                    <span>Title</span>
+                    <input
+                      name="title"
+                      autoFocus
+                      placeholder={
+                        pendingAdd.kind === "module" ? "New module" : "New lesson"
+                      }
+                      disabled={pending}
+                      className="field"
+                    />
+                  </label>
+                ) : null}
+
+                {pendingAdd.kind === "lesson" ? (
+                  <label className="grid gap-1">
+                    <span>Objective it teaches</span>
+                    <select name="objectiveId" defaultValue="" disabled={pending} className="field">
+                      <option value="">No objective yet</option>
+                      {outcomes.map((outcome) => (
+                        <option key={outcome.id} value={outcome.id}>
+                          {OUTCOME_KIND_LABELS[outcome.kind]}: {capitalizeFirst(outcome.behavior)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {needsObjective ? (
+                  <label className="grid gap-1">
+                    <span>Which objective is this proving?</span>
+                    <select
+                      name="objectiveId"
+                      required
+                      defaultValue={outcomes[0]?.id ?? ""}
+                      disabled={pending}
+                      className="field"
+                    >
+                      {outcomes.map((outcome) => (
+                        <option key={outcome.id} value={outcome.id}>
+                          {OUTCOME_KIND_LABELS[outcome.kind]}: {capitalizeFirst(outcome.behavior)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {pendingAdd.kind === "quiz" ? (
+                  <label className="grid gap-1">
+                    <span>Format</span>
+                    <select name="format" defaultValue="quiz" disabled={pending} className="field">
+                      {(
+                        Object.keys(ASSESSMENT_FORMAT_LABELS) as (keyof typeof ASSESSMENT_FORMAT_LABELS)[]
+                      ).map((format) => (
+                        <option key={format} value={format}>
+                          {ASSESSMENT_FORMAT_LABELS[format]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                <div className="mt-1 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    disabled={pending}
+                    className="text-sm text-muted hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    className="btn-primary text-sm disabled:opacity-60"
+                  >
+                    {pending ? "Adding…" : "Add"}
+                  </button>
+                </div>
+              </>
+            )}
+          </ActionForm>
+        )}
+      </div>
+    </div>
   );
 }
 
