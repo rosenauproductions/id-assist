@@ -13,6 +13,7 @@ import {
   deleteProjectAction,
   deleteRequirementAction,
   dismissFilterAction,
+  draftTutorBotAction,
   generateArtifactsAction,
   linkTutorBotAction,
   logTimeAction,
@@ -263,6 +264,16 @@ export function ProjectWorkspace({
       formData.set("projectId", project.id);
       formData.set("lessonId", lessonId);
       await linkTutorBotAction(formData);
+      try {
+        // Best-effort: draft a full first-pass concept set from the
+        // lesson's own content. If no AI model is configured (or the
+        // call fails for any other reason), the lesson still has the
+        // single starter concept linkTutorBotAction already seeded, so
+        // opening the editor never blocks on this.
+        await draftTutorBotAction(formData);
+      } catch (err) {
+        console.error("Tutor bot AI draft failed, keeping starter concept", err);
+      }
       setOpenTutorBotLessonId(lessonId);
     });
   }

@@ -11,6 +11,7 @@ import { nid } from "@/lib/id/ids";
 import { capitalizeFirst } from "@/lib/id/labels";
 import { importOutlineFromText } from "@/lib/id/import-outline";
 import { refineOutlineWithModel } from "@/lib/id/refine";
+import { draftTutorConcepts } from "@/lib/id/tutor-bot-draft";
 import { mergeRequirements } from "@/lib/id/requirements";
 import { deleteProject, loadProject, saveProject } from "@/lib/id/store";
 import { addAcceptableRule } from "@/lib/id/acceptable-rules";
@@ -29,6 +30,7 @@ import {
   type DeliveryTarget,
   type Lesson,
   type MethodologyPhase,
+  type Outcome,
   type PhaseStatus,
   type RequirementPriority,
   type SmeEngagement,
@@ -642,6 +644,51 @@ export async function linkTutorBotAction(formData: FormData) {
 
   project.outline.tutorBots.push(bot);
   lesson.tutorBotId = bot.id;
+
+  await saveProject(project);
+  revalidatePath(`/projects/${projectId}`);
+}
+
+// Drafts a full first-pass set of concepts (with content and quiz
+// questions) from the lesson's own objective(s), assessment, and content
+// units, in place of the single empty starter concept linkTutorBotAction
+// seeds. Requires a bot to already be linked. Replaces the bot's concepts
+// if it's still just the untouched starter (empty content, no quiz);
+// otherwise appends after whatever's already there, so a person's own
+// edits are never silently discarded. Same lighter-touch rules as the
+// other tutor-bot actions above: no refilter()/approval guard.
+export async function draftTutorBotAction(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const lessonId = String(formData.get("lessonId") ?? "");
+  const project = await loadProject(projectId);
+  if (!project) throw new Error("Project not found");
+  const lesson = project.outline.lessons.find((item) => item.id === lessonId);
+  if (!lesson) throw new Error("Lesson not found");
+  if (!lesson.tutorBotId) throw new Error("Link a tutor bot to this lesson first.");
+  const bot = project.outline.tutorBots.find((item) => item.id === lesson.tutorBotId);
+  if (!bot) throw new Error("Tutor bot not found");
+
+  const objectives = lesson.objectiveIds
+    .map((id) => project.outline.outcomes.find((item) => item.id === id))
+    .filter((item): item is Outcome => Boolean(item));
+  const assessment = lesson.assessmentId
+    ? project.outline.assessments.find((item) => item.id === lesson.assessmentId)
+    : undefined;
+
+  const drafted = await draftTutorConcepts({
+    lesson,
+    objectives,
+    assessment,
+    brief: project.outline.brief,
+  });
+
+  const isUntouchedStarter =
+    bot.concepts.length === 1 &&
+    !bot.concepts[0].content &&
+    bot.concepts[0].quiz.length === 0;
+
+  bot.concepts = isUntouchedStarter ? drafted : [...bot.concepts, ...drafted];
+  bot.updatedAt = new Date().toISOString();
 
   await saveProject(project);
   revalidatePath(`/projects/${projectId}`);
