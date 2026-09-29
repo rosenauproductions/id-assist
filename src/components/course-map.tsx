@@ -29,6 +29,19 @@ export type CourseMapAddHandlers = {
 type MenuItem = { label: string; onClick: () => void };
 type MenuState = { x: number; y: number; items: MenuItem[] };
 
+function lessonMenuItems(
+  addHandlers: CourseMapAddHandlers,
+  lessonId: string,
+  hasAssessment: boolean,
+): MenuItem[] {
+  return [
+    ...(hasAssessment
+      ? []
+      : [{ label: "Add quiz", onClick: () => addHandlers.onAddQuiz(lessonId) }]),
+    { label: "Tutor bot", onClick: () => addHandlers.onOpenTutorBot(lessonId) },
+  ];
+}
+
 export function CourseMap({
   data,
   title = "Course map",
@@ -69,9 +82,21 @@ export function CourseMap({
           : undefined
       }
     >
-      <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
-        {title}
-      </p>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted">
+          {title}
+        </p>
+        {addHandlers ? (
+          <AddButton
+            title="Add module"
+            onClick={(event) =>
+              openMenu(event, [
+                { label: "Add module", onClick: addHandlers.onAddModule },
+              ])
+            }
+          />
+        ) : null}
+      </div>
 
       {modules.length === 0 ? (
         <p className="mt-2 text-sm text-muted">{emptyHint}</p>
@@ -82,6 +107,7 @@ export function CourseMap({
             return (
               <li key={courseModule.id} className="min-w-0 py-3 first:pt-0 last:pb-0">
                 <div
+                  className="flex items-center gap-1"
                   onContextMenu={
                     addHandlers
                       ? (event) =>
@@ -94,12 +120,27 @@ export function CourseMap({
                       : undefined
                   }
                 >
-                  <MapRow
-                    node={courseModule}
-                    activeId={activeId}
-                    onSelect={onSelect}
-                    emphasize
-                  />
+                  <div className="min-w-0 flex-1">
+                    <MapRow
+                      node={courseModule}
+                      activeId={activeId}
+                      onSelect={onSelect}
+                      emphasize
+                    />
+                  </div>
+                  {addHandlers ? (
+                    <AddButton
+                      title="Add lesson"
+                      onClick={(event) =>
+                        openMenu(event, [
+                          {
+                            label: "Add lesson",
+                            onClick: () => addHandlers.onAddLesson(courseModule.id),
+                          },
+                        ])
+                      }
+                    />
+                  ) : null}
                 </div>
                 {lessons.length > 0 ? (
                   <ol className="mt-2 ml-[0.4rem] grid divide-y divide-line border-l-2 border-accent/25 pl-3">
@@ -116,31 +157,29 @@ export function CourseMap({
                       return (
                         <li key={lesson.id} className="min-w-0 py-2 first:pt-0 last:pb-0">
                           <div
+                            className="flex items-center gap-1"
                             onContextMenu={
                               addHandlers
                                 ? (event) =>
-                                    openMenu(event, [
-                                      ...(hasAssessment
-                                        ? []
-                                        : [
-                                            {
-                                              label: "Add quiz",
-                                              onClick: () => addHandlers.onAddQuiz(lesson.id),
-                                            },
-                                          ]),
-                                      {
-                                        label: "Tutor bot",
-                                        onClick: () => addHandlers.onOpenTutorBot(lesson.id),
-                                      },
-                                    ])
+                                    openMenu(event, lessonMenuItems(addHandlers, lesson.id, hasAssessment))
                                 : undefined
                             }
                           >
-                            <MapRow
-                              node={lesson}
-                              activeId={activeId}
-                              onSelect={onSelect}
-                            />
+                            <div className="min-w-0 flex-1">
+                              <MapRow
+                                node={lesson}
+                                activeId={activeId}
+                                onSelect={onSelect}
+                              />
+                            </div>
+                            {addHandlers ? (
+                              <AddButton
+                                title={hasAssessment ? "Tutor bot" : "Add quiz or tutor bot"}
+                                onClick={(event) =>
+                                  openMenu(event, lessonMenuItems(addHandlers, lesson.id, hasAssessment))
+                                }
+                              />
+                            ) : null}
                           </div>
                           {chain.length > 0 ? (
                             <ol className="mt-1.5 ml-[0.4rem] grid gap-1">
@@ -194,6 +233,31 @@ export function CourseMap({
         </>
       ) : null}
     </div>
+  );
+}
+
+/** Small always-visible "+" affordance so adding a module/lesson/quiz/
+ * tutor bot doesn't depend on already knowing to right-click — right-click
+ * still works too, as a shortcut. Opens the same menu either way. */
+function AddButton({
+  title,
+  onClick,
+}: {
+  title: string;
+  onClick: (event: React.MouseEvent) => void;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-muted opacity-70 transition-opacity hover:opacity-100 hover:border-accent/50 hover:text-accent"
+    >
+      <span aria-hidden className="text-xs leading-none">
+        +
+      </span>
+    </button>
   );
 }
 

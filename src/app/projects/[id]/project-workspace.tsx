@@ -163,6 +163,17 @@ export function ProjectWorkspace({
   function openMapFromModeIndicator() {
     setMapSubView(defaultMapViewFor(project.methodology));
     setActiveTab("map");
+    // The Diagrams tab sits well below the fold (past the header, the
+    // production-progress panel, and the stat row), so without this the
+    // click can look like it did nothing. Scroll it into view and give it
+    // the same brief highlight jumpToTab uses for board-jump clicks.
+    window.setTimeout(() => {
+      const el = document.getElementById("workspace-tabs");
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("ring-2", "ring-accent");
+      window.setTimeout(() => el.classList.remove("ring-2", "ring-accent"), 1500);
+    }, 50);
   }
 
   function handleMethodologyChange(next: Methodology) {
@@ -282,7 +293,7 @@ export function ProjectWorkspace({
       label: "Requirements",
       badge: `${requirements.filter((item) => item.done).length}/${requirements.length}`,
     },
-    { id: "map", label: "Map" },
+    { id: "map", label: "Diagrams" },
     { id: "time-cost", label: "Time & cost" },
     {
       id: "delivery",
@@ -425,6 +436,7 @@ export function ProjectWorkspace({
       <p className="mt-2 text-sm text-muted">Bottleneck: {estimate.bottleneck}</p>
 
       <div
+        id="workspace-tabs"
         className={`mt-10 grid gap-6 lg:items-start ${
           activeTab === "map" ? "lg:grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_18rem]"
         }`}
@@ -561,10 +573,10 @@ export function ProjectWorkspace({
           {activeTab === "map" ? (
             <section>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Map</h2>
+                <h2 className="text-lg font-semibold">Diagrams</h2>
                 <div
                   role="tablist"
-                  aria-label="Map view"
+                  aria-label="Diagram view"
                   className="flex gap-1 rounded-lg border border-line p-1"
                 >
                   {(

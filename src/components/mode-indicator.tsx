@@ -151,8 +151,8 @@ export function ModeIndicator({
       <span className="relative inline-flex shrink-0 items-center">
         <button
           type="button"
-          title={`${modeLabel} · ${phaseLabel} — open the map`}
-          aria-label={`Course mode: ${modeLabel}, phase ${phaseLabel}. Click to open the map.`}
+          title={`${modeLabel} · ${phaseLabel} — open diagrams`}
+          aria-label={`Course mode: ${modeLabel}, phase ${phaseLabel}. Click to open diagrams.`}
           onClick={onOpenMap}
           onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
